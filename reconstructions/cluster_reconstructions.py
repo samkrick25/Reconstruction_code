@@ -1,6 +1,8 @@
 '''
 think im going to have to put a hold on this as running pca on the df of endpoints in each region is returning pcs that explain an annoyingly low amount of variance per pc,
 ill have to write a script to interact with snt and get out the data i need i think
+ok new variation, i transpose df now before scaling and am explaining a bit more variance, really i want the pcs outside of like the top 5 to be explaining less than 1% of variance
+idk if thats actually a good metric, maybe I should do a bit more reading and discuss with people
 '''
 
 import numpy as np
@@ -36,11 +38,11 @@ def scale_as_desired(df, use_scaler):
     match use_scaler:
         case 'minmax':
             scaler_mm = MinMaxScaler()
-            scaled_df_mm = scaler_mm.fit_transform(df)
+            scaled_df_mm = scaler_mm.fit_transform(df.T) #transposing here helps explain a bit more variance but still only hitting 27% on PC1
             return scaled_df_mm
         case 'standard':
             scaler_ss = StandardScaler()
-            scaled_df_ss = scaler_ss.fit_transform(df)
+            scaled_df_ss = scaler_ss.fit_transform(df.T)
             return scaled_df_ss
         case _:
             raise ValueError("use_scaler can only be 'minmax' or 'standard'")
@@ -95,6 +97,7 @@ data_reduced = selector.fit_transform(data_nonan)
 data_thresh5 = drop_by_thresh(data_reduced, 5)
 data_thresh10 = drop_by_thresh(data_reduced, 10)
 data_thresh15 = drop_by_thresh(data_reduced, 15)
+data_thresh0 = drop_by_thresh(data_reduced, 0)
 
 #check for drop_by_thresh
 # sum_5 = data_thresh5.apply(np.sum, axis=0)
@@ -110,6 +113,7 @@ data_thresh15 = drop_by_thresh(data_reduced, 15)
 
 
 #normalize
+data0_mm = scale_as_desired(data_thresh0, 'minmax')
 data5_mm = scale_as_desired(data_thresh5, 'minmax')
 data5_ss = scale_as_desired(data_thresh5,'standard')
 data10_mm = scale_as_desired(data_thresh10, 'minmax')
@@ -120,8 +124,14 @@ data15_mm = scale_as_desired(data_thresh15, 'minmax')
 full_data_list = [data5_mm, data5_ss, data10_mm, data10_ss, data15_mm, data15_ss]
 
 #PCA
+data0_mm_trans, data0_mm_PCA = run_pca(data0_mm)
+print(f'var thresh 0 PCA: {data0_mm_PCA.explained_variance_ratio_, sum(data0_mm_PCA.explained_variance_ratio_)}')
 data5_mm_trans, data5_mm_PCA = run_pca(data5_mm)
-print(data5_mm_PCA.explained_variance_ratio_, sum(data5_mm_PCA.explained_variance_ratio_))
+print(f'var thresh 5 PCA: {data5_mm_PCA.explained_variance_ratio_, sum(data5_mm_PCA.explained_variance_ratio_)}')
+data15_mm_trans, data15_mm_PCA = run_pca(data15_mm)
+print(f'var thresh 15 PCA: {data15_mm_PCA.explained_variance_ratio_, sum(data15_mm_PCA.explained_variance_ratio_)}')
+data10_mm_trans, data10_mm_PCA = run_pca(data10_mm)
+print(f'var thresh 10 PCA: {data10_mm_PCA.explained_variance_ratio_, sum(data10_mm_PCA.explained_variance_ratio_)}')
 #columns = data.keys()
 # norm_data = data_reduced.copy()
 # mm_scaler = MinMaxScaler()

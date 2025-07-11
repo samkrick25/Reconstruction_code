@@ -6,7 +6,7 @@ from tqdm import tqdm
 from sklearn.feature_selection import VarianceThreshold
 
 def main():
-    file = r"C:\Data\reconstructions\medulla_IRN_PRN_PGRN\swc_measurements\reg_recon_measurements.csv"
+    file = r"C:\Reconstructions\registered_MY_IRN_PARN_PGRN\measurements\reg_recon_measurements.csv"
     columns = ['Cable length', 'Depth', 'Height', 'No. of branch points', 'No. of primary branches', 'No. of tips', 'No. of total nodes', 'Volume', 'Width', 'No. of compartments']
 
     data = pd.read_csv(file, delimiter=',', names=columns)
