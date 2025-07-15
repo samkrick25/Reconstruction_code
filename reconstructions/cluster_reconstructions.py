@@ -3,6 +3,7 @@ think im going to have to put a hold on this as running pca on the df of endpoin
 ill have to write a script to interact with snt and get out the data i need i think
 ok new variation, i transpose df now before scaling and am explaining a bit more variance, really i want the pcs outside of like the top 5 to be explaining less than 1% of variance
 idk if thats actually a good metric, maybe I should do a bit more reading and discuss with people
+rewriting this as v3 in a new file i think
 '''
 
 import numpy as np
@@ -12,7 +13,6 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.feature_selection import VarianceThreshold
 import os
-import traceback
 from tqdm import tqdm
 
 #first, writing all functions I need at the top
@@ -34,6 +34,7 @@ def scale_as_desired(df, use_scaler):
     df: pandas.DataFrame
     use_scaler: string, accepted values are 'minmax' and 'standard'
     returns: pandas.DataFrame
+    think im not going to actually use this lmao
     '''
     match use_scaler:
         case 'minmax':
@@ -51,6 +52,7 @@ def run_pca(df):
     '''
     fit and run pca on a pandas dataframe
     returns the transformed dataframe along with the PCA object
+    also think im not going to do PCA here, doesn't seem to apply super well
     '''
     pca = PCA(n_components=0.9, svd_solver='full')
     pca.fit(df)
@@ -94,22 +96,13 @@ data_reduced = selector.fit_transform(data_nonan)
 
 #just arbitrarily picking some thresholds right now, not exactly sure what to use as i didn't find people who did this
 #filtering out regions that have less than 5, 10, or 15 labeled endpoints
-data_thresh5 = drop_by_thresh(data_reduced, 5)
-data_thresh10 = drop_by_thresh(data_reduced, 10)
-data_thresh15 = drop_by_thresh(data_reduced, 15)
-data_thresh0 = drop_by_thresh(data_reduced, 0)
+# data_thresh5 = drop_by_thresh(data_reduced, 5)
+# data_thresh10 = drop_by_thresh(data_reduced, 10)
+# data_thresh15 = drop_by_thresh(data_reduced, 15)
+# data_thresh0 = drop_by_thresh(data_reduced, 0)
+data_thresh = drop_by_thresh(data_reduced, 3) #doing 3 as per Ding et al. 2025
 
-#check for drop_by_thresh
-# sum_5 = data_thresh5.apply(np.sum, axis=0)
-# mask = sum_5 < 5
-# empty = sum_5[mask].index
 
-# to_drop = []
-# for thresh in threshs:
-    
-#     print(f'regions with less than {thresh} endpoints: {low_endpoint_regions}')
-
-#plt.bar(sum_df)
 
 
 #normalize

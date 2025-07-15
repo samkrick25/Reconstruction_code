@@ -1,3 +1,7 @@
+"""
+v2 but i think this is also going to fail, can come back and use these measurements if i want to later, writing a new file for v3
+"""
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
