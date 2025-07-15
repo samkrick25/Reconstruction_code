@@ -24,10 +24,10 @@ def drop_by_thresh(df, thresh):
     low_endpoint_regions = sum_df[mask].index
     return df.drop(low_endpoint_regions, axis=1)
 
-ij = imagej.init(ij_dir_or_version_or_endpoint=r'C:\Users\samkr\OneDrive\Desktop\fiji-win64 (2)\Fiji.app\fiji-windows-x64.exe', mode='Mode.GUI')
+#ij = imagej.init(ij_dir_or_version_or_endpoint=r'C:\Users\samkr\OneDrive\Desktop\fiji-win64 (2)\Fiji.app\fiji-windows-x64.exe', mode='Mode.GUI')
 #ij.run_plugin
 
-frequency_dir = r"C:\Code\reconstructions\SNT_histos\SNT_histos\frequency"
+frequency_dir = input('Input directory with region frequency data: ') #r"C:\Code\reconstructions\SNT_histos\SNT_histos\frequency"
 length_dir = r"C:\Code\reconstructions\SNT_histos\SNT_histos\length"
 
 data = pd.DataFrame()
