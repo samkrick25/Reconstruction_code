@@ -98,7 +98,7 @@ Ipsilateral VTA,MB
 Ipsilateral SCig,MB
 Ipsilateral SCiw,MB
 Ipsilateral ICB,MY-mot
-Ipsilateral PRC,MB-mot
+Ipsilateral PRC,MB
 Ipsilateral PPY,MY-mot
 Ipsilateral AVPV,HY
 Ipsilateral pc,MB
@@ -122,10 +122,10 @@ Ipsilateral uf,CB
 Ipsilateral GR,MY-sen
 Ipsilateral MEV,MB
 Ipsilateral fx,CTX
-Ipsilateral CEAm,STR
+Ipsilateral CEAm,CNU
 Ipsilateral DR,MB
 Ipsilateral MD,TH
-Ipsilateral ACB,STR
+Ipsilateral ACB,CNU
 Ipsilateral LAT,TH
 Ipsilateral sctv,CB
 Ipsilateral STR,CNU
@@ -133,7 +133,7 @@ Ipsilateral AMBv,MY-mot
 Ipsilateral LRN,MY-mot
 Ipsilateral TMv,HY
 Ipsilateral fa,CTX
-Ipsilateral BST,PAL
+Ipsilateral BST,CNU
 Ipsilateral csc,MB
 Ipsilateral ECT6a,CTX
 Ipsilateral INC,MB
@@ -150,7 +150,7 @@ Ipsilateral ICc,MB
 Ipsilateral ISN,MY-mot
 Ipsilateral SPA,TH
 Ipsilateral PMv,HY
-Ipsilateral TTd,OLF
+Ipsilateral TTd,CTX
 Ipsilateral x,MY-mot
 Ipsilateral TU,HY
 Ipsilateral chpl,Other
@@ -161,7 +161,7 @@ Ipsilateral SPFm,TH
 Ipsilateral SSs6a,CTX
 Ipsilateral VISC5,CTX
 Ipsilateral LDT,P-sat
-Ipsilateral PAL,PAL
+Ipsilateral PAL,CNU
 Ipsilateral PF,TH
 Ipsilateral PVpo,HY
 Ipsilateral PoT,TH
