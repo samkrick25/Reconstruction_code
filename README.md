@@ -1,4 +1,4 @@
-code for clustering and analysis of single neuron reconstructions for the Economo Lab at Boston University
+code for analysis of single neuron reconstructions for the Economo Lab at Boston University
 
 requires .json (check structure of the json as allen changed how they structure it over time, current json functionality only works for recent reconstructions
 
