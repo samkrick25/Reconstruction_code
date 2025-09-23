@@ -1,4 +1,5 @@
-code for clustering and analysis of single neuron reconstructions for the Economo Lab at Boston University, requires .swc
+code for analysis of single neuron reconstructions for the Economo Lab at Boston University
 
-TODO: write json support? sort clustering y axis by higher ontology level (MY, HY, TH, CTX, CB, MB)
-cross-correlation with the same thing
+requires .json (check structure of the json as allen changed how they structure it over time, current json functionality only works for recent reconstructions
+
+if not .json, can also use .csv of endpoint frequency of each neuron, can get that through imagej SNT (all new reconstructions i should just be able to do with this)
