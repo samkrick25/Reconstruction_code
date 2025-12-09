@@ -1,0 +1,112 @@
+import numpy as np
+import pandas as pd
+import pickle
+import os
+from sklearn.feature_selection import VarianceThreshold
+from warnings import simplefilter
+
+def rem_zero_var(df):
+    '''
+    removes columns with 0 variance from a df, might not be necessary if my json reading is working correctly
+    
+    :param df: DataFrame to have colums dropped from
+    '''
+    selector = VarianceThreshold(threshold=0.0).set_output(transform='pandas')
+    df = selector.fit_transform(df)
+    return df
+
+
+def preprocess(df, log1p=True, pct=True):
+    '''
+    preprocess data however I want to, accepts a pandas.DataFrame with no NaNs
+
+    :param df: pandas.DataFrame
+
+    :param log1p: preprocessing option, default True, if False skips log1p scaling
+
+    :param pct: preprocessing option, default True, if False skips cell size scaling
+
+    returns: pandas.DataFrame
+    '''
+    data_tonorm = df.copy()
+
+    #natural log scale my data, formula of ln(number of terminals + 1) as per Ding et al. 2025
+    #and control for cell size
+    #default behavior
+    if log1p and pct:
+        df_log = np.log(data_tonorm+1)
+        row_sums = df_log.sum(axis=1)
+        df_pct = (df_log.div(row_sums, axis=0))*100
+        return df_pct
+    
+    if log1p and not pct:
+        df_log = np.log(data_tonorm+1)
+        return df_log
+    
+    if not log1p  and pct:
+        row_sums = df.sum(axis=1)
+        df_pct = (df.div(row_sums, axis=0))*100
+        return df_pct
+    
+    if not log1p and not pct:
+        print('what are you using this for')
+        return
+    
+def merge_regions(df):
+    '''
+    merge ipsilateral/contralateral regions into one column
+    (GPT assist)
+
+    :param df: DataFrame with frequency information for cells, columns must be 'Ipsilateral [region]' or 'Contralateral [region]'
+
+    returns: DataFrame with shape (n cells, n regions)
+    '''
+    #this suppresses the PerformanceWarning that pd throws, this function is still running fast
+    simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+    
+    ipsi_cols = pd.Series(col for col in df.columns if col.startswith('Ipsilateral'))
+    contra_cols = pd.Series(col for col in df.columns if col.startswith('Contralateral'))
+    ipsi_regions = ipsi_cols.str.replace('Ipsilateral ', '')
+    contra_regions = contra_cols.str.replace('Contrlateral ', '')
+    all_regions = set(ipsi_regions) | set(contra_regions)
+    
+    merged_frequency = pd.DataFrame(index=df.index)
+    for region in all_regions:
+        ipsi_col = f'Ipsilateral {region}'
+        contra_col = f'Contralateral {region}'
+        ipsi_series = df[ipsi_col] if ipsi_col in df.columns else None
+        contra_series = df[contra_col] if contra_col in df.columns else None
+        
+        #regions that recieve both ipsi and contra projections
+        if ipsi_series is not None and contra_series is not None:
+            merged_frequency[region] = df[ipsi_col] + df[contra_col]
+            
+        #regions that recieve only ipsilateral
+        if ipsi_series is not None and contra_series is None:
+            merged_frequency[region] = df[ipsi_col]
+            
+        #regions that only recieve contra
+        if ipsi_series is None and contra_series is not None:
+            merged_frequency[region] = df[contra_col]
+    
+    return merged_frequency
+
+def get_df_for_region(df, region):
+    '''
+    get a df containing lateralized frequency data for a given target region
+
+    :params df: full dataframe with columns as regions, lateralized, and rows as neurons
+
+    :params region: target region as str
+    '''
+    ipsireg = 'Ipsilateral '+region
+    contrareg = 'Contralateral '+region
+    fullreg = [ipsireg, contrareg]
+
+    regdf = df[fullreg]
+    for cell, val in regdf.iterrows():
+        iv, cv = val
+        if iv == 0 and cv == 0:
+            regdf = regdf.drop(cell)
+
+    return regdf

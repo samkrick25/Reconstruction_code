@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from sklearn.feature_selection import VarianceThreshold
 from tqdm import tqdm
 import os
 from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
@@ -18,6 +17,7 @@ def ver_spec_helper(file_dict, ver=None):
                 #sets somahem to - if soma is left hem, + if soma if right hem, will compare with each node down the line
                 #to see if a node is ipsi/contra to soma
                 somahem = np.sign(somaref)
+                somacomp = file_dict['neurons']['soma']['allenId']
 
                 #build a tree from json, then get endpoints for freq analysis
                 parent_child_dict = {}
@@ -63,6 +63,7 @@ def json_to_freq_from_dir(dir, ver=None):
     loads in .json files and creates frequency dfs
     
     :param dir: directory containing .json files of reconstructions to load
+    
     :param ver: string, default None as it has to be set to 1 of 3 values
                 
                 'AA' loads in any AA files
@@ -122,6 +123,8 @@ def json_to_freq_from_dir(dir, ver=None):
     return datat
 
 if __name__ == '__main__':
+    #might be able to remove all this and just use this to store loading functions
+    #keeping for testing purposes tbh
     ccf_v3_10um = BrainGlobeAtlas('allen_mouse_10um')
 
     aa = r'reconstructions\data\json_w_names\AA'
