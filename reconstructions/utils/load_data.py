@@ -10,6 +10,12 @@ from treelib import Tree
 MIDLINEZ = 5750
 
 def ver_spec_helper(file_dict, ver=None):
+    '''
+    helper for my file loader, this does need allen ccf v3 10um loaded in from brainglobeatlas to work correctly
+    
+    :param file_dict: Description
+    :param ver: Description
+    '''
     match ver:
             case 'AA':
                 somaz = file_dict['neurons']['soma']['z']
@@ -17,7 +23,11 @@ def ver_spec_helper(file_dict, ver=None):
                 #sets somahem to - if soma is left hem, + if soma if right hem, will compare with each node down the line
                 #to see if a node is ipsi/contra to soma
                 somahem = np.sign(somaref)
-                somacomp = file_dict['neurons']['soma']['allenId']
+                somaaid = file_dict['neurons']['soma']['allenId']
+                somacomp = ccf_v3_10um.structures[somaaid]['acronym']
+
+                #add cell id to index, create a data frame that is one column, just containing cell soma compartment identified by allenId annotation
+                cellId = file_dict['neurons']['idString']
 
                 #build a tree from json, then get endpoints for freq analysis
                 parent_child_dict = {}
@@ -36,7 +46,9 @@ def ver_spec_helper(file_dict, ver=None):
                 #sets somahem to - if soma is left hem, + if soma if right hem, will compare with each node down the line
                 #to see if a node is ipsi/contra to soma
                 somahem = np.sign(somaref)
-
+                somaaid = file_dict['neurons'][0]['soma']['allenId']
+                somacomp = ccf_v3_10um.structures[somaaid]['acronym']
+                cellId = file_dict['neurons'][0]['idString']
                 #build a tree from json, then get endpoints for freq analysis
                 parent_child_dict = {}
                 nodes = file_dict['neurons'][0]['axon']
@@ -55,15 +67,15 @@ def ver_spec_helper(file_dict, ver=None):
     ends_from_tree = [int(node.identifier) for node in leaves]
     endpoints = [node for node in nodes if node['sampleNumber'] in ends_from_tree]
     
-    return endpoints, somahem
+    return endpoints, somahem, somacomp, cellId
 
 
 def json_to_freq_from_dir(dir, ver=None):
     '''
-    loads in .json files and creates frequency dfs
+    loads in .json files and creates frequency dfs, needs ccfv3 10um loaded in to work correctly
     
     :param dir: directory containing .json files of reconstructions to load
-    
+
     :param ver: string, default None as it has to be set to 1 of 3 values
                 
                 'AA' loads in any AA files
@@ -74,14 +86,14 @@ def json_to_freq_from_dir(dir, ver=None):
     '''
 
     data = pd.DataFrame()
-
+    somalocs = []
     for file in tqdm(os.listdir(dir)):
         filename = os.path.join(dir, file)
         with open(filename,'r') as f:
             file_dict = json.load(f)
         
-        endpoints, somahem = ver_spec_helper(file_dict, ver)
-
+        endpoints, somahem, somacomp, cellId = ver_spec_helper(file_dict, ver)
+        somalocs.append((cellId, somacomp))
         freq_dict = {}
         
         for node in endpoints:
@@ -120,7 +132,7 @@ def json_to_freq_from_dir(dir, ver=None):
     data_nonan = data.replace(np.nan, 0)
     datat = data_nonan.T
 
-    return datat
+    return datat, somalocs
 
 if __name__ == '__main__':
     #might be able to remove all this and just use this to store loading functions
@@ -130,14 +142,16 @@ if __name__ == '__main__':
     aa = r'reconstructions\data\json_w_names\AA'
     not_aa = r'reconstructions\data\json_w_names\not-AA'
 
-    aa_raw = json_to_freq_from_dir(aa, ver='AA')
-    not_aa_raw = json_to_freq_from_dir(not_aa, ver='not-AA')
+    aa_raw, aasomalocs = json_to_freq_from_dir(aa, ver='AA')
+    not_aa_raw, not_aasomalocs = json_to_freq_from_dir(not_aa, ver='not-AA')
 
     not_aa_raw['Ipsilateral CUL4 5'] = not_aa_raw['Ipsilateral CUL4, 5']
     not_aa_raw = not_aa_raw.drop(columns=['Ipsilateral CUL4, 5']) 
     
     full_freq = pd.merge(not_aa_raw, aa_raw, how='outer')
     full_freq = full_freq.replace(np.nan, 0)
+    full_locs = aasomalocs + not_aasomalocs
+    print(full_locs)
 
     store_full_file = open(r'reconstructions\data\freq_data.pkl', 'ab')
     pickle.dump(full_freq, store_full_file)
