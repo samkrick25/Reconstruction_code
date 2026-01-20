@@ -134,6 +134,17 @@ def json_to_freq_from_dir(dir, ver=None):
 
     return datat, somalocs
 
+def load_neurons(folderpath):
+    neuron_dict={}
+    for i, file in tqdm(enumerate(os.listdir(folderpath))):
+        filename = os.path.join(folderpath, file)
+        with open(filename, 'r') as f:
+            fdict = json.load(f)
+            cellname = fdict['neurons'][0]['idString']
+            axon = fdict ['neurons'][0]['axon']
+            neuron_dict[cellname] = axon
+    return neuron_dict
+
 if __name__ == '__main__':
     #might be able to remove all this and just use this to store loading functions
     #keeping for testing purposes tbh
