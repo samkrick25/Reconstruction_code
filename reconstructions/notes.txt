@@ -1,2 +1,37 @@
 PT things
 Pontine central grey is allenID 898 in this atlas
+striatum 477, caudoputamen 672
+pallidum 803, gpe is 1022
+thal 549
+all related thal nuclei that might be helpful
+intralaminar nuc of dorsal thal 51, 262 for reticular nuc of thal, 362 mediodorsal, 366 for submedial, 444 medial, 575 central lateral, 599 central medial, 685 ventral medial,
+856 thal polymodal association cortex related, 907 paracentral, 930 parafascicular, 1020 posterior complex, 1120 interanteromedial, 422 subparafascicular parvicellular part,
+609 subparafascicular area, 629 ventral anterior-lateral complex, 1029 posterior-limiting, 239 for anterior group of dorsal thal
+
+
+PTupper1 – Gpe, PF, PRNc, PCG, GRN, caudal medial pons
+
+AA1633, AA0772, AA0726, AA0261, AA0245, AA0182, AA0122, AA0114
+
+PTupper2 – anterior dorsal thalamus, CL, PO, SCm, anterior ventral pons
+
+AA0181, AA0250, AA0583, AA0587, AA0617, AA0791, AA0794, AA0926, AA0927, AA1212, AA1221, AA1579, AA1625
+
+1:30
+
+Group 1: 351 and 354; Stxbp6+/Nspr1+ (Npsr1 very strong in 351, moderate in 354) n = 350/950 (MERFISH/scRNAseq) 
+
+Group 2: 355 and 358 are Stxbp6+/Npsr1-; n = 435/1400
+
+Group 2: 356 is Npsr1+/Stxbp6-; n = 828/283
+
+1:34
+
+Other good genes: Mdga1/Gfra2/Slc24a2
+
+search for lowers
+anatomical region, primary motor area layer 3 and secondary motor area layer 5, soma
+and anatomical region, medulla motor related, axonal end point, threshold > 5
+
+lower names
+AA0012, AA0114, AA0180, AA0182, AA0250, AA0788, AA0923, AA1190, AA1543

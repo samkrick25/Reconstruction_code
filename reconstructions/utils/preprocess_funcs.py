@@ -110,3 +110,23 @@ def get_df_for_region(df, region):
             regdf = regdf.drop(cell)
 
     return regdf
+
+def get_nodes_in_region(cells, *regions):
+    nodes = []
+    for _, axon in cells.items():
+        for node in axon:
+            if node['allenId'] in regions:
+                nodes.append(node)
+    return nodes
+
+def get_coords(nodes, dim):
+    match dim:
+        case 'x':
+            x = [node['x'] for node in nodes]
+            return x
+        case 'y':
+            y = [node['y'] for node in nodes]
+            return y
+        case 'z':
+            z = [node['z'] for node in nodes]
+            return z

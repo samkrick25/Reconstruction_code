@@ -16,6 +16,8 @@ def ver_spec_helper(file_dict, ver=None):
     :param file_dict: Description
     :param ver: Description
     '''
+
+    ccf_v3_10um = BrainGlobeAtlas('allen_mouse_10um')
     match ver:
             case 'AA':
                 somaz = file_dict['neurons']['soma']['z']
@@ -85,6 +87,7 @@ def json_to_freq_from_dir(dir, ver=None):
     returns: df with neurons as rows, columns as regions, lateralized, values are raw endpoint counts in each region
     '''
 
+    ccf_v3_10um = BrainGlobeAtlas('allen_mouse_10um')
     data = pd.DataFrame()
     somalocs = []
     for file in tqdm(os.listdir(dir)):
@@ -136,19 +139,30 @@ def json_to_freq_from_dir(dir, ver=None):
 
 def load_neurons(folderpath):
     neuron_dict={}
+    aidtoreg = {}
+    regtoaid = {}
+    abvtoaid = {}
     for i, file in tqdm(enumerate(os.listdir(folderpath))):
         filename = os.path.join(folderpath, file)
         with open(filename, 'r') as f:
             fdict = json.load(f)
             cellname = fdict['neurons'][0]['idString']
-            axon = fdict ['neurons'][0]['axon']
+            axon = fdict['neurons'][0]['axon']
+            alleninfo = fdict['neurons'][0]['allenInformation']
+            for region in alleninfo:
+                aid = region['allenId']
+                name = region['name']
+                acronym = region['acronym']
+                aidtoreg[aid] = (name, acronym)
+                regtoaid[name] = aid
+                abvtoaid[acronym] = aid
             neuron_dict[cellname] = axon
-    return neuron_dict
+    return neuron_dict, aidtoreg, regtoaid, abvtoaid
 
 if __name__ == '__main__':
     #might be able to remove all this and just use this to store loading functions
     #keeping for testing purposes tbh
-    ccf_v3_10um = BrainGlobeAtlas('allen_mouse_10um')
+    
 
     aa = r'reconstructions\data\json_w_names\AA'
     not_aa = r'reconstructions\data\json_w_names\not-AA'
