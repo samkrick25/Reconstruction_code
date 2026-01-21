@@ -57,8 +57,10 @@ def ver_spec_helper(file_dict, ver=None):
                 for node in nodes:
                     nodeID = str(node['sampleNumber'])
                     parent = str(node['parentNumber'])
+                    #following is for the first node, the parent for the first node is -1 so edge case control here
                     if parent == str(-1):
                         parent_child_dict[nodeID] = None
+                    #then nodes count up from 1, so this gets the parent for each node
                     if parent > str(0):
                         parent_child_dict[nodeID] = str(parent)
 
@@ -142,13 +144,16 @@ def load_neurons(folderpath):
     aidtoreg = {}
     regtoaid = {}
     abvtoaid = {}
-    for i, file in tqdm(enumerate(os.listdir(folderpath))):
+    freq_df = pd.DataFrame()
+
+    for file in tqdm(os.listdir(folderpath)):
         filename = os.path.join(folderpath, file)
         with open(filename, 'r') as f:
             fdict = json.load(f)
             cellname = fdict['neurons'][0]['idString']
             axon = fdict['neurons'][0]['axon']
             alleninfo = fdict['neurons'][0]['allenInformation']
+            #build region dictionary
             for region in alleninfo:
                 aid = region['allenId']
                 name = region['name']
