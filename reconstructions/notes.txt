@@ -35,3 +35,7 @@ and anatomical region, medulla motor related, axonal end point, threshold > 5
 
 lower names
 AA0012, AA0114, AA0180, AA0182, AA0250, AA0788, AA0923, AA1190, AA1543
+
+to do for rendering -> json has node ids, get all the nodeids for a given region, then filter the swc to only render those
+plot bar graphs of the two populations looking at GPe, STR, CL, PO, VM, PF, LD, LP
+brainrender, might just be able to directly import the cells I want thru their data downloader since its hooked w/ mouselight

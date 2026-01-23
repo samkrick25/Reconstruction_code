@@ -6,6 +6,9 @@ from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
 import json
 import pickle
 from treelib import Tree
+import brainrender
+from brainrender.actors import Neuron
+import vedo
 
 MIDLINEZ = 5750
 
@@ -163,6 +166,15 @@ def load_neurons(folderpath):
                 abvtoaid[acronym] = aid
             neuron_dict[cellname] = axon
     return neuron_dict, aidtoreg, regtoaid, abvtoaid
+
+def load_brainrender_neurons(dir):
+    neurons = []
+    for file in tqdm(os.listdir(dir)):
+        filename = os.path.join(dir, file)
+        neuron = Neuron(neuron=filename)
+        neurons.append(neuron)
+    return neurons
+
 
 if __name__ == '__main__':
     #might be able to remove all this and just use this to store loading functions
