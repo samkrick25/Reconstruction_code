@@ -167,12 +167,16 @@ def load_neurons(folderpath):
             neuron_dict[cellname] = axon
     return neuron_dict, aidtoreg, regtoaid, abvtoaid
 
-def load_brainrender_neurons(dir):
+def load_brainrender_neurons(dir, color=None):
     neurons = []
     for file in tqdm(os.listdir(dir)):
         filename = os.path.join(dir, file)
-        neuron = Neuron(neuron=filename)
-        neurons.append(neuron)
+        if color is None:
+            neuron = Neuron(neuron=filename)
+            neurons.append(neuron)
+        if color is not None:
+            neuron = Neuron(neuron=filename, color=color)
+            neurons.append(neuron)
     return neurons
 
 

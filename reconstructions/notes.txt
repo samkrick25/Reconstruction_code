@@ -39,3 +39,18 @@ AA0012, AA0114, AA0180, AA0182, AA0250, AA0788, AA0923, AA1190, AA1543
 to do for rendering -> json has node ids, get all the nodeids for a given region, then filter the swc to only render those
 plot bar graphs of the two populations looking at GPe, STR, CL, PO, VM, PF, LD, LP
 brainrender, might just be able to directly import the cells I want thru their data downloader since its hooked w/ mouselight
+
+coords for possible slice:
+    in AP str and gpe are roughly 3500-7500, ML 9000-6000
+    
+    might need position here to create a new plane? althought i'd have to speficy a different plane when using Scene.atlas.get_plane() 
+    cam = dict(
+    pos=(7297.69, 3838.38, -7009.28),
+    focal_point=(7201.88, 3916.81, -7087.80),
+    viewup=(0.725632, 0.644050, -0.242195),
+    roll=40.3358,
+    distance=146.613,
+    clipping_range=(13.6723, 13672.3),
+)
+
+cells I need to mirror when I load in: AA1633, AA1212

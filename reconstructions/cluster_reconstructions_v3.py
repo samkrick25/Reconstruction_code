@@ -47,6 +47,7 @@ for file in tqdm(os.listdir(frequency_dir)):
     df_t.columns = df_t.iloc[0]
     df_t = df_t.drop([0])
     data = pd.concat([data, df_t], join='outer')
+print(data.shape)
 data_nonan = data.replace(np.nan, 0)
 #print("Column variances:", np.var(data, axis=0))
 #remove zero variance columns
