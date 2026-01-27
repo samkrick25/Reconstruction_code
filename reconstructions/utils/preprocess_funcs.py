@@ -119,6 +119,13 @@ def get_nodes_in_region(cells, *regions):
                 nodes.append(node)
     return nodes
 
+def get_target_nodes_list(nodes, *regions):
+    targets = []
+    for node in nodes:
+        if node['allenId'] in regions:
+            targets.append(node)
+    return targets
+
 def get_coords(nodes, dim):
     match dim:
         case 'x':
@@ -130,3 +137,15 @@ def get_coords(nodes, dim):
         case 'z':
             z = [node['z'] for node in nodes]
             return z
+        case 'all':
+            for node in nodes:
+                if node['x'] < 5700:
+                    diff = 5700 - node['x']
+                    node['x'] = 5700+diff
+            coords = np.array([[node['z'], node['y'], node['x']] for node in nodes])
+            return coords
+        
+def node_coords_getter(cell, dim, *regions):
+    targets = get_target_nodes_list(cell, regions)
+    coords = np.array(get_coords(cell, dim) for cell in targets if cell)
+    return coords

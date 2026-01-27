@@ -179,6 +179,32 @@ def load_brainrender_neurons(dir, color=None):
             neurons.append(neuron)
     return neurons
 
+def get_endpoints(neuronjson):
+    with open(neuronjson, 'r') as f:
+        parent_child_dict = {}
+        neuron = json.load(f)
+        axon = neuron['neurons'][0]['axon']
+        for node in axon:
+            nodeID = str(node['sampleNumber'])
+            parent = str(node['parentNumber'])
+            if parent == str(-1):
+                parent_child_dict[nodeID] = None
+            if parent > str(0):
+                parent_child_dict[nodeID] = str(parent)
+        tree = Tree()
+        tree = tree.from_map(parent_child_dict)
+        leaves = tree.leaves()
+        ends_from_tree = [int(node.identifier) for node in leaves]
+        endpoints = [node for node in axon if node['sampleNumber'] in ends_from_tree]
+    return endpoints
+
+def load_endpoints(dir):
+    allends = []
+    for file in tqdm(os.listdir(dir)):
+        filename = os.path.join(dir, file)
+        endpoints = get_endpoints(filename)
+        allends.append(endpoints)
+    return allends
 
 if __name__ == '__main__':
     #might be able to remove all this and just use this to store loading functions
