@@ -62,3 +62,4 @@ zoom more on coronal thal
 versions of str sag
 and thal horizontal 
 get zoom same for both of those views
+scale bars?
