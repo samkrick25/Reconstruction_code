@@ -78,11 +78,11 @@ root_ccf._needs_silhouette = False #turn off silhouette for the wholebrain mesh
 #posplanebg=ccf_scene.atlas.get_plane(pos=(7750,4000,5000),norm=(-1, 0, 0),plane='frontal')
 #antplanepg=ccf_scene.atlas.get_plane(pos=(8500,4000,5000),plane='frontal')
 #posplanepg=ccf_scene.atlas.get_plane(pos=(9500,4000,5000),norm=(-1,0,0),plane='frontal')
-#medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,-1))
+medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,-1))
 allplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,0))
 #ccf_scene.slice(plane=antplanebg)
 #ccf_scene.slice(plane=posplanebg)
-#ccf_scene.slice(plane=medplane)
+ccf_scene.slice(plane=medplane)
 ccf_scene.slice(plane=allplane, actors=actors[0])
 
 #load and add points
@@ -127,5 +127,5 @@ topcam = dict(
 )
 
 
-ccf_scene.render(camera=corcam)
+ccf_scene.render(camera=topcam)
 #ccf_scene.screenshot(name='PTs_in_STR_and_GPe')5
