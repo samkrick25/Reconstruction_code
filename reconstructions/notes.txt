@@ -56,3 +56,9 @@ coords for possible slice:
 cells I need to mirror when I load in: AA1633, AA1212
 okay notes -> load in all endpoints from whatever area(s) i want to visualize and load those in as a npy array of coordinates using point actor
 midpoint is somewhere around 5700 x i think?
+
+pf and md shade of same color (cyan and blue), po lp and cl orange yellow red
+zoom more on coronal thal
+versions of str sag
+and thal horizontal 
+get zoom same for both of those views
