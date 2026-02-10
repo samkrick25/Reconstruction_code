@@ -88,6 +88,7 @@ def json_to_freq_from_dir(dir, ver=None):
                 'AA' loads in any AA files
 
                 'not-AA' loads all others
+                actaully currently reformatting all old AAs so everything will be processed the same
 
     returns: df with neurons as rows, columns as regions, lateralized, values are raw endpoint counts in each region
     '''
@@ -147,6 +148,7 @@ def load_neurons(folderpath):
     aidtoreg = {}
     regtoaid = {}
     abvtoaid = {}
+    somas = {}
     freq_df = pd.DataFrame()
 
     for file in tqdm(os.listdir(folderpath)):
@@ -156,6 +158,7 @@ def load_neurons(folderpath):
             cellname = fdict['neurons'][0]['idString']
             axon = fdict['neurons'][0]['axon']
             alleninfo = fdict['neurons'][0]['allenInformation']
+            soma = fdict['neurons'][0]['soma']
             #build region dictionary
             for region in alleninfo:
                 aid = region['allenId']
@@ -165,6 +168,7 @@ def load_neurons(folderpath):
                 regtoaid[name] = aid
                 abvtoaid[acronym] = aid
             neuron_dict[cellname] = axon
+            somas[cellname] = soma
     return neuron_dict, aidtoreg, regtoaid, abvtoaid
 
 def load_brainrender_neurons(dir, color=None):
