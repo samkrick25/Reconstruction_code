@@ -169,7 +169,7 @@ def load_neurons(folderpath):
                 abvtoaid[acronym] = aid
             neuron_dict[cellname] = axon
             somas[cellname] = soma
-    return neuron_dict, aidtoreg, regtoaid, abvtoaid
+    return neuron_dict, somas, aidtoreg, regtoaid, abvtoaid
 
 def load_brainrender_neurons(dir, color=None):
     neurons = []
@@ -188,7 +188,14 @@ def get_endpoints(neuronjson):
         parent_child_dict = {}
         neuron = json.load(f)
         axon = neuron['neurons'][0]['axon']
+        ver = neuron['neurons'][0]['annotationSpace']['version'] #this will be 2.5 if CCFv2.5 is used, 3 if CCFv3
         for node in axon:
+            x = node['x']
+            z = node['z']
+            #x and z in ccf2.5 are swapped in ccfv3, so swapping those in any cell annotated in ccfv2.5
+            if ver == 2.5:
+                node['z'] = x
+                node['x'] = z
             nodeID = str(node['sampleNumber'])
             parent = str(node['parentNumber'])
             if parent == str(-1):
