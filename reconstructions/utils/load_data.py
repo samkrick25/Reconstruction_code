@@ -144,6 +144,11 @@ def json_to_freq_from_dir(dir, ver=None):
     return datat, somalocs
 
 def load_neurons(folderpath):
+    '''
+    Docstring for load_neurons
+    
+    :param folderpath: Description
+    '''
     neuron_dict={}
     aidtoreg = {}
     regtoaid = {}
@@ -155,6 +160,10 @@ def load_neurons(folderpath):
         filename = os.path.join(folderpath, file)
         with open(filename, 'r') as f:
             fdict = json.load(f)
+            #again, since some of the neurons are annotated in different ccf versions, i have to swap some coords around, going to write a coordinate swapper that takes the version and fdict and will swap around coords if needed
+            ver = fdict['neurons'][0]['annotationSpace']['version']
+            if ver == 2.5:
+                fdict = coord_swapper(fdict)
             cellname = fdict['neurons'][0]['idString']
             axon = fdict['neurons'][0]['axon']
             alleninfo = fdict['neurons'][0]['allenInformation']
@@ -169,9 +178,16 @@ def load_neurons(folderpath):
                 abvtoaid[acronym] = aid
             neuron_dict[cellname] = axon
             somas[cellname] = soma
+            
     return neuron_dict, somas, aidtoreg, regtoaid, abvtoaid
 
 def load_brainrender_neurons(dir, color=None):
+    '''
+    Docstring for load_brainrender_neurons
+    
+    :param dir: Description
+    :param color: Description
+    '''
     neurons = []
     for file in tqdm(os.listdir(dir)):
         filename = os.path.join(dir, file)
@@ -184,6 +200,11 @@ def load_brainrender_neurons(dir, color=None):
     return neurons
 
 def get_endpoints(neuronjson):
+    '''
+    Docstring for get_endpoints
+    
+    :param neuronjson: Description
+    '''
     with open(neuronjson, 'r') as f:
         parent_child_dict = {}
         neuron = json.load(f)
@@ -210,12 +231,45 @@ def get_endpoints(neuronjson):
     return endpoints
 
 def load_endpoints(dir):
+    '''
+    Docstring for load_endpoints
+    
+    :param dir: Description
+    '''
     allends = []
     for file in tqdm(os.listdir(dir)):
         filename = os.path.join(dir, file)
         endpoints = get_endpoints(filename)
         allends.append(endpoints)
     return allends
+
+def coord_swapper(fdict):
+    '''
+    swaps x and z coordinates for soma node, axon and dendrite nodes, used to render cells that were annotated in allen ccfv2.5 in ccfv3 space
+    
+    :param fdict: dictionary, the neuron json that you need coordinates swapped for
+    '''
+    soma = fdict['neurons'][0]['soma']
+    axon = fdict['neurons'][0]['axon']
+    dendrite = fdict['neurons'][0]['dendrite']
+    somax = soma['x']
+    somaz = soma['z']
+    soma['x'] = somaz
+    soma['z'] = somax
+    fdict['neurons'][0]['soma'] = soma
+    for node in axon:
+        x = node['x']
+        z = node['z']
+        node['z'] = x
+        node['x'] = z
+    for node in dendrite:
+        x = node['x']
+        z = node['z']
+        node['z'] = x
+        node['x'] = z
+    fdict['neurons'][0]['axon'] = axon
+    fdict['neurons'][0]['dendrite'] = dendrite
+    return fdict
 
 if __name__ == '__main__':
     #might be able to remove all this and just use this to store loading functions

@@ -112,6 +112,12 @@ def get_df_for_region(df, region):
     return regdf
 
 def get_nodes_in_region(cells, *regions):
+    '''
+    Docstring for get_nodes_in_region
+    
+    :param cells: Description
+    :param regions: Description
+    '''
     nodes = []
     for _, axon in cells.items():
         for node in axon:
@@ -120,13 +126,27 @@ def get_nodes_in_region(cells, *regions):
     return nodes
 
 def get_target_nodes_list(nodes, *regions):
+    '''
+    Docstring for get_target_nodes_list
+    
+    :param nodes: Description
+    :param regions: Description
+    '''
     targets = []
     for node in nodes:
         if node['allenId'] in regions:
             targets.append(node)
     return targets
 
-def get_coords(nodes, dim):
+def get_coords(nodes, dim='all'):
+    """
+    Coordinate getter for a list of nodes contianing x, y, z coordinates
+    
+    :param nodes: list of dictionaries, each entry should be a dictionary containing 'x', 'y', 'z' coordinates for said node
+    :param dim: str, selecting which coordinates to get, default behavior is to return all coords
+
+    Returns: list of coordinates if only one dimension is selected, np.array of lists where each list contains x, y, z coords if all dims are selected
+    """
     match dim:
         case 'x':
             x = [node['x'] for node in nodes]
@@ -138,10 +158,10 @@ def get_coords(nodes, dim):
             z = [node['z'] for node in nodes]
             return z
         case 'all':
-            for node in nodes:
-                if node['z'] < 5700:
-                    diff = 5700 - node['z']
-                    node['z'] = 5700+diff
+            # for node in nodes:
+            #     if node['z'] < 5700:
+            #         diff = 5700 - node['z']
+            #         node['z'] = 5700+diff
             coords = np.array([[node['x'], node['y'], node['z']] for node in nodes]) 
             return coords
         
