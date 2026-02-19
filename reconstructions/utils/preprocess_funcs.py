@@ -158,10 +158,10 @@ def get_coords(nodes, dim='all'):
             z = [node['z'] for node in nodes]
             return z
         case 'all':
-            # for node in nodes:
-            #     if node['z'] < 5700:
-            #         diff = 5700 - node['z']
-            #         node['z'] = 5700+diff
+            for node in nodes:
+                if node['z'] < 5700:
+                    diff = 5700 - node['z']
+                    node['z'] = 5700+diff
             coords = np.array([[node['x'], node['y'], node['z']] for node in nodes]) 
             return coords
         

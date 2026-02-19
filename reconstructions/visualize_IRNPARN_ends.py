@@ -13,7 +13,7 @@ import vedo
 IRNdir = r'reconstructions\data\IRNPARN_cells\IRN'
 PARNdir = r'reconstructions\data\IRNPARN_cells\PARN'
 
-#621 is V, XII is 773
+#621 is V, XII is 773, MRN 128
 IRNends = load_data.load_endpoints(IRNdir)
 PARNends = load_data.load_endpoints(PARNdir)
 
@@ -21,15 +21,24 @@ IRNallpoints = [point for cell in IRNends for point in cell]
 PARNallpoints = [point for cell in PARNends for point in cell]
 
 #add in other motor nuclei in a min, VII, VI, AMB, etc.
-IRNmnends = preprocess_funcs.get_target_nodes_list(IRNallpoints, 621, 773)
-PARNmnends = preprocess_funcs.get_target_nodes_list(PARNallpoints, 621, 773)
+IRNmnends = preprocess_funcs.get_target_nodes_list(IRNallpoints, 128)
+PARNmnends = preprocess_funcs.get_target_nodes_list(PARNallpoints, 128)
 
 IRNcoords = preprocess_funcs.get_coords(IRNmnends, dim='all')
 PARNcoords = preprocess_funcs.get_coords(PARNmnends, dim='all')
 
 ccf_scene = Scene(atlas_name='allen_mouse_10um')
-ccf_scene.add_brain_region('XII', color='blue', alpha=0.1, silhouette=False)
-ccf_scene.add_brain_region('V', color='red', alpha=0.1, silhouette=False)
+#ccf_scene.add_brain_region('XII', color='blue', alpha=0.1, silhouette=False)
+#ccf_scene.add_brain_region('V', color='red', alpha=0.1, silhouette=False)
+ccf_scene.add_brain_region('MRN', color='green', alpha=0.1, silhouette=False)
+
+actors = ccf_scene.get_actors() #just debug and look here to find actor indices
+root_ccf = actors[0]
+root_ccf._needs_silhouette = False
+allplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,0))
+medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,-1))
+ccf_scene.slice(plane=medplane)
+ccf_scene.slice(plane=allplane, actors=actors[0])
 
 IRNpoints = Points(IRNcoords, name='IRN endpoints', colors='red')
 PARNpoints = Points(PARNcoords, name='PARN endpoints', colors='blue')
