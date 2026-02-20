@@ -9,9 +9,8 @@ import morphapi
 from tqdm import tqdm
 import os
 import vedo
+from utils.filedirs import IRNdir, PARNdir
 
-IRNdir = r'reconstructions\data\IRNPARN_cells\IRN'
-PARNdir = r'reconstructions\data\IRNPARN_cells\PARN'
 
 #621 is V, XII is 773, MRN 128
 IRNends = load_data.load_endpoints(IRNdir)

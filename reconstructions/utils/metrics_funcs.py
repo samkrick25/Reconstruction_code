@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import preprocess_funcs as pp
+from utils import preprocess_funcs as pp
 
 def lat_index(df, region):
     '''

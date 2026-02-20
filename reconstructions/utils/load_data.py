@@ -9,102 +9,169 @@ from treelib import Tree
 import brainrender
 from brainrender.actors import Neuron
 import vedo
+from utils.filedirs import regiondict
 
 MIDLINEZ = 5750
 
-def ver_spec_helper(file_dict, ver=None):
-    '''
-    helper for my file loader, this does need allen ccf v3 10um loaded in from brainglobeatlas to work correctly
-    
-    :param file_dict: Description
-    :param ver: Description
-    '''
 
-    ccf_v3_10um = BrainGlobeAtlas('allen_mouse_10um')
-    match ver:
-            case 'AA':
-                somaz = file_dict['neurons']['soma']['z']
-                somaref = MIDLINEZ - somaz
-                #sets somahem to - if soma is left hem, + if soma if right hem, will compare with each node down the line
-                #to see if a node is ipsi/contra to soma
-                somahem = np.sign(somaref)
-                somaaid = file_dict['neurons']['soma']['allenId']
-                somacomp = ccf_v3_10um.structures[somaaid]['acronym']
+#both of the following are deprecated, keeping until im sure that the rest of my code will run correctly but probably don't need
+# def ver_spec_helper(file_dict, ver=None):
+#     '''
+#     helper for my file loader, this does need allen ccf v3 10um loaded in from brainglobeatlas to work correctly
+#     this is deprecated since i don't have different versions the way I did here, now i rewrite b/c different CCF versions
+#     :param file_dict: Description
+#     :param ver: Description
+#     '''
 
-                #add cell id to index, create a data frame that is one column, just containing cell soma compartment identified by allenId annotation
-                cellId = file_dict['neurons']['idString']
+#     ccf_v3_10um = BrainGlobeAtlas('allen_mouse_10um')
+#     match ver:
+#             case 'AA':
+#                 somaz = file_dict['neurons']['soma']['z']
+#                 somaref = MIDLINEZ - somaz
+#                 #sets somahem to - if soma is left hem, + if soma if right hem, will compare with each node down the line
+#                 #to see if a node is ipsi/contra to soma
+#                 somahem = np.sign(somaref)
+#                 somaaid = file_dict['neurons']['soma']['allenId']
+#                 somacomp = ccf_v3_10um.structures[somaaid]['acronym']
 
-                #build a tree from json, then get endpoints for freq analysis
-                parent_child_dict = {}
-                nodes = file_dict['neurons']['axon']
-                for node in nodes:
-                    nodeID = str(node['sampleNumber'])
-                    parent = str(node['parentNumber'])
-                    if parent == str(-1):
-                        parent_child_dict[nodeID] = None
-                    if parent > str(0):
-                        parent_child_dict[nodeID] = str(parent)
+#                 #add cell id to index, create a data frame that is one column, just containing cell soma compartment identified by allenId annotation
+#                 cellId = file_dict['neurons']['idString']
+
+#                 #build a tree from json, then get endpoints for freq analysis
+#                 parent_child_dict = {}
+#                 nodes = file_dict['neurons']['axon']
+#                 for node in nodes:
+#                     nodeID = str(node['sampleNumber'])
+#                     parent = str(node['parentNumber'])
+#                     if parent == str(-1):
+#                         parent_child_dict[nodeID] = None
+#                     if parent > str(0):
+#                         parent_child_dict[nodeID] = str(parent)
             
-            case 'not-AA':
-                somaz = file_dict['neurons'][0]['soma']['z']
-                somaref = MIDLINEZ - somaz
-                #sets somahem to - if soma is left hem, + if soma if right hem, will compare with each node down the line
-                #to see if a node is ipsi/contra to soma
-                somahem = np.sign(somaref)
-                somaaid = file_dict['neurons'][0]['soma']['allenId']
-                somacomp = ccf_v3_10um.structures[somaaid]['acronym']
-                cellId = file_dict['neurons'][0]['idString']
-                #build a tree from json, then get endpoints for freq analysis
-                parent_child_dict = {}
-                nodes = file_dict['neurons'][0]['axon']
-                for node in nodes:
-                    nodeID = str(node['sampleNumber'])
-                    parent = str(node['parentNumber'])
-                    #following is for the first node, the parent for the first node is -1 so edge case control here
-                    if parent == str(-1):
-                        parent_child_dict[nodeID] = None
-                    #then nodes count up from 1, so this gets the parent for each node
-                    if parent > str(0):
-                        parent_child_dict[nodeID] = str(parent)
+#             case 'not-AA':
+#                 somaz = file_dict['neurons'][0]['soma']['z']
+#                 somaref = MIDLINEZ - somaz
+#                 #sets somahem to - if soma is left hem, + if soma if right hem, will compare with each node down the line
+#                 #to see if a node is ipsi/contra to soma
+#                 somahem = np.sign(somaref)
+#                 somaaid = file_dict['neurons'][0]['soma']['allenId']
+#                 somacomp = ccf_v3_10um.structures[somaaid]['acronym']
+#                 cellId = file_dict['neurons'][0]['idString']
+#                 #build a tree from json, then get endpoints for freq analysis
+#                 parent_child_dict = {}
+#                 nodes = file_dict['neurons'][0]['axon']
+#                 for node in nodes:
+#                     nodeID = str(node['sampleNumber'])
+#                     parent = str(node['parentNumber'])
+#                     #following is for the first node, the parent for the first node is -1 so edge case control here
+#                     if parent == str(-1):
+#                         parent_child_dict[nodeID] = None
+#                     #then nodes count up from 1, so this gets the parent for each node
+#                     if parent > str(0):
+#                         parent_child_dict[nodeID] = str(parent)
 
     
-    tree = Tree()
-    tree = tree.from_map(parent_child_dict)
-    leaves = tree.leaves()
-    ends_from_tree = [int(node.identifier) for node in leaves]
-    endpoints = [node for node in nodes if node['sampleNumber'] in ends_from_tree]
+#     tree = Tree()
+#     tree = tree.from_map(parent_child_dict)
+#     leaves = tree.leaves()
+#     ends_from_tree = [int(node.identifier) for node in leaves]
+#     endpoints = [node for node in nodes if node['sampleNumber'] in ends_from_tree]
     
-    return endpoints, somahem, somacomp, cellId
+#     return endpoints, somahem, somacomp, cellId
 
 
-def json_to_freq_from_dir(dir, ver=None):
-    '''
-    loads in .json files and creates frequency dfs, needs ccfv3 10um loaded in to work correctly
+# def json_to_freq_from_dir(dir, ver=None):
+#     '''
+#     loads in .json files and creates frequency dfs, needs ccfv3 10um loaded in to work correctly
     
-    :param dir: directory containing .json files of reconstructions to load
+#     :param dir: directory containing .json files of reconstructions to load
 
-    :param ver: string, default None as it has to be set to 1 of 3 values
+#     :param ver: string, default None as it has to be set to 1 of 3 values
                 
-                'AA' loads in any AA files
+#                 'AA' loads in any AA files
 
-                'not-AA' loads all others
-                actaully currently reformatting all old AAs so everything will be processed the same
+#                 'not-AA' loads all others
+#                 actaully currently reformatting all old AAs so everything will be processed the same
 
-    returns: df with neurons as rows, columns as regions, lateralized, values are raw endpoint counts in each region
-    '''
+#     returns: df with neurons as rows, columns as regions, lateralized, values are raw endpoint counts in each region
+#     '''
 
-    ccf_v3_10um = BrainGlobeAtlas('allen_mouse_10um')
-    data = pd.DataFrame()
-    somalocs = []
-    for file in tqdm(os.listdir(dir)):
-        filename = os.path.join(dir, file)
-        with open(filename,'r') as f:
-            file_dict = json.load(f)
+#     ccf_v3_10um = BrainGlobeAtlas('allen_mouse_10um')
+#     data = pd.DataFrame()
+#     somalocs = []
+#     for file in tqdm(os.listdir(dir)):
+#         filename = os.path.join(dir, file)
+#         with open(filename,'r') as f:
+#             file_dict = json.load(f)
         
-        endpoints, somahem, somacomp, cellId = ver_spec_helper(file_dict, ver)
-        somalocs.append((cellId, somacomp))
+#         endpoints, somahem, somacomp, cellId = ver_spec_helper(file_dict, ver)
+#         somalocs.append((cellId, somacomp))
+#         freq_dict = {}
+        
+#         for node in endpoints:
+#             if node['allenId'] is None:
+#                 #some nodes don't have a region annotation, at some point I could recreate this by looking at the coordinates and searching for where it would be?
+
+#                 continue
+#             else:
+#                 region = node['allenId']
+#                 z = node['z']
+#                 zref = MIDLINEZ-z
+#                 zsign = np.sign(zref)
+#                 ipsstr = 'Ipsilateral ' + ccf_v3_10um.structures[region]['acronym']
+#                 constr = 'Contralateral ' + ccf_v3_10um.structures[region]['acronym']
+#                 #ipsilateral condition
+#                 if zsign == somahem:
+#                     if ipsstr in freq_dict:
+#                         freq_dict[ipsstr] += 1
+#                     else:
+#                         freq_dict[ipsstr] = 1
+#                 #contralat condition
+#                 if zsign != somahem:
+#                     if constr in freq_dict:
+#                         freq_dict[constr] += 1
+#                     else:
+#                         freq_dict[constr] = 1
+
+#         match ver:
+#             case 'AA':
+#                 ser = pd.Series(freq_dict, name=file_dict['neurons']['idString'])
+#             case 'not-AA':
+#                 ser = pd.Series(freq_dict, name=file_dict['neurons'][0]['idString'])
+#         #print(ser)
+#         #this join might be an issue, it seems to be adding duplicate regions so that each neuron has its own column for each region it projects to...
+#         data = pd.concat([data, ser], join='outer', axis=1)
+#     data_nonan = data.replace(np.nan, 0)
+#     datat = data_nonan.T
+
+#     return datat, somalocs
+
+def get_frequencies(cells, somas):
+    with open(regiondict, 'r') as f:
+        regdict = json.load(f)
+
+    freqs = pd.DataFrame()
+    for cell, axon in tqdm(cells.items(), desc='Finding endpoint frequencies per cell'):
+        somaz = somas[cell]['z']
+        somaref = MIDLINEZ - somaz
+        #sets somahem to - if soma is left hem, + if soma if right hem, will compare with each node down the line
+        #to see if a node is ipsi/contra to soma
+        somahem = np.sign(somaref)
+        parent_child_dict = {}
+        for node in axon:
+            nodeID = str(node['sampleNumber'])
+            parent = str(node['parentNumber'])
+            if parent == str(-1):
+                parent_child_dict[nodeID] = None
+            if parent > str(0):
+                parent_child_dict[nodeID] = str(parent)
+        #build a tree so that I can identify which nodes are ends for freq analysis
+        tree = Tree()
+        tree = tree.from_map(parent_child_dict)
+        leaves = tree.leaves()
+        ends_from_tree = [int(node.identifier) for node in leaves]
+        endpoints = [node for node in axon if node['sampleNumber'] in ends_from_tree]
         freq_dict = {}
-        
         for node in endpoints:
             if node['allenId'] is None:
                 #some nodes don't have a region annotation, at some point I could recreate this by looking at the coordinates and searching for where it would be?
@@ -115,8 +182,8 @@ def json_to_freq_from_dir(dir, ver=None):
                 z = node['z']
                 zref = MIDLINEZ-z
                 zsign = np.sign(zref)
-                ipsstr = 'Ipsilateral ' + ccf_v3_10um.structures[region]['acronym']
-                constr = 'Contralateral ' + ccf_v3_10um.structures[region]['acronym']
+                ipsstr = 'Ipsilateral ' + regdict[str(region)][1]
+                constr = 'Contralateral ' + regdict[str(region)][1]
                 #ipsilateral condition
                 if zsign == somahem:
                     if ipsstr in freq_dict:
@@ -129,19 +196,11 @@ def json_to_freq_from_dir(dir, ver=None):
                         freq_dict[constr] += 1
                     else:
                         freq_dict[constr] = 1
-
-        match ver:
-            case 'AA':
-                ser = pd.Series(freq_dict, name=file_dict['neurons']['idString'])
-            case 'not-AA':
-                ser = pd.Series(freq_dict, name=file_dict['neurons'][0]['idString'])
-        #print(ser)
-        #this join might be an issue, it seems to be adding duplicate regions so that each neuron has its own column for each region it projects to...
-        data = pd.concat([data, ser], join='outer', axis=1)
-    data_nonan = data.replace(np.nan, 0)
-    datat = data_nonan.T
-
-    return datat, somalocs
+        ser = pd.Series(freq_dict, name=cell)
+        freqs = pd.concat([freqs, ser], join='outer', axis=1)
+    freqs_nonan = freqs.replace(np.nan, 0)
+    freqt = freqs_nonan.T
+    return freqt
 
 def load_neurons(folderpath):
     '''
@@ -156,7 +215,7 @@ def load_neurons(folderpath):
     somas = {}
     freq_df = pd.DataFrame()
 
-    for file in tqdm(os.listdir(folderpath)):
+    for file in tqdm(os.listdir(folderpath), desc='Loading neurons'):
         filename = os.path.join(folderpath, file)
         with open(filename, 'r') as f:
             fdict = json.load(f)
@@ -199,9 +258,9 @@ def load_brainrender_neurons(dir, color=None):
             neurons.append(neuron)
     return neurons
 
-def get_endpoints(neuronjson):
+def get_endpoints_from_file(neuronjson):
     '''
-    Docstring for get_endpoints
+    helper func for load_endpoints
     
     :param neuronjson: Description
     '''
@@ -239,7 +298,7 @@ def load_endpoints(dir):
     allends = []
     for file in tqdm(os.listdir(dir)):
         filename = os.path.join(dir, file)
-        endpoints = get_endpoints(filename)
+        endpoints = get_endpoints_from_file(filename)
         allends.append(endpoints)
     return allends
 
@@ -270,27 +329,3 @@ def coord_swapper(fdict):
     fdict['neurons'][0]['axon'] = axon
     fdict['neurons'][0]['dendrite'] = dendrite
     return fdict
-
-if __name__ == '__main__':
-    #might be able to remove all this and just use this to store loading functions
-    #keeping for testing purposes tbh
-    
-
-    aa = r'reconstructions\data\json_w_names\AA'
-    not_aa = r'reconstructions\data\json_w_names\not-AA'
-
-    aa_raw, aasomalocs = json_to_freq_from_dir(aa, ver='AA')
-    not_aa_raw, not_aasomalocs = json_to_freq_from_dir(not_aa, ver='not-AA')
-
-    not_aa_raw['Ipsilateral CUL4 5'] = not_aa_raw['Ipsilateral CUL4, 5']
-    not_aa_raw = not_aa_raw.drop(columns=['Ipsilateral CUL4, 5']) 
-    
-    full_freq = pd.merge(not_aa_raw, aa_raw, how='outer')
-    full_freq = full_freq.replace(np.nan, 0)
-    full_locs = aasomalocs + not_aasomalocs
-    print(full_locs)
-
-    store_full_file = open(r'reconstructions\data\freq_data.pkl', 'ab')
-    pickle.dump(full_freq, store_full_file)
-    store_full_file.close()
-    

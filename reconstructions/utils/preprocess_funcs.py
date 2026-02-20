@@ -5,6 +5,8 @@ import os
 from sklearn.feature_selection import VarianceThreshold
 from warnings import simplefilter
 
+MIDLINEZ = 5750
+
 def rem_zero_var(df):
     '''
     removes columns with 0 variance from a df, might not be necessary if my json reading is working correctly
@@ -169,3 +171,17 @@ def node_coords_getter(cell, dim, *regions):
     targets = get_target_nodes_list(cell, regions)
     coords = np.array(get_coords(cell, dim) for cell in targets if cell)
     return coords
+
+def get_freqs(neuronsdict, aidtoreg):
+    columns = []
+    for _, (_, abv) in aidtoreg.items():
+        ipsi = 'Ipsilateral ' + abv
+        contra = 'Contralateral ' + abv
+        columns.append(ipsi)
+        columns.append(contra)
+    freqdf = pd.DataFrame(columns=columns)
+    for neuron, axon in neuronsdict.items():
+        ...
+        
+
+    
