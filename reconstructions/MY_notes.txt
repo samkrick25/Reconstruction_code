@@ -1,0 +1,6 @@
+N057-658735-SK has some missing region annotations, should write in controls to deal with nodes that have null allenID field,
+likely just skip them for now at least, although at some point I could try to annotate them myself by just guessing at other nodes
+that have similar coords? or if theres a way I can get region mesh coords from brainrender I could find it that way
+
+ok so all the cells that peter just sent me I already have as they were either already given to us or i downloaded off allens
+reconstruction portal
