@@ -4,3 +4,17 @@ that have similar coords? or if theres a way I can get region mesh coords from b
 
 ok so all the cells that peter just sent me I already have as they were either already given to us or i downloaded off allens
 reconstruction portal
+
+Anisform lobule (AN) is the larger makeup of Crus1 and crus2, idk if I should lump these all together or keep the distinction,
+maybe this is because of ccfv2.5 annotations
+
+for white matter projections, right now I classify them under their region of origin and if ambig i put them under Other but 
+i don't like this classification, should think of a better way to do this
+
+N025-715345 is actually the dendrites that are uploaded to the community portal, the smartsheet has it with a much longer length than is seen on the portal
+
+cells that cluster, possibly GRN projecting:
+AL0008, N020-703070, AA1308, N051-715345-SA, N066-665081-YP, AA1518, N061-665081, AL0019, N112-708369-JN, AA1521, AA1535, N126-708369-HD, AA0503, N042-674185-SP, N068-685221, N016-651324, N067-685221-HS, N046-658735-AR, N058-653159-PC, N063-665081-AS, N064-665081-JN, AL0006, N059-665081-KA, AA1602, AL0007
+
+cells that cluster, possibly non-GRN projecting cells:
+N015-703070, N021-703070, N130-708369-YP, AA1460, N034-674191-IB, AA1405, N003-703070, N108-708369-VM, AA0434, AA0947, N029-703070, N004-674185-DS, N032-674185-IB, N005-674185, N031-674185-FMR, N023-706301-KA, N008-653980, N132-708369-SA, N054-715345-AP, N036-674191-SP, N039-674185-IB, AA1513, N052-653159-HD, N053-653159-YP, AA1329, AA1331, N059-653159-AK, N011-703070, N030-703070

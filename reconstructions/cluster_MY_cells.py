@@ -3,12 +3,12 @@ from utils.filedirs import alldir
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import matplotlib
+#import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.ticker as mticker
 import os
-matplotlib.use('Qt5Agg')
+#matplotlib.use('Qt5Agg')
 
 os.chdir(r'C:\Users\economolab\Documents\GitHub\Reconstruction_code')
 
@@ -65,12 +65,13 @@ vals = freq_sorted.values
 nonzero = vals[vals != 0]
 vmin = nonzero.min() if nonzero.size>0 else 0
 vmax = nonzero.max() if nonzero.size>0 else 1
-base_cmap = plt.cm.hot
+base_cmap = plt.cm.gist_earth
 bounds = [0, 0.00001] + list(np.linspace(vmin, vmax, 256))
 zero_color = (np.float64(0),np.float64(0),np.float64(0),np.float64(1))
 colors = [zero_color] + [base_cmap(i) for i in range(base_cmap.N)]
 cmap = mcolors.ListedColormap(colors)
 norm = mcolors.BoundaryNorm(bounds, cmap.N, clip=True)
+print('Clustering now:')
 g = sns.clustermap(freq_sorted,
         method='ward',
         metric='euclidean',
@@ -78,7 +79,7 @@ g = sns.clustermap(freq_sorted,
         norm=norm,
         row_cluster=False,
         col_cluster=True,
-        #row_colors=row_colors,
+        row_colors=row_colors,
         dendrogram_ratio=(.1, .15),
         cbar_pos=(0, .15, .03, .7),
         cbar_kws={'label': 'ln(percent of terminals in region + 1)'},
@@ -90,5 +91,6 @@ cbar_ax = g.cax
 cbar_ax.yaxis.set_major_formatter(mticker.FormatStrFormatter(r'%d'))
 cbar_ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 g.figure.canvas.draw()
-plt.show()
-#g.savefig('recons_clustermap.png')
+#g.fig.show()
+savepath = r'C:\Users\economolab\Documents\GitHub\Reconstruction_code\reconstructions\recons_clustermap_new.png'
+g.savefig(savepath, dpi=300, bbox_inches='tight')

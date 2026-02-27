@@ -220,9 +220,10 @@ def load_neurons(folderpath):
         with open(filename, 'r') as f:
             fdict = json.load(f)
             #again, since some of the neurons are annotated in different ccf versions, i have to swap some coords around, going to write a coordinate swapper that takes the version and fdict and will swap around coords if needed
+            #i think this specific functionality is deprecated now, since I swapped coords and resaved the jsons, going to comment it out
             ver = fdict['neurons'][0]['annotationSpace']['version']
-            if ver == 2.5:
-                fdict = coord_swapper(fdict)
+            # if ver == 2.5:
+            #     fdict = coord_swapper(fdict)
             cellname = fdict['neurons'][0]['idString']
             axon = fdict['neurons'][0]['axon']
             alleninfo = fdict['neurons'][0]['allenInformation']
@@ -273,9 +274,10 @@ def get_endpoints_from_file(neuronjson):
             x = node['x']
             z = node['z']
             #x and z in ccf2.5 are swapped in ccfv3, so swapping those in any cell annotated in ccfv2.5
-            if ver == 2.5:
-                node['z'] = x
-                node['x'] = z
+            #dont think this is needed anymore, keeping it in in case i get other 2.5 cells?
+            # if ver == 2.5:
+            #     node['z'] = x
+            #     node['x'] = z
             nodeID = str(node['sampleNumber'])
             parent = str(node['parentNumber'])
             if parent == str(-1):
