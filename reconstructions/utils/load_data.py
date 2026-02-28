@@ -9,7 +9,7 @@ from treelib import Tree
 import brainrender
 from brainrender.actors import Neuron
 import vedo
-from utils.filedirs import regiondict
+from reconstructions.utils.filedirs import regiondict
 
 MIDLINEZ = 5750
 
@@ -221,7 +221,7 @@ def load_neurons(folderpath):
             fdict = json.load(f)
             #again, since some of the neurons are annotated in different ccf versions, i have to swap some coords around, going to write a coordinate swapper that takes the version and fdict and will swap around coords if needed
             #i think this specific functionality is deprecated now, since I swapped coords and resaved the jsons, going to comment it out
-            ver = fdict['neurons'][0]['annotationSpace']['version']
+            # ver = fdict['neurons'][0]['annotationSpace']['version']
             # if ver == 2.5:
             #     fdict = coord_swapper(fdict)
             cellname = fdict['neurons'][0]['idString']

@@ -1,5 +1,5 @@
 from brainrender import Scene
-from utils import load_data, preprocess_funcs
+from reconstructions.utils import load_data, preprocess_funcs
 from brainglobe_atlasapi import BrainGlobeAtlas
 from brainrender.actors import Neuron, Points, ruler
 import brainrender
@@ -9,7 +9,7 @@ import morphapi
 from tqdm import tqdm
 import os
 import vedo
-from utils.filedirs import IRNdir, PARNdir
+from reconstructions.utils.filedirs import IRNdir, PARNdir
 
 
 #621 is V, XII is 773, MRN 128
