@@ -33,6 +33,7 @@ ccf_scene.add_brain_region('MRN', color='green', alpha=0.1, silhouette=False)
 
 actors = ccf_scene.get_actors() #just debug and look here to find actor indices
 root_ccf = actors[0]
+#can use root=False when loading scene to not load the root mesh
 root_ccf._needs_silhouette = False
 allplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,0))
 medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,-1))

@@ -1,38 +1,56 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
-from utils import preprocess_funcs
+from reconstructions.utils import preprocess_funcs
 
-def plot_axon_dist_in_region(upper1nodes, upper2nodes, region):
-    upper1x = preprocess_funcs.get_coords(upper1nodes, 'x')
-    upper1y = preprocess_funcs.get_coords(upper1nodes, 'y')
-    upper1z = preprocess_funcs.get_coords(upper1nodes, 'z')
+def comp_node_dist(points1, points2, suptitle=None, labels=None, ver=3.0, colors=['blue', 'red']):
+    '''
+    Compare node distribution in x, y, z coordinates of two populations of points
+    
+    :param points1: list of dictionaries, nodes from a reconstruction's json, to be input into preprocess_funcs.get_coords
+    :param points2: list of dictionaries, nodes from a reconstruciton's json, to be input into preprocess_funcs.get_coords
+    :param suptitle: str, input to fig.suptitle
+    :param labels: list of str, labels for the two populations to compare
+    :param ver: float, allen ccf version, to be used for x labels, either 3.0 or 2.5, written as x and z were switched between two versions
+    :param colors: array of str, the colors you want the two populations to be labeled as, default blue and red
+    '''
+    points1x = preprocess_funcs.get_coords(points1, 'x')
+    points1y = preprocess_funcs.get_coords(points1, 'y')
+    points1z = preprocess_funcs.get_coords(points1, 'z')
 
-    upper2x = preprocess_funcs.get_coords(upper2nodes, 'x')
-    upper2y = preprocess_funcs.get_coords(upper2nodes, 'y')
-    upper2z = preprocess_funcs.get_coords(upper2nodes, 'z')
+    points2x = preprocess_funcs.get_coords(points2, 'x')
+    points2y = preprocess_funcs.get_coords(points2, 'y')
+    points2z = preprocess_funcs.get_coords(points2, 'z')
 
     fig, (xax, yax, zax) = plt.subplots(1, 3, figsize=(20,6))
-    fig.suptitle(f'PT distribution in {region}')
+    if suptitle:
+        fig.suptitle(suptitle)
     fig.supylabel('kernel density')
     fig.supxlabel('allen CCF coordinates')
+    
+    match ver:
+        case 3.0:
+            xax.set_xlabel('AP')
+            yax.set_xlabel('DV')
+            zax.set_xlabel('ML')
+        case 2.5:
+            xax.set_xlabel('ML')
+            yax.set_xlabel('DV')
+            zax.set_xlabel('AP')
 
-    xax.set_xlabel('ML')
-    yax.set_xlabel('DV')
-    zax.set_xlabel('AP')
+    sns.kdeplot(data=points1x, color=colors[0], alpha=0.5, ax=xax)
+    sns.kdeplot(data=points2x, color=colors[1], alpha=0.5, ax=xax)
 
-    sns.kdeplot(data=upper1x, color='blue', alpha=0.5, ax=xax)
-    sns.kdeplot(data=upper2x, color='red', alpha=0.5, ax=xax)
+    sns.kdeplot(data=points1y, color=colors[0], alpha=0.5, ax=yax)
+    sns.kdeplot(data=points2y, color=colors[1], alpha=0.5, ax=yax)
 
-    sns.kdeplot(data=upper1y, color='blue', alpha=0.5, ax=yax)
-    sns.kdeplot(data=upper2y, color='red', alpha=0.5, ax=yax)
+    sns.kdeplot(data=points1z, color=colors[0], alpha=0.5, ax=zax)
+    sns.kdeplot(data=points2z, color=colors[1], alpha=0.5, ax=zax)
 
-    sns.kdeplot(data=upper1z, color='blue', alpha=0.5, ax=zax)
-    sns.kdeplot(data=upper2z, color='red', alpha=0.5, ax=zax)
+    if labels:
+        lines = xax.get_lines()
+        lines[0].set_label(labels[0])
+        lines[1].set_label(labels[1])
+        fig.legend()
 
-    lines = xax.get_lines()
-    lines[0].set_label('PT_upper 1')
-    lines[1].set_label('PT_upper 2')
-    fig.legend()
-
-    return
+    return fig
 

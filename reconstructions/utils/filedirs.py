@@ -8,3 +8,4 @@ regiondict = r'reconstructions\data\aidtoreg.json'
 allcoordswapped = r'reconstructions\data\IRNPARN_cells\json_coordswapped'
 
 freqspkl = r'reconstructions\data\freqs.pkl'
+somaspkl = r'reconstructions\data\somas.pkl'

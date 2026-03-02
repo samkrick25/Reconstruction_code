@@ -140,12 +140,13 @@ def get_target_nodes_list(nodes, *regions):
             targets.append(node)
     return targets
 
-def get_coords(nodes, dim='all'):
+def get_coords(nodes, dim='all', mirror=False):
     """
     Coordinate getter for a list of nodes contianing x, y, z coordinates
     
     :param nodes: list of dictionaries, each entry should be a dictionary containing 'x', 'y', 'z' coordinates for said node
     :param dim: str, selecting which coordinates to get, default behavior is to return all coords
+    :param mirror: bool, default False to not mirror nodes, but will mirror nodes over saggital axis (z in ccfv3)
 
     Returns: list of coordinates if only one dimension is selected, np.array of lists where each list contains x, y, z coords if all dims are selected
     """
@@ -161,6 +162,7 @@ def get_coords(nodes, dim='all'):
             return z
         case 'all':
             for node in nodes:
+                #this mirrors
                 if node['z'] < 5700:
                     diff = 5700 - node['z']
                     node['z'] = 5700+diff
