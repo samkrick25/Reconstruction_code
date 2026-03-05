@@ -1,5 +1,5 @@
 from brainrender import Scene
-from utils import load_data, preprocess_funcs
+from reconstructions.utils import load_data, preprocess_funcs
 from brainglobe_atlasapi import BrainGlobeAtlas
 from brainrender.actors import Neuron, Points, ruler
 import brainrender
