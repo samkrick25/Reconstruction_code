@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
-from utils import preprocess_funcs as pp
+from reconstructions.utils import preprocess_funcs as pp
+import pickle
+from reconstructions.utils.filedirs import freqspkl
 
 def lat_index(df, region):
     '''
@@ -58,3 +60,14 @@ def get_cells_to_region(df, region):
     nozero = values[values!=0].index.to_list()
 
     return nozero
+
+def get_targets(df, cell):
+    targetrow = df.loc[cell]
+    targets = targetrow[targetrow != 0].index.tolist()
+    return targets
+
+if __name__=='__main__':
+    freqs = pickle.load(open(freqspkl, 'rb'))
+    targetcell = 'AA0503'
+    targets = get_targets(freqs, targetcell)
+    print(targets)

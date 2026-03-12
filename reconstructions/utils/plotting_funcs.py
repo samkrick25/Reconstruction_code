@@ -54,3 +54,15 @@ def comp_node_dist(points1, points2, suptitle=None, labels=None, ver=3.0, colors
 
     return fig
 
+def plot_node_dist(nodes, colors=['blue']):
+    pointsx = preprocess_funcs.get_coords(nodes, 'x')
+    pointsy = preprocess_funcs.get_coords(nodes, 'y')
+    pointsz = preprocess_funcs.get_coords(nodes, 'z', mirror=True)
+    fig, (xax, yax, zax) = plt.subplots(1, 3, figsize=(20,6))
+    xax.set_xlabel('AP')
+    yax.set_xlabel('DV')
+    zax.set_xlabel('ML')
+    sns.kdeplot(pointsx, color=colors[0], alpha=0.5, ax=xax)
+    sns.kdeplot(pointsy, color=colors[0], alpha=0.5, ax=yax)
+    sns.kdeplot(pointsz, color=colors[0], alpha=0.5, ax=zax)
+    return fig, (xax, yax, zax)

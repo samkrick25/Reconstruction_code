@@ -113,20 +113,31 @@ def get_df_for_region(df, region):
 
     return regdf
 
-def get_nodes_in_region(cells, *regions):
+def get_nodes_in_region(cells, *regions, kind=None):
     '''
     Docstring for get_nodes_in_region
     
     :param cells: Description
     :param regions: Description
     '''
-    nodes = []
-    for _, axon in cells.items():
-        for node in axon:
-            if node['allenId'] in regions:
-                nodes.append(node)
-    return nodes
-
+    match kind:
+        case 'bulk':
+            nodes = []
+            for _, axon in cells.items():
+                for node in axon:
+                    if node['allenId'] in regions:
+                        nodes.append(node)
+            return nodes
+        case 'by_cell':
+            cellstonodes = {}
+            for cell, axon in cells.items():
+                nodes = []
+                for node in axon:
+                    if node['allenId'] in regions:
+                        nodes.append(node)
+                cellstonodes[cell] = nodes
+            return cellstonodes
+        
 def get_target_nodes_list(nodes, *regions):
     '''
     Docstring for get_target_nodes_list
@@ -158,14 +169,21 @@ def get_coords(nodes, dim='all', mirror=False):
             y = [node['y'] for node in nodes]
             return y
         case 'z':
-            z = [node['z'] for node in nodes]
+            if mirror:
+                for node in nodes:
+                    if node['z'] < 5700:
+                        diff = 5700-node['z']
+                        node['z'] = diff
+                z = [node['z'] for node in nodes]
+            else:
+                z = [node['z'] for node in nodes]            
             return z
         case 'all':
             for node in nodes:
-                #this mirrors
-                if node['z'] < 5700:
-                    diff = 5700 - node['z']
-                    node['z'] = 5700+diff
+                if mirror:
+                    if node['z'] < 5700:
+                        diff = 5700 - node['z']
+                        node['z'] = 5700+diff
             coords = np.array([[node['x'], node['y'], node['z']] for node in nodes]) 
             return coords
         
