@@ -12,11 +12,31 @@ import numpy as np
 
 freqs = pickle.load(open(freqspkl, 'rb'))
 somas = pickle.load(open(somaspkl, 'rb'))
+
 ccf_scene = Scene(atlas_name='allen_mouse_10um', root=True)
 ccf_scene.add_brain_region('XII', color='blue', alpha=0.1, silhouette=False)
+ccf_scene.add_brain_region('IRN', color='red', alpha=0.0, silhouette=False)
+ccf_scene.add_brain_region('PARN', color='pink', alpha=0.0, silhouette=False)
+
 actors = ccf_scene.get_actors()
 XIImesh = actors[1]
+IRNmesh = actors[2]
+PARNmesh = actors[3]
 XIIvertices = XIImesh.mesh.vertices
+IRNvertices = IRNmesh.mesh.vertices
+PARNvertices = PARNmesh.mesh.vertices
+
+#TODO later: plot out distributions of endpoints from different IRN/PARN compartments
+IRNap = [vertex[0] for vertex in IRNvertices]
+PARNap = [vertex[0] for vertex in IRNvertices]
+IRNPARNap = IRNap+PARNap
+MedRNa_bound = np.min(IRNPARNap)
+MedRNp_bound = np.max(IRNPARNap)
+MedRNrange = MedRNp_bound-MedRNa_bound
+MedRNant = [MedRNa_bound, (MedRNa_bound + (MedRNrange/3))]
+MedRNmid = [(MedRNa_bound + (MedRNrange/3)), (MedRNa_bound + 2(MedRNrange/3))]
+
+
 XIIap = [vertex[0] for vertex in XIIvertices]
 XIIdv = [vertex[1] for vertex in XIIvertices]
 XIIlr = [vertex[2] for vertex in XIIvertices]
