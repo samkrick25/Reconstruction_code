@@ -18,5 +18,5 @@ allen_parcellation = r'D:\allen_brain_atlas\metadata\parcellation.csv'
 
 allen_2017_to_2020 = r"D:\allen_brain_atlas\metadata\parcellation_to_parcellation_term_membership.csv"
 
-allen_parcellationpkl = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\parcellation.pkl'
-parcellation_mappkl = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\parcellation_map.pkl"
+allen_parcellationpkl = r'reconstructions\data\parcellation.pkl' #C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\
+parcellation_mappkl = r"reconstructions\data\parcellation_map.pkl" #C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\

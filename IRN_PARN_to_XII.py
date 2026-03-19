@@ -10,6 +10,7 @@ from tqdm import tqdm
 import os
 import numpy as np
 
+#os.system('conda activate reconstructions')
 
 freqs = pickle.load(open(freqspkl, 'rb'))
 somas = pickle.load(open(somaspkl, 'rb'))
@@ -34,37 +35,30 @@ IRNPARNap = IRNap+PARNap
 MedRNa_bound = np.min(IRNPARNap)
 MedRNp_bound = np.max(IRNPARNap)
 MedRNrange = MedRNp_bound-MedRNa_bound
-MedRNmid1 = MedRNrange/3
-MedRNmid2 = 2*(MedRNmid1)
+MedRNmid = MedRNa_bound + MedRNrange/3
+#MedRNmid2 = MedRNa_bound + 2*(MedRNmid1)
 
 antIPARNcells = []
-midIPARNcells = []
 postIPARNcells = []
 for cell, soma in somas.items():
-    if MedRNa_bound <= soma['x'] < MedRNmid1:
+    if MedRNa_bound <= soma['x'] < MedRNmid:
         antIPARNcells.append(cell)
-    if MedRNmid1 <= soma['x'] < MedRNmid2:
-        midIPARNcells.append(cell)
-    if MedRNmid2 <= soma['x'] <= MedRNp_bound:
+    if MedRNmid <= soma['x'] <= MedRNp_bound:
         postIPARNcells.append(cell)
         
 antIPARNends = {}
-midIPARNends = {}
 postIPARNends = {}
 for file in tqdm(os.listdir(allcoordswapped), desc='Loading endpoints'):
     cellname = file.split('.')[0]
     endpoints = ld.get_endpoints_from_file(os.path.join(allcoordswapped, file))
     if cellname in antIPARNcells:
         antIPARNends[cellname] = endpoints
-    if cellname in midIPARNends:
-        midIPARNends[cellname] = endpoints
-    if cellname in postIPARNends:
+    if cellname in postIPARNcells:
         postIPARNends[cellname] = endpoints
         
 antIPARNXII = pp.get_nodes_in_region(antIPARNends, 773, kind='bulk')
-midIPARNXII = pp.get_nodes_in_region(midIPARNends, 773, kind='bulk')
 postIPARNXII = pp.get_nodes_in_region(postIPARNends, 773, kind='bulk')
-
+5
 XIIap = [vertex[0] for vertex in XIIvertices]
 XIIdv = [vertex[1] for vertex in XIIvertices]
 XIIlr = [vertex[2] for vertex in XIIvertices]
@@ -85,9 +79,8 @@ XIIlr = [vertex[2] for vertex in XIIvertices]
 #XIInodes = pp.get_nodes_in_region(XIIends, 773, kind='bulk')
 
 #fig, axes = pl.plot_node_dist(XIInodes)
-labels = ['anterior IRN/PARN','middle IRN/PARN','posterior IRN/PARN']
-fig, axes = pl.comp_node_dist(antIPARNXII, midIPARNXII, postIPARNXII, suptitle='Compartmental analysis of IRN/PARN projections to XII',
-                              labels=labels, colors=['red', 'blue', 'green'])
+labels = ['anterior IRN/PARN','posterior IRN/PARN']
+fig, axes = pl.comp_node_dist(antIPARNXII, postIPARNXII, labels=labels, suptitle='Compartmental analysis of IRN/PARN projections to XII', colors=['red', 'blue'])
 axes[0].axvline(x=13001.4, label='XII posterior boundary')
 axes[0].axvline(x=12093.4, label='XII anterior boundary')
 axes[1].axvline(x=np.max(XIIdv), label="XII ventral boundary")
@@ -95,7 +88,9 @@ axes[1].axvline(x=np.min(XIIdv), label="XII dorsal boundary")
 axes[2].axvline(x=np.max(XIIlr), label="XII lateral boundary")
 axes[2].axvline(x=5700, label="XII medial boundary (midline)")
 fig.show()
-#input('Press Enter to continue')
+savepath = r'C:\Users\economolab\Documents\GitHub\Reconstruction_code\reconstructions\plots\antIRNPARNvpostIRNPARNXII.png'
+fig.savefig(savepath, dpi=300, bbox_inches='tight')
+input('Press Enter to continue')
 
 #XIIcoords = pp.get_coords(XIInodes, dim='all')
 

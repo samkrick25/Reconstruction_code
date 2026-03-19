@@ -27,5 +27,5 @@ import pandas as pd
 # =============================================================================
 neurondict = ld.load_neurons(allcoordswapped)
 ld.get_node_parcellations(neurondict)
-savedict = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\neurondict.pkl'
+savedict = r'reconstructions\data\neurondict.pkl'
 pickle.dump(neurondict, open(savedict, 'wb'))

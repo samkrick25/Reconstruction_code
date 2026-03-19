@@ -7,7 +7,7 @@ import pickle
 import json
 from treelib import Tree
 #import brainrender
-#from brainrender.actors import Neuron
+from brainrender.actors import Neuron
 #import vedo
 from reconstructions.utils.filedirs import allen_ccf_10um, allen_parcellationpkl, parcellation_mappkl
 import nibabel as nib

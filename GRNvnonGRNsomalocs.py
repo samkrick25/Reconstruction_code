@@ -37,9 +37,9 @@ ccf_scene.add(GRNpospoints)
 ccf_scene.add(GRNnegpoints)
 
 ccf_scene.slice(plane=medplane)
-ccf_scene.render(camera=corcam)
+#ccf_scene.render(camera=corcam)
 
-axondistfig = plotting_funcs.comp_node_dist(GRNpossomas, GRNnegsomas, suptitle='Soma Distribution of GRN+ and GRN- cells',
+axondistfig, axes = plotting_funcs.comp_node_dist(GRNpossomas, GRNnegsomas, suptitle='Soma Distribution of GRN+ and GRN- cells',
                                             labels=['GRN positive somas', 'GRN negative somas'], colors=['green', 'purple'])
 savepath = r'C:\Users\economolab\Documents\GitHub\Reconstruction_code\reconstructions\plots\GRNvnonGRNsomadist.png'
 axondistfig.savefig(savepath, dpi=300, bbox_inches='tight')
