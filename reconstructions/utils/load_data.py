@@ -253,39 +253,37 @@ def get_axonal_endpoints(neurondict):
     return endsdict
         
 
-# =============================================================================
-# def get_endpoints_from_file(neuronjson):
-#     '''
-#     helper func for load_endpoints
-#     
-#     :param neuronjson: Description
-#     '''
-#     with open(neuronjson, 'r') as f:
-#         parent_child_dict = {}
-#         neuron = json.load(f)
-#         axon = neuron['neurons'][0]['axon']
-#         ver = neuron['neurons'][0]['annotationSpace']['version'] #this will be 2.5 if CCFv2.5 is used, 3 if CCFv3
-#         for node in axon:
-#             x = node['x']
-#             z = node['z']
-#             #x and z in ccf2.5 are swapped in ccfv3, so swapping those in any cell annotated in ccfv2.5
-#             #dont think this is needed anymore, keeping it in in case i get other 2.5 cells?
-#             # if ver == 2.5:
-#             #     node['z'] = x
-#             #     node['x'] = z
-#             nodeID = str(node['sampleNumber'])
-#             parent = str(node['parentNumber'])
-#             if parent == str(-1):
-#                 parent_child_dict[nodeID] = None
-#             if parent > str(0):
-#                 parent_child_dict[nodeID] = str(parent)
-#         tree = Tree()
-#         tree = tree.from_map(parent_child_dict)
-#         leaves = tree.leaves()
-#         ends_from_tree = [int(node.identifier) for node in leaves]
-#         endpoints = [node for node in axon if node['sampleNumber'] in ends_from_tree]
-#     return endpoints
-# =============================================================================
+def get_endpoints_from_file(neuronjson):
+    '''
+    helper func for load_endpoints
+    
+    :param neuronjson: Description
+    '''
+    with open(neuronjson, 'r') as f:
+        parent_child_dict = {}
+        neuron = json.load(f)
+        axon = neuron['neurons'][0]['axon']
+        ver = neuron['neurons'][0]['annotationSpace']['version'] #this will be 2.5 if CCFv2.5 is used, 3 if CCFv3
+        for node in axon:
+            x = node['x']
+            z = node['z']
+            #x and z in ccf2.5 are swapped in ccfv3, so swapping those in any cell annotated in ccfv2.5
+            #dont think this is needed anymore, keeping it in in case i get other 2.5 cells?
+            # if ver == 2.5:
+            #     node['z'] = x
+            #     node['x'] = z
+            nodeID = str(node['sampleNumber'])
+            parent = str(node['parentNumber'])
+            if parent == str(-1):
+                parent_child_dict[nodeID] = None
+            if parent > str(0):
+                parent_child_dict[nodeID] = str(parent)
+        tree = Tree()
+        tree = tree.from_map(parent_child_dict)
+        leaves = tree.leaves()
+        ends_from_tree = [int(node.identifier) for node in leaves]
+        endpoints = [node for node in axon if node['sampleNumber'] in ends_from_tree]
+    return endpoints
 # =============================================================================
 # 
 # def load_endpoints(dir):

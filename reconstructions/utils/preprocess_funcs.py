@@ -193,6 +193,15 @@ def node_coords_getter(cell, dim, *regions):
     coords = np.array(get_coords(cell, dim) for cell in targets if cell)
     return coords
 
+def get_cells_to_region(freqspkl, regionabv, thresh=3):
+    freqs = pickle.load(open(freqspkl, 'rb'))
+
+    latmerged = merge_regions(freqs)
+    poscells = [cell for cell in latmerged.index.tolist() if latmerged.loc[cell][regionabv] > thresh]
+    negcells = [cell for cell in latmerged.index.tolist() if latmerged.loc[cell][regionabv] <= thresh]
+
+    return poscells, negcells
+
 def get_freqs(neuronsdict, aidtoreg):
     columns = []
     for _, (_, abv) in aidtoreg.items():
