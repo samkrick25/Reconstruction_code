@@ -5,20 +5,21 @@ import os
 import pickle
 #from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
 import json
-#import pickle
 from treelib import Tree
 #import brainrender
 #from brainrender.actors import Neuron
 #import vedo
 from reconstructions.utils.filedirs import allen_ccf_10um, allen_parcellationpkl, parcellation_mappkl
 import nibabel as nib
+import time
 
 MIDLINEZ = 5750
+MIDLINEZ_10UM = 570
 
 allen_ccf = nib.load(allen_ccf_10um)
 allen_ccf_data = np.asanyarray(allen_ccf.dataobj)
-allen_parcellations = pickle.load(allen_parcellationpkl)
-parcellation_map = pickle.load(parcellation_mappkl)
+allen_parcellations = pickle.load(open(allen_parcellationpkl, 'rb'))
+parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
 
 # =============================================================================
 # def get_frequencies(cells, somas):
@@ -79,38 +80,89 @@ parcellation_map = pickle.load(parcellation_mappkl)
 # =============================================================================
 
 def get_frequencies_from_dict(neurondict, ontlevel='structure'):
+    '''
+    right now im only writing this for axon endpoint analysis, ill have to first pull the endpoints thru helper function
+    '''
     freqs = pd.DataFrame()
-    ...
+    axonalends = get_axonal_endpoints(neurondict)
+    for cell, (ends, soma) in axonalends:
+        somaz = soma['z']
+        ...
     
 def parcellation_annotator(node):
     #round coordinates to 10um resolution
+    startround = time.perf_counter()
     coords = [node['x'], node['y'], node['z']]
-    coords = coords/10
+    coords = [x/10 for x in coords]
     coords = tuple(np.round(coords).astype(np.uint16))
     node['x'], node['y'], node['z'] = coords
+    endround = time.perf_counter()
+    roundtime = endround-startround
     
     #find parcellation index
+    startindex=time.perf_counter()
     parcellation_index = allen_ccf_data[node['x'], node['y'], node['z']]
     parcellation_label = parcellation_map.loc[allen_parcellations.loc[parcellation_index]['label']]
+    endindex=time.perf_counter()
+    indextime = endindex-startindex
+    
     
     #annotate each ontology level
+    startannot = time.perf_counter()
     node['organ'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='organ', 'parcellation_term_acronym']
     node['category'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='category', 'parcellation_term_acronym']
     node['division'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='division', 'parcellation_term_acronym']
     node['structure'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='structure', 'parcellation_term_acronym']
     node['substructure'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='organ', 'parcellation_term_acronym']
+    endannot = time.perf_counter()
+    annottime = endannot-startannot
     
-    return
+    return roundtime, indextime, annottime
     
 def get_node_parcellations(neurondict):
-    for cell, (axon, soma, dendrite) in tqdm(neurondict.items(), desc='Finding parcellations'):
+    for cell, info in tqdm(neurondict.items(), desc='Finding parcellations'):
+        axon = info['axon']
+        dendrite = info['dendrite']
+        soma = info['soma']
+        rtlist = []
+        itlist = []
+        atlist = []
+        ttlist = []
         for node in axon:
-            parcellation_annotator(node)
+            starttimea = time.perf_counter()
+            try:
+                rta, ita, ata = parcellation_annotator(node)
+            except IndexError:
+                axon.remove(node)
+            else:
+                rta, ita, ata = parcellation_annotator(node)
+            finally:
+                rtlist.append(rta)
+                itlist.append(ita)
+                atlist.append(ata)
+            endtimea=time.perf_counter()
+            totaltimea=endtimea-starttimea
+            ttlist.append(totaltimea)
         for node in dendrite:
-            parcellation_annotator(node)
-        for node in soma:
-            parcellation_annotator(node)
-    
+            starttimed=time.perf_counter()
+            try:
+                rtd, itd, atd = parcellation_annotator(node)
+            except IndexError:
+                dendrite.remove(node)
+            else:
+                rtd, itd, atd = parcellation_annotator(node)
+            finally:
+                rtlist.append(rtd)
+                itlist.append(itd)
+                atlist.append(atd)
+            endtimed=time.perf_counter()
+            totaltimed=endtimed-starttimed
+            ttlist.append(totaltimed)
+        parcellation_annotator(soma)
+        print(f'Total time to round node coordinates: {np.sum(rtlist)}')
+        print(f'Total time to index parcellations: {np.sum(itlist)}')
+        print(f'Total time to annotate parcellations: {np.sum(atlist)}')
+        print(f'Total time to annotate cell: {np.sum(ttlist)}')
     return
 
 def load_neurons(folderpath):
@@ -183,6 +235,7 @@ def get_axonal_endpoints(neurondict):
     endsdict = {}
     for cell, info in neurondict.items():
         axon = info['axon']
+        soma = info['soma']
         parent_child_dict = {}
         for node in axon:
             nodeID = str(node['sampleNumber'])
@@ -196,7 +249,7 @@ def get_axonal_endpoints(neurondict):
         leaves = tree.leaves()
         ends_from_tree = [int(node.identifier) for node in leaves]
         endpoints = [node for node in axon if node['sampleNumber'] in ends_from_tree]
-        endsdict[cell] = endpoints
+        endsdict[cell] = {'ends': endpoints, 'soma': soma}
     return endsdict
         
 

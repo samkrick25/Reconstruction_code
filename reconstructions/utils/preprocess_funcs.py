@@ -6,6 +6,7 @@ from sklearn.feature_selection import VarianceThreshold
 from warnings import simplefilter
 
 MIDLINEZ = 5750
+MIDLINEZ_10UM = 570
 
 def rem_zero_var(df):
     '''

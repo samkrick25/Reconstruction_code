@@ -1,4 +1,4 @@
-from reconstructions.utils import load_data
+from reconstructions.utils import load_data as ld
 import pickle
 from reconstructions.utils.filedirs import allcoordswapped, allen_ccf_10um, allen_parcellation, allen_2017_to_2020
 import nibabel as nib
@@ -16,9 +16,16 @@ import pandas as pd
 # pickle.dump(somas, open(savefilesomas, 'wb'))
 # =============================================================================
 
-save1 = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\parcellation.pkl'
-save2 = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\parcellation_map.pkl'
-allen_parcellation = pd.read_csv(allen_parcellation, index_col='parcellation_index')
-parcellation_map = pd.read_csv(allen_2017_to_2020, index_col='parcellation_label')
-pickle.dump(allen_parcellation, open(save1, 'wb'))
-pickle.dump(parcellation_map, open(save2, 'wb'))
+# =============================================================================
+# save1 = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\parcellation.pkl'
+# save2 = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\parcellation_map.pkl'
+# allen_parcellation = pd.read_csv(allen_parcellation, index_col='parcellation_index')
+# parcellation_map = pd.read_csv(allen_2017_to_2020, index_col='parcellation_label')
+# pickle.dump(allen_parcellation, open(save1, 'wb'))
+# pickle.dump(parcellation_map, open(save2, 'wb'))
+# 
+# =============================================================================
+neurondict = ld.load_neurons(allcoordswapped)
+ld.get_node_parcellations(neurondict)
+savedict = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\neurondict.pkl'
+pickle.dump(neurondict, open(savedict, 'wb'))
