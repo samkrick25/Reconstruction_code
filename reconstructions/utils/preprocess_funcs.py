@@ -188,9 +188,9 @@ def get_coords(nodes, dim='all', mirror=False):
             coords = np.array([[node['x'], node['y'], node['z']] for node in nodes]) 
             return coords
         
-def node_coords_getter(cell, dim, *regions):
+def node_coords_getter(cell, dim, mirror=False, *regions):
     targets = get_target_nodes_list(cell, regions)
-    coords = np.array(get_coords(cell, dim) for cell in targets if cell)
+    coords = np.array(get_coords(cell, dim, mirror) for cell in targets if cell)
     return coords
 
 def get_cells_to_region(freqspkl, regionabv, thresh=3):

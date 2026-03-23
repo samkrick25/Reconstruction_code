@@ -3,7 +3,7 @@ from reconstructions.utils import load_data as ld
 from reconstructions.utils import preprocess_funcs as pp
 from reconstructions.utils import plotting_funcs as pl
 from reconstructions.utils.filedirs import freqspkl, somaspkl, allcoordswapped
-from reconstructions.utils.cameras import corcam, sagcam
+import reconstructions.utils.cameras as cams
 from brainrender.actors import Points
 import pickle
 from tqdm import tqdm
@@ -15,15 +15,15 @@ import numpy as np
 freqs = pickle.load(open(freqspkl, 'rb'))
 somas = pickle.load(open(somaspkl, 'rb'))
 
-ccf_scene = Scene(atlas_name='allen_mouse_10um', root=True)
-ccf_scene.add_brain_region('XII', color='blue', alpha=0.1, silhouette=False)
+ccf_scene = Scene(atlas_name='allen_mouse_10um', root=False)
+ccf_scene.add_brain_region('XII', color='orange', alpha=0.2, silhouette=False)
 ccf_scene.add_brain_region('IRN', color='red', alpha=0.0, silhouette=False)
 ccf_scene.add_brain_region('PARN', color='pink', alpha=0.0, silhouette=False)
 
 actors = ccf_scene.get_actors()
-XIImesh = actors[1]
-IRNmesh = actors[2]
-PARNmesh = actors[3]
+XIImesh = actors[0]
+IRNmesh = actors[1]
+PARNmesh = actors[2]
 XIIvertices = XIImesh.mesh.vertices
 IRNvertices = IRNmesh.mesh.vertices
 PARNvertices = PARNmesh.mesh.vertices
@@ -58,7 +58,10 @@ for file in tqdm(os.listdir(allcoordswapped), desc='Loading endpoints'):
         
 antIPARNXII = pp.get_nodes_in_region(antIPARNends, 773, kind='bulk')
 postIPARNXII = pp.get_nodes_in_region(postIPARNends, 773, kind='bulk')
-5
+antIPARNXIIcoords = pp.get_coords(antIPARNXII, mirror=True)
+postIPARNXIIcoords = pp.get_coords(postIPARNXII, mirror=True)
+
+
 XIIap = [vertex[0] for vertex in XIIvertices]
 XIIdv = [vertex[1] for vertex in XIIvertices]
 XIIlr = [vertex[2] for vertex in XIIvertices]
@@ -78,30 +81,22 @@ XIIlr = [vertex[2] for vertex in XIIvertices]
 #XIIcoords = ... #finish later, i can investigate this quesiton (topology of IRN/PARN->XII) by eye
 #XIInodes = pp.get_nodes_in_region(XIIends, 773, kind='bulk')
 
-#fig, axes = pl.plot_node_dist(XIInodes)
-labels = ['anterior IRN/PARN','posterior IRN/PARN']
-fig, axes = pl.comp_node_dist(antIPARNXII, postIPARNXII, labels=labels, suptitle='Compartmental analysis of IRN/PARN projections to XII', colors=['red', 'blue'])
-axes[0].axvline(x=13001.4, label='XII posterior boundary')
-axes[0].axvline(x=12093.4, label='XII anterior boundary')
-axes[1].axvline(x=np.max(XIIdv), label="XII ventral boundary")
-axes[1].axvline(x=np.min(XIIdv), label="XII dorsal boundary")
-axes[2].axvline(x=np.max(XIIlr), label="XII lateral boundary")
-axes[2].axvline(x=5700, label="XII medial boundary (midline)")
-fig.show()
-savepath = r'C:\Users\economolab\Documents\GitHub\Reconstruction_code\reconstructions\plots\antIRNPARNvpostIRNPARNXII.png'
-fig.savefig(savepath, dpi=300, bbox_inches='tight')
-input('Press Enter to continue')
 
 #XIIcoords = pp.get_coords(XIInodes, dim='all')
 
 #brainrender visualization stuff
-# XIIpoints = Points(XIIcoords, colors='red')
-#ccf_scene = Scene(atlas_name='allen_mouse_10um', root=True)
+#XIIpoints = Points(XIIcoords, colors='red')
+antPoints = Points(antIPARNXIIcoords, colors='red', radius=10)
+postPoints = Points(postIPARNXIIcoords, colors='blue', radius=10)
+# =============================================================================
 # actors = ccf_scene.get_actors() #just debug and look here to find actor indices
 # root_ccf = actors[0]
 # root_ccf._needs_silhouette = False
+# =============================================================================
 #ccf_scene.add_brain_region('XII', color='blue', alpha=0.1, silhouette=False)
 #ccf_scene.add(XIIpoints)
-#medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,-1))
+ccf_scene.add(antPoints)
+ccf_scene.add(postPoints)
+medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,-1))
 #ccf_scene.slice(plane=medplane)
-#ccf_scene.render(camera=sagcam)
+ccf_scene.render(camera=cams.topcam)
