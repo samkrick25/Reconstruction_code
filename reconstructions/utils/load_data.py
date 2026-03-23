@@ -85,16 +85,71 @@ def get_frequencies_from_dict(neurondict, ontlevel='structure'):
     '''
     freqs = pd.DataFrame()
     axonalends = get_axonal_endpoints(neurondict)
-    for cell, (ends, soma) in axonalends:
+    for cell, info in axonalends.items():
+        soma = info['soma']
+        ends = info['ends']
+        freqdict = {}
         somaz = soma['z']
-        ...
+        somaref = MIDLINEZ_10UM - somaz
+        #set somahem to - if LH, + if RH, to find lateralization of axonal ends
+        somahem = np.sign(somaref)
+        for end in ends:
+            match ontlevel:
+                case 'organ':
+                    if end['organ'] is None:
+                        continue
+                    else:
+                        freq_helper(freqdict, end, end['organ'], somahem)
+                case 'category':
+                    if end['category'] is None:
+                        continue
+                    else:
+                        freq_helper(freqdict, end, end['category'], somahem)
+                case 'division':
+                    if end['division'] is None:
+                        continue
+                    else:    
+                        freq_helper(freqdict, end, end['division'], somahem)
+                case 'structure':
+                    if end['structure'] is None:
+                        continue
+                    else:
+                        freq_helper(freqdict, end, end['structure'], somahem)
+                case 'substructure':
+                    if end['substructure'] is None:
+                        continue
+                    else:
+                        freq_helper(freqdict, end, end['substructure'], somahem)
+            ser = pd.Series(freqdict, name=cell)
+            freqs = pd.concat([freqs, ser], join='outer', axis=1)
+    freqs_nonan = freqs.replace(np.nan, 0)
+    return freqs_nonan
+                    
+def freq_helper(freqdict, end, region, somahem):
+    zend = end['z']
+    zref = MIDLINEZ_10UM - zend
+    #also, should be - for LH, + for RH
+    zhem = np.sign(zref)
+    ipsstr = 'Ipsilateral ' + region
+    contstr = 'Contralateral ' + region
+    if zhem == somahem:
+        if ipsstr in freqdict:
+            freqdict[ipsstr] += 1
+        else:
+            freqdict[ipsstr] = 1
+    if zhem != somahem:
+        if contstr in freqdict:
+            freqdict[contstr] += 1
+        else:
+            freqdict[contstr] = 1
+    return
     
 def parcellation_annotator(node):
     #round coordinates to 10um resolution
     startround = time.perf_counter()
     coords = [node['x'], node['y'], node['z']]
     coords = [x/10 for x in coords]
-    coords = tuple(np.round(coords).astype(np.uint16))
+    coords = np.round(coords).astype(int).tolist()
     node['x'], node['y'], node['z'] = coords
     endround = time.perf_counter()
     roundtime = endround-startround
@@ -109,11 +164,11 @@ def parcellation_annotator(node):
     
     #annotate each ontology level
     startannot = time.perf_counter()
-    node['organ'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='organ', 'parcellation_term_acronym']
-    node['category'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='category', 'parcellation_term_acronym']
-    node['division'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='division', 'parcellation_term_acronym']
-    node['structure'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='structure', 'parcellation_term_acronym']
-    node['substructure'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='organ', 'parcellation_term_acronym']
+    node['organ'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='organ', 'parcellation_term_acronym'].values[0]
+    node['category'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='category', 'parcellation_term_acronym'].values[0]
+    node['division'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='division', 'parcellation_term_acronym'].values[0]
+    node['structure'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='structure', 'parcellation_term_acronym'].values[0]
+    node['substructure'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='substructure', 'parcellation_term_acronym'].values[0]
     endannot = time.perf_counter()
     annottime = endannot-startannot
     

@@ -20,3 +20,5 @@ allen_2017_to_2020 = r"D:\allen_brain_atlas\metadata\parcellation_to_parcellatio
 
 allen_parcellationpkl = r'reconstructions\data\parcellation.pkl' #C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\
 parcellation_mappkl = r"reconstructions\data\parcellation_map.pkl" #C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\
+
+neurondictpkl = r"C:\Users\economolab\Documents\GitHub\Reconstruction_code\reconstructions\data\neurondict.pkl"

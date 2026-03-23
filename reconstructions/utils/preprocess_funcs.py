@@ -202,16 +202,4 @@ def get_cells_to_region(freqspkl, regionabv, thresh=3):
 
     return poscells, negcells
 
-def get_freqs(neuronsdict, aidtoreg):
-    columns = []
-    for _, (_, abv) in aidtoreg.items():
-        ipsi = 'Ipsilateral ' + abv
-        contra = 'Contralateral ' + abv
-        columns.append(ipsi)
-        columns.append(contra)
-    freqdf = pd.DataFrame(columns=columns)
-    for neuron, axon in neuronsdict.items():
-        ...
-        
-
     
