@@ -56,8 +56,8 @@ for file in tqdm(os.listdir(allcoordswapped), desc='Loading endpoints'):
     if cellname in postIPARNcells:
         postIPARNends[cellname] = endpoints
         
-antIPARNXII = pp.get_nodes_in_region(antIPARNends, 773, kind='bulk')
-postIPARNXII = pp.get_nodes_in_region(postIPARNends, 773, kind='bulk')
+antIPARNXII = pp.get_nodes_in_region(antIPARNends, 'XII', parcellated=True, kind='bulk')
+postIPARNXII = pp.get_nodes_in_region(postIPARNends, 'XII', parcellated=True, kind='bulk')
 antIPARNXIIcoords = pp.get_coords(antIPARNXII, mirror=True)
 postIPARNXIIcoords = pp.get_coords(postIPARNXII, mirror=True)
 

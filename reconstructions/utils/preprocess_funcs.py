@@ -114,20 +114,26 @@ def get_df_for_region(df, region):
 
     return regdf
 
-def get_nodes_in_region(cells, *regions, kind=None):
+def get_nodes_in_region(cells, *regions, ontlevel='structure', parcellated, kind=None):
     '''
     Docstring for get_nodes_in_region
     
     :param cells: Description
     :param regions: Description
+    returns a list of nodeIDs that I can then use to pull the specific nodes from coordswapped that have coords for visualizaiton
     '''
     match kind:
         case 'bulk':
             nodes = []
             for _, axon in cells.items():
                 for node in axon:
-                    if node['allenId'] in regions:
-                        nodes.append(node)
+                    if parcellated:
+                        if node[ontlevel] in regions:
+                            nodes.append(node['sampleNumber'])
+                    #if you want not parcellated, then regions has to be the ont id (numbers), if using parcellated can find the region abv
+                    if not parcellated:
+                        if node['allenId'] in regions:
+                            nodes.append(node)
             return nodes
         case 'by_cell':
             cellstonodes = {}

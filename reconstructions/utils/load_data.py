@@ -21,63 +21,6 @@ allen_ccf_data = np.asanyarray(allen_ccf.dataobj)
 allen_parcellations = pickle.load(open(allen_parcellationpkl, 'rb'))
 parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
 
-# =============================================================================
-# def get_frequencies(cells, somas):
-#     with open(regiondict, 'r') as f:
-#         regdict = json.load(f)
-# 
-#     freqs = pd.DataFrame()
-#     for cell, axon in tqdm(cells.items(), desc='Finding endpoint frequencies per cell'):
-#         somaz = somas[cell]['z']
-#         somaref = MIDLINEZ - somaz
-#         #sets somahem to - if soma is left hem, + if soma if right hem, will compare with each node down the line
-#         #to see if a node is ipsi/contra to soma
-#         somahem = np.sign(somaref)
-#         parent_child_dict = {}
-#         for node in axon:
-#             nodeID = str(node['sampleNumber'])
-#             parent = str(node['parentNumber'])
-#             if parent == str(-1):
-#                 parent_child_dict[nodeID] = None
-#             if parent > str(0):
-#                 parent_child_dict[nodeID] = str(parent)
-#         #build a tree so that I can identify which nodes are ends for freq analysis
-#         tree = Tree()
-#         tree = tree.from_map(parent_child_dict)
-#         leaves = tree.leaves()
-#         ends_from_tree = [int(node.identifier) for node in leaves]
-#         endpoints = [node for node in axon if node['sampleNumber'] in ends_from_tree]
-#         freq_dict = {}
-#         for node in endpoints:
-#             if node['allenId'] is None:
-#                 #some nodes don't have a region annotation, at some point I could recreate this by looking at the coordinates and searching for where it would be?
-# 
-#                 continue
-#             else:
-#                 region = node['allenId']
-#                 z = node['z']
-#                 zref = MIDLINEZ-z
-#                 zsign = np.sign(zref)
-#                 ipsstr = 'Ipsilateral ' + regdict[str(region)][1]
-#                 constr = 'Contralateral ' + regdict[str(region)][1]
-#                 #ipsilateral condition
-#                 if zsign == somahem:
-#                     if ipsstr in freq_dict:
-#                         freq_dict[ipsstr] += 1
-#                     else:
-#                         freq_dict[ipsstr] = 1
-#                 #contralat condition
-#                 if zsign != somahem:
-#                     if constr in freq_dict:
-#                         freq_dict[constr] += 1
-#                     else:
-#                         freq_dict[constr] = 1
-#         ser = pd.Series(freq_dict, name=cell)
-#         freqs = pd.concat([freqs, ser], join='outer', axis=1)
-#     freqs_nonan = freqs.replace(np.nan, 0)
-#     freqt = freqs_nonan.T
-#     return freqt
-# =============================================================================
 
 def get_frequencies_from_dict(neurondict, ontlevel='structure'):
     '''
