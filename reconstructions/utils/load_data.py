@@ -12,6 +12,7 @@ from brainrender.actors import Neuron
 from reconstructions.utils.filedirs import allen_ccf_10um, allen_parcellationpkl, parcellation_mappkl
 import nibabel as nib
 import time
+import sys
 
 MIDLINEZ = 5750
 MIDLINEZ_10UM = 570
@@ -26,7 +27,6 @@ def get_frequencies_from_dict(neurondict, ontlevel='structure'):
     '''
     right now im only writing this for axon endpoint analysis, ill have to first pull the endpoints thru helper function
     '''
-    freqs = pd.DataFrame()
     axonalends = get_axonal_endpoints(neurondict)
     for cell, info in axonalends.items():
         soma = info['soma']
@@ -54,19 +54,24 @@ def get_frequencies_from_dict(neurondict, ontlevel='structure'):
                     else:    
                         freq_helper(freqdict, end, end['division'], somahem)
                 case 'structure':
-                    if end['structure'] is None:
+                    try: 
+                        if end['structure'] is None:
+                            continue               
+                        else:
+                            freq_helper(freqdict, end, end['structure'], somahem)
+                    except KeyError:
+                        print(cell, end)
                         continue
-                    else:
-                        freq_helper(freqdict, end, end['structure'], somahem)
                 case 'substructure':
                     if end['substructure'] is None:
                         continue
                     else:
                         freq_helper(freqdict, end, end['substructure'], somahem)
+                case None:
+                    raise ValueError('Please specify desired ontology level for annotation!')
             ser = pd.Series(freqdict, name=cell)
-            freqs = pd.concat([freqs, ser], join='outer', axis=1)
-    freqs_nonan = freqs.replace(np.nan, 0)
-    return freqs_nonan
+            ser = ser.replace(np.nan, 0)
+    return ser
                     
 def freq_helper(freqdict, end, region, somahem):
     zend = end['z']
@@ -106,6 +111,7 @@ def parcellation_annotator(node):
     
     
     #annotate each ontology level
+    #should figure out why this is so slow and rewrite it to be faster, maybe I can look for the parcellation ID concatenated onto a string?
     startannot = time.perf_counter()
     node['organ'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='organ', 'parcellation_term_acronym'].values[0]
     node['category'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='category', 'parcellation_term_acronym'].values[0]
@@ -132,8 +138,6 @@ def get_node_parcellations(neurondict):
                 rta, ita, ata = parcellation_annotator(node)
             except IndexError:
                 axon.remove(node)
-            else:
-                rta, ita, ata = parcellation_annotator(node)
             finally:
                 rtlist.append(rta)
                 itlist.append(ita)

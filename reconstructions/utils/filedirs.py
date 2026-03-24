@@ -22,3 +22,6 @@ allen_parcellationpkl = r'reconstructions\data\parcellation.pkl' #C:\Users\samkr
 parcellation_mappkl = r"reconstructions\data\parcellation_map.pkl" #C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\
 
 neurondictpkl = r"C:\Users\economolab\Documents\GitHub\Reconstruction_code\reconstructions\data\neurondict.pkl"
+parcellated_neurons = r'reconstructions\data\IRNPARN_cells\json_parcellated'
+structure_ont_info = r'reconstructions\data\structure_ont_info.pkl'
+frequenciespkl = r'reconstructions\data\frequencies.pkl'

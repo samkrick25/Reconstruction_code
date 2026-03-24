@@ -22,6 +22,7 @@ def rem_zero_var(df):
 def preprocess(df, log1p=True, pct=True):
     '''
     preprocess data however I want to, accepts a pandas.DataFrame with no NaNs
+    this is written to have cells as cols and regions as rows i think
 
     :param df: pandas.DataFrame
 
@@ -38,8 +39,8 @@ def preprocess(df, log1p=True, pct=True):
     #default behavior
     if log1p and pct:
         df_log = np.log(data_tonorm+1)
-        row_sums = df_log.sum(axis=1)
-        df_pct = (df_log.div(row_sums, axis=0))*100
+        col_sums = df_log.sum(axis=0)
+        df_pct = (df_log.div(col_sums, axis=1))*100
         return df_pct
     
     if log1p and not pct:
