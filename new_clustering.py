@@ -88,7 +88,8 @@ cbar_ax.yaxis.set_major_formatter(mticker.FormatStrFormatter(r'%d'))
 cbar_ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 g.figure.canvas.draw()
 #g.fig.show()
-
+savepath = r'C:\Users\economolab\Documents\GitHub\Reconstruction_code\reconstructions\recons_clustermap_parcellated.png'
+g.savefig(savepath, dpi=300, bbox_inches='tight')
 # =============================================================================
 # #this is all to set the colormap for my rows during clustering, I want my rows sorted and colored by ontology, but had to manually
 # #annotate to get the resolution I desired

@@ -4,6 +4,7 @@ import pickle
 import os
 from sklearn.feature_selection import VarianceThreshold
 from warnings import simplefilter
+import json
 
 MIDLINEZ = 5750
 MIDLINEZ_10UM = 570
@@ -129,8 +130,11 @@ def get_nodes_in_region(cells, *regions, ontlevel='structure', parcellated, kind
             for _, axon in cells.items():
                 for node in axon:
                     if parcellated:
-                        if node[ontlevel] in regions:
-                            nodes.append(node['sampleNumber'])
+                        try: 
+                            if node[ontlevel] in regions:
+                                nodes.append(node['sampleNumber'])
+                        except KeyError:
+                            print(node)
                     #if you want not parcellated, then regions has to be the ont id (numbers), if using parcellated can find the region abv
                     if not parcellated:
                         if node['allenId'] in regions:
@@ -141,11 +145,40 @@ def get_nodes_in_region(cells, *regions, ontlevel='structure', parcellated, kind
             for cell, axon in cells.items():
                 nodes = []
                 for node in axon:
-                    if node['allenId'] in regions:
-                        nodes.append(node)
+                    if parcellated:
+                        try:
+                            if node[ontlevel] in regions:
+                                nodes.append(node['sampleNumber'])
+                        except KeyError:
+                            print(node)
+                    if not parcellated:
+                        if node['allenId'] in regions:
+                            nodes.append(node)
                 cellstonodes[cell] = nodes
             return cellstonodes
-        
+
+def tenmicron_to_one(nodedict, coordswappedpath):
+    '''
+    think what i want to do here is read in the dictionary of cells:nodeIds that registered in a given area (will have pulled that info earlier)
+    and return a nested dictionary of cells:nodes with the coordinates before transforming to 10 micron resolution
+    '''
+    coordswappeddict = {}
+    for cell, nodes in nodedict.items():
+        cellfile = cell+'.json'
+        cellpath = os.path.join(coordswappedpath,cellfile)
+        onemicron_nodes = []
+        if nodes:
+            with open(cellpath, 'r') as coordswappedcell:
+                coordswapped = json.load(coordswappedcell)
+                swappednodes = coordswapped['neurons'][0]['axon']
+                for node in swappednodes:
+                    if node['sampleNumber'] in nodes:
+                        onemicron_nodes.append(node)
+        coordswappeddict[cell] = onemicron_nodes
+    return coordswappeddict
+                
+            
+
 def get_target_nodes_list(nodes, *regions):
     '''
     Docstring for get_target_nodes_list

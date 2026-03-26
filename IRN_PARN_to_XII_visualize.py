@@ -2,13 +2,14 @@ from brainrender import Scene
 from reconstructions.utils import load_data as ld
 from reconstructions.utils import preprocess_funcs as pp
 from reconstructions.utils import plotting_funcs as pl
-from reconstructions.utils.filedirs import freqspkl, somaspkl, allcoordswapped
+from reconstructions.utils.filedirs import freqspkl, somaspkl, allcoordswapped, parcellated_neurons
 import reconstructions.utils.cameras as cams
 from brainrender.actors import Points
 import pickle
 from tqdm import tqdm
 import os
 import numpy as np
+
 
 #os.system('conda activate reconstructions')
 
@@ -28,7 +29,6 @@ XIIvertices = XIImesh.mesh.vertices
 IRNvertices = IRNmesh.mesh.vertices
 PARNvertices = PARNmesh.mesh.vertices
 
-#TODO later: plot out distributions of endpoints from different IRN/PARN compartments
 IRNap = [vertex[0] for vertex in IRNvertices]
 PARNap = [vertex[0] for vertex in IRNvertices]
 IRNPARNap = IRNap+PARNap
@@ -48,19 +48,33 @@ for cell, soma in somas.items():
         
 antIPARNends = {}
 postIPARNends = {}
-for file in tqdm(os.listdir(allcoordswapped), desc='Loading endpoints'):
+for file in tqdm(os.listdir(parcellated_neurons), desc='Loading endpoints'):
     cellname = file.split('.')[0]
-    endpoints = ld.get_endpoints_from_file(os.path.join(allcoordswapped, file))
+    endpoints = ld.get_endpoints_from_file_parcellated(os.path.join(parcellated_neurons, file))
     if cellname in antIPARNcells:
         antIPARNends[cellname] = endpoints
     if cellname in postIPARNcells:
         postIPARNends[cellname] = endpoints
         
-antIPARNXII = pp.get_nodes_in_region(antIPARNends, 'XII', parcellated=True, kind='bulk')
-postIPARNXII = pp.get_nodes_in_region(postIPARNends, 'XII', parcellated=True, kind='bulk')
-antIPARNXIIcoords = pp.get_coords(antIPARNXII, mirror=True)
-postIPARNXIIcoords = pp.get_coords(postIPARNXII, mirror=True)
+antIPARNXII = pp.get_nodes_in_region(antIPARNends, 'XII', parcellated=True, kind='by_cell')
+postIPARNXII = pp.get_nodes_in_region(postIPARNends, 'XII', parcellated=True, kind='by_cell')
 
+antIPARNXIIswapped = pp.tenmicron_to_one(antIPARNXII, allcoordswapped)
+postIPARNXIIswapped = pp.tenmicron_to_one(postIPARNXII, allcoordswapped)
+#finish cleaning up from here later, need to rewrite this a little since above is now by cell, first need to look at coordswapped for actual coords
+antIPARNXIIcoords = []
+for cell, nodes in antIPARNXIIswapped.items():
+    coords = pp.get_coords(nodes, mirror=True)
+    if coords.any():
+        antIPARNXIIcoords.append(coords)
+antIPARNXIIflat = np.array([node for cell in antIPARNXIIcoords for node in cell])
+
+postIPARNXIIcoords = []
+for cell, nodes in postIPARNXIIswapped.items():
+    coords = pp.get_coords(nodes, mirror=True)
+    if coords.any():
+        postIPARNXIIcoords.append(coords)
+postIPARNXIIflat = np.array([node for cell in postIPARNXIIcoords for node in cell])
 
 XIIap = [vertex[0] for vertex in XIIvertices]
 XIIdv = [vertex[1] for vertex in XIIvertices]
@@ -86,8 +100,8 @@ XIIlr = [vertex[2] for vertex in XIIvertices]
 
 #brainrender visualization stuff
 #XIIpoints = Points(XIIcoords, colors='red')
-antPoints = Points(antIPARNXIIcoords, colors='red', radius=10)
-postPoints = Points(postIPARNXIIcoords, colors='blue', radius=10)
+antPoints = Points(antIPARNXIIflat, colors='red', radius=10)
+postPoints = Points(postIPARNXIIflat, colors='blue', radius=10)
 # =============================================================================
 # actors = ccf_scene.get_actors() #just debug and look here to find actor indices
 # root_ccf = actors[0]
@@ -99,4 +113,4 @@ ccf_scene.add(antPoints)
 ccf_scene.add(postPoints)
 medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,-1))
 ccf_scene.slice(plane=medplane)
-ccf_scene.render(camera=cams.topcam)
+ccf_scene.render(camera=cams.sagcam)
