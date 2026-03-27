@@ -90,16 +90,16 @@ antIPARNXII_transformed = XIIsystem.transform_to_local(antIPARNXIIflat)
 postIPARNXII_transformed = XIIsystem.transform_to_local(postIPARNXIIflat) 
 
 XIIap = [point[0] for point in XIIsystem.local_vertices]
-XIIml = [point[2] for point in XIIsystem.local_vertices]
-XIIdv = [point[1] for point in XIIsystem.local_vertices]
+XIIml = [point[1] for point in XIIsystem.local_vertices]
+XIIdv = [point[2] for point in XIIsystem.local_vertices]
 
 ant_x_transformed = [point[0] for point in antIPARNXII_transformed]
-ant_y_transformed = [point[1] for point in antIPARNXII_transformed]
-ant_z_transformed = [point[2] for point in antIPARNXII_transformed]
+ant_y_transformed = [point[2] for point in antIPARNXII_transformed]
+ant_z_transformed = [point[1] for point in antIPARNXII_transformed]
 
 post_x_transformed = [point[0] for point in postIPARNXII_transformed]
-post_y_transformed = [point[1] for point in postIPARNXII_transformed]
-post_z_transformed = [point[2] for point in postIPARNXII_transformed]
+post_y_transformed = [point[2] for point in postIPARNXII_transformed]
+post_z_transformed = [point[1] for point in postIPARNXII_transformed]
 
 colors=['red', 'blue']
 fig, axes = plt.subplots(1, 3, figsize=(20,6))
@@ -120,11 +120,11 @@ axes[1].axvline(x=np.max(XIIdv))
 axes[1].axvline(x=np.min(XIIdv))
 axes[2].axvline(x=np.max(XIIml))
 #everything is mirrored into one hemisphere, so 
-axes[2].axvline(x=np.min(XIIml))
+axes[2].axvline(x=0)
 
-xax.set_xlabel('Anterior-Posterior')
-yax.set_xlabel('Dorsal-Ventral')
-zax.set_xlabel('Medial-Lateral')
+xax.set_xlabel('XII PC1')
+yax.set_xlabel('XII PC2')
+zax.set_xlabel('XII PC3')
 fig.suptitle('Compartmental analysis of IRN/PARN projections to XII')
 lines = xax.get_lines()
 lines[0].set_label('Anterior IRN/PARN')

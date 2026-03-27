@@ -39,22 +39,22 @@ axes = pca.components_
 xc, yc, zc = np.array(XIIcentered).T
 x, y, z = np.array(XIItransformed).T
 
-fig = go.Figure(data=[go.Mesh3d(x=x, y=y, z=z, alphahull=0, color='lightpink', opacity=0.5)])
-fig.add_trace(go.Mesh3d(x=xc, y=yc, z=zc, alphahull=0, color='lightblue', opacity=0.5))
+#fig = go.Figure(data=[go.Mesh3d(x=x, y=y, z=z, alphahull=0, color='lightpink', opacity=0.5)])
+fig = go.Figure(data=[go.Mesh3d(x=xc, y=yc, z=zc, alphahull=0, color='lightblue', opacity=0.25)])
 
-pc1x = [0, axes[0][0]*100]
-pc1y = [0, axes[0][1]*100]
-pc1z = [0, axes[0][2]*100]
-pc2x = [0, axes[2][0]*100]
-pc2y = [0, axes[2][1]*100]
-pc2z = [0, axes[2][2]*100]
-pc3x = [0, axes[1][0]*100]
-pc3y = [0, axes[1][1]*100]
-pc3z = [0, axes[1][2]*100]
+pc1x = [0, axes[0][0]*-500]
+pc1y = [0, axes[0][1]*-500]
+pc1z = [0, axes[0][2]*-500]
+pc2x = [0, axes[2][0]*150]
+pc2y = [0, axes[2][1]*150]
+pc2z = [0, axes[2][2]*150]
+pc3x = [0, axes[1][0]*200]
+pc3y = [0, axes[1][1]*200]
+pc3z = [0, axes[1][2]*200]
 
 fig.add_trace(go.Scatter3d(x=pc1x, y=pc1y, z=pc1z, mode='lines', line=dict(color='blue', width=4), name="PC1"))
 fig.add_trace(go.Scatter3d(x=pc2x, y=pc2y, z=pc2z, mode='lines', line=dict(color='green', width=4), name='PC2'))
-fig.add_trace(go.Scatter3d(x=pc3x, y=pc3y, z=pc3z, mode='lines', line=dict(color='yellow', width=4), name='PC3'))
+fig.add_trace(go.Scatter3d(x=pc3x, y=pc3y, z=pc3z, mode='lines', line=dict(color='red', width=4), name='PC3'))
 
 # =============================================================================
 # XIIorigin = np.mean(XIIvertices, axis=0)

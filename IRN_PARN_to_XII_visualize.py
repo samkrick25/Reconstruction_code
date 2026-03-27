@@ -16,15 +16,17 @@ import numpy as np
 freqs = pickle.load(open(freqspkl, 'rb'))
 somas = pickle.load(open(somaspkl, 'rb'))
 
-ccf_scene = Scene(atlas_name='allen_mouse_10um', root=False)
-ccf_scene.add_brain_region('XII', color='orange', alpha=0.2, silhouette=False)
+ccf_scene = Scene(atlas_name='allen_mouse_10um', root=True)
+ccf_scene.add_brain_region('XII', color='pink', alpha=0.5, silhouette=False)
 ccf_scene.add_brain_region('IRN', color='red', alpha=0.0, silhouette=False)
 ccf_scene.add_brain_region('PARN', color='pink', alpha=0.0, silhouette=False)
 
 actors = ccf_scene.get_actors()
-XIImesh = actors[0]
-IRNmesh = actors[1]
-PARNmesh = actors[2]
+root = actors[0]
+root._needs_silhouette = False
+XIImesh = actors[1]
+IRNmesh = actors[2]
+PARNmesh = actors[3]
 XIIvertices = XIImesh.mesh.vertices
 IRNvertices = IRNmesh.mesh.vertices
 PARNvertices = PARNmesh.mesh.vertices
@@ -109,8 +111,8 @@ postPoints = Points(postIPARNXIIflat, colors='blue', radius=10)
 # =============================================================================
 #ccf_scene.add_brain_region('XII', color='blue', alpha=0.1, silhouette=False)
 #ccf_scene.add(XIIpoints)
-ccf_scene.add(antPoints)
-ccf_scene.add(postPoints)
+#ccf_scene.add(antPoints)
+#ccf_scene.add(postPoints)
 medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,-1))
 ccf_scene.slice(plane=medplane)
-ccf_scene.render(camera=cams.sagcam)
+ccf_scene.render(camera=cams.topcam)
