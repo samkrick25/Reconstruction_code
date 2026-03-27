@@ -8,16 +8,14 @@ import os
 import numpy as np
 from tqdm import tqdm
 
-# =============================================================================
-# cells, somas, _, _, _ = load_data.load_neurons(allcoordswapped)
-# freqs = load_data.get_frequencies(cells, somas)
-# 
+_, somas, _, _, _ = load_data.load_neurons(allcoordswapped)
+# = load_data.get_frequencies(cells, somas)
+
 # savefile = r'reconstructions\data\freqs.pkl'
 # pickle.dump(freqs, open(savefile, 'wb'))
-# 
-# savefilesomas = r'reconstructions\data\somas.pkl'
-# pickle.dump(somas, open(savefilesomas, 'wb'))
-# =============================================================================
+
+savefilesomas = r'reconstructions\data\somas.pkl'
+pickle.dump(somas, open(savefilesomas, 'wb'))
 
 # =============================================================================
 # save1 = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\parcellation.pkl'

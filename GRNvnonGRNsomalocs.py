@@ -1,6 +1,6 @@
 from reconstructions.utils import preprocess_funcs, plotting_funcs
 from reconstructions.utils.cameras import topcam, sagcam, corcam
-from reconstructions.utils.filedirs import freqspkl, somaspkl
+from reconstructions.utils.filedirs import frequenciespkl, somaspkl
 from reconstructions.utils.planes import medplane
 import numpy as np
 import pickle
@@ -8,7 +8,7 @@ from brainrender.actors import Points
 from brainrender import Scene
 import vedo
 
-freqs = pickle.load(open(freqspkl, 'rb'))
+freqs = pickle.load(open(frequenciespkl, 'rb'))
 somas = pickle.load(open(somaspkl, 'rb'))
 
 latmerged = preprocess_funcs.merge_regions(freqs)

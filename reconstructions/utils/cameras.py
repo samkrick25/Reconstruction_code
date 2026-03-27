@@ -22,3 +22,20 @@ corcam = dict(
     distance=80026.0,
     clipping_range=(64035.5, 99934.5),
 )
+
+MYtopcam = dict(
+    pos=(9835.10, -72751.3, -6183.83),
+    focal_point=(9984.59, 4291.59, -5651.14),
+    viewup=(-1.00000, 0, 0),
+    roll=74.3239,
+    distance=77044.9,
+    clipping_range=(68339.5, 87172.9),
+)
+MYsagcam = dict(
+    pos=(15136.1, 6079.61, 54358.2),
+    focal_point=(10444.9, 4888.00, 10596.0),
+    viewup=(5.09822e-3, -0.999631, 0.0266727),
+    roll=179.872,
+    distance=44029.0,
+    clipping_range=(48156.4, 76531.2),
+)
