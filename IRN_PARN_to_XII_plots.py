@@ -37,7 +37,6 @@ XIIverticesmirrored = XIImesh.mesh.vertices
 IRNvertices = IRNmesh.mesh.vertices
 PARNvertices = PARNmesh.mesh.vertices
 
-#TODO later: plot out distributions of endpoints from different IRN/PARN compartments
 IRNap = [vertex[0] for vertex in IRNvertices]
 PARNap = [vertex[0] for vertex in IRNvertices]
 IRNPARNap = IRNap+PARNap

@@ -116,14 +116,18 @@ def get_df_for_region(df, region):
 
     return regdf
 
-def get_nodes_in_region(cells, *regions, ontlevel='structure', parcellated, kind=None):
+def get_nodes_in_region(cells, *regions, ontlevel='structure', parcellated, kind=None, infunc=False):
     '''
     Docstring for get_nodes_in_region
     
     :param cells: Description
     :param regions: Description
     returns a list of nodeIDs that I can then use to pull the specific nodes from coordswapped that have coords for visualizaiton
+    or if inputting the non parcellated jsons, will regurn a list of nodes in desired region
     '''
+    if infunc:
+        regions=regions[0]
+        
     match kind:
         case 'bulk':
             nodes = []

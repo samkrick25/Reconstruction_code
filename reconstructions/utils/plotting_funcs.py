@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from reconstructions.utils import preprocess_funcs
 
-def comp_node_dist(points1, points2, suptitle=None, labels=None, ver=3.0, colors=['blue', 'red']):
+def comp_node_dist(points1, points2, suptitle=None, labels=None, ver=3.0, colors=['red', 'blue']):
     '''
     Compare node distribution in x, y, z coordinates of two populations of points
     
