@@ -19,6 +19,7 @@ import seaborn as sns
 #TODO: rewrite using plotly as it allows me to zoom around and investigate clusters at a closer resolution, although i don't have time to do this rn
 #have to find a way to get my row colors to work
 
+# %%
 
 # %%
 #os.chdir(r'C:\Users\economolab\Documents\GitHub\Reconstruction_code')

@@ -41,8 +41,8 @@ def swc_to_line_actors(swc_df, axon_color='blue', dendrite_color='red', lw=2):
     return actors
 
 #set directories
-celldir = r"C:\Users\economolab\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson"
-savedir = r"C:\Users\economolab\Documents\GitHub\Reconstruction_code\images\all_cells"
+celldir = r"reconstructions\data\IRNPARN_cells\swcsfromjson"#C:\Users\economolab\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson"
+savedir = r"images\all_cells"#C:\Users\economolab\Documents\GitHub\Reconstruction_code\images\all_cells"
 
 #set colors for each cell to be rendered as
 cellcolors = ['blue','red','orange','green','purple']
@@ -81,7 +81,7 @@ for file, color in tqdm(zip(os.listdir(celldir),output),desc='loading and screen
     Path(cellsavedir).mkdir(parents=True, exist_ok=True)
     sagsavefile = os.path.join(cellsavedir, cellname+'_sag.png')
     topsavefile = os.path.join(cellsavedir, cellname+'_top.png')
-    
+    corsavefile = os.path.join(cellsavedir, cellname+'_cor.png')
     #add neuron, screenshot from saggital view
 # =============================================================================
 #     neuronsag = Neuron(neuron=filename, color=color)
@@ -89,7 +89,7 @@ for file, color in tqdm(zip(os.listdir(celldir),output),desc='loading and screen
 # =============================================================================
     swc_df = pd.read_csv(
         filename,
-        comment='#',
+        comment='#', 
         sep=r'\s+',
         names=['id', 'type', 'x', 'y', 'z', 'r', 'parent']
     )
@@ -101,7 +101,8 @@ for file, color in tqdm(zip(os.listdir(celldir),output),desc='loading and screen
     #screenshot (change name/camera for different views)
     for actor in cell_actors:
         ccf_scenesag.add(actor)
-    ccf_scenesag.screenshot(name=topsavefile, camera=cameras.MYtopcam)
+    ccf_scenesag.screenshot(name=corsavefile, camera=cameras.corcam) #(camera=cameras.corcam)
+    ccf_scenesag.close()
 # =============================================================================
 #     for actor in cell_actors:
 #         ccf_scenesag.remove(actor)
