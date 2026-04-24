@@ -9,7 +9,7 @@ from reconstructions.utils import visualize, cameras, plotting_funcs
 from brainrender import Scene
 import numpy as np
 
-antnodes, postnodes = visualize.show_endpoints('NTS', root=False, colors=['orange'], alphas=[0.2], unilat=True, camera=cameras.sagcam)
+antnodes, postnodes = visualize.show_endpoints('VII', root=False, colors=['orange'], alphas=[0.2], unilat=True, camera=cameras.sagcam)
 
 antnonempty=[]
 for cell, nodes in antnodes.items():
@@ -35,7 +35,7 @@ regdv = [v[1] for v in regmeshverts]
 regml = [v[2] for v in regmeshverts]
 
 
-fig, axes = plotting_funcs.comp_node_dist(antflat, postflat, labels=['anterior IRN/PARN', 'posterior IRN/PARN'], suptitle = 'Distribution of IRN/PARN endpoints in NTS')
+fig, axes = plotting_funcs.comp_node_dist(antflat, postflat, labels=['dorsal IRN/PARN', 'ventral IRN/PARN'], suptitle = 'Distribution of IRN/PARN endpoints in VII')
 
 axes[0].axvline(x=np.max(regap))
 axes[0].axvline(x=np.min(regap))

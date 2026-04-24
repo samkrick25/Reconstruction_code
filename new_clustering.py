@@ -20,11 +20,13 @@ import seaborn as sns
 #have to find a way to get my row colors to work
 
 
+# %%
 #os.chdir(r'C:\Users\economolab\Documents\GitHub\Reconstruction_code')
 structure_to_ont = pickle.load(open(structure_ont_info, 'rb'))
 parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
 frequencies_notprocessed = pickle.load(open(frequenciespkl, 'rb'))
 frequencies = preprocess_funcs.preprocess(frequencies_notprocessed)
+# %%
 
 divisiondf = parcellation_map.loc[(parcellation_map['parcellation_term_set_name']=='division')]
 uniquedivisions = np.unique(divisiondf['parcellation_term_acronym'].values)

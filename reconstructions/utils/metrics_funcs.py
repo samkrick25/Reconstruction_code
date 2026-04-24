@@ -2,24 +2,41 @@ import numpy as np
 import pandas as pd
 from reconstructions.utils import preprocess_funcs as pp
 import pickle
-from reconstructions.utils.filedirs import freqspkl
+from reconstructions.utils.filedirs import parcellation_mappkl, structure_ont_info, frequenciespkl
 
-def lat_index(df, region):
+def lat_index(df, region=None):
     '''
     find laterality index of cells in frequency dataset, lat index is (%proj ipsilateral - %proj contralateral)/100
     -1 is solely contralat projecting, 1 is solely ipsilateral projecting, 0 is perfectly bilaterally projecting
 
     :params df: DataFrame containing projection frequencies in shape (n cells, n regions)
 
-    :params region: target region to calc lat index for as str, currently this is only accepting one region at a time
+    :params region: target region to calc lat index for as str, only accepts one region but can leave empty and this will calc on whole dataset
     '''
-    data = pp.get_df_for_region(df, region=region)
-    cols = list(data.columns)
-    sums = data.sum(axis=1)
-    pct = (data.div(sums, axis=0))*100
-    pct['Laterality Index'] = (pct[cols[0]]-pct[cols[1]])/100
-
-    return pct
+    ips = 'Ipsilateral'
+    cont = 'Contralateral'
+    if region:
+        data = pp.get_df_for_region(df, region=region)
+        cols = list(data.columns)
+        sums = data.sum(axis=1)
+        pct = (data.div(sums, axis=0))*100
+        pct['Laterality Index'] = (pct[cols[0]]-pct[cols[1]])/100
+    
+        return pct
+    else:
+        data=df
+        ipsdf=data.filter(regex=ips)
+        contdf=data.filter(regex=cont)
+        ipssums = ipsdf.sum(axis=1)
+        contsums = contdf.sum(axis=1)
+        pct = pd.DataFrame(index=ipssums.index, columns=['Laterality Index'])
+        for name, ips, cont in zip(ipssums.index, ipssums, contsums):
+            sum = ips+cont
+            ipspct = (ips/sum)*100
+            contpct = (cont/sum)*100
+            latindex = (ipspct-contpct)/100
+            pct.loc[name, 'Laterality Index'] = latindex
+        return pct
 
 def get_cell_lateralization(df):
     '''
@@ -67,7 +84,14 @@ def get_targets(df, cell):
     return targets
 
 if __name__=='__main__':
-    freqs = pickle.load(open(freqspkl, 'rb'))
-    targetcell = 'AA0503'
-    targets = get_targets(freqs, targetcell)
-    print(targets)
+# =============================================================================
+#     freqs = pickle.load(open(freqspkl, 'rb'))
+#     targetcell = 'AA0503'
+#     targets = get_targets(freqs, targetcell)
+#     print(targets)
+# =============================================================================
+    structure_to_ont = pickle.load(open(structure_ont_info, 'rb'))
+    parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
+    frequencies_notprocessed = pickle.load(open(frequenciespkl, 'rb'))
+    frequencies = pp.preprocess(frequencies_notprocessed).T
+    latdf = lat_index(frequencies)['Laterality Index']

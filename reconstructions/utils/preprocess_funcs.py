@@ -246,4 +246,11 @@ def get_cells_to_region(freqspkl, regionabv, thresh=3):
 
     return poscells, negcells
 
+def get_targeted_regions(data, cell):
+    '''
+    returns a series containing the targeted regions of a given cell, requires data to be a pandas DataFrame where columns are regions and cells are rows
+    cell is the name of the cell you want to see target regions for as str 
+    '''
+    return data.loc[cell, data.columns[data.loc[cell]!=0].tolist()].sort_values(ascending=False)
+
     
