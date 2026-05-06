@@ -8,7 +8,7 @@ import os
 import numpy as np
 from tqdm import tqdm
 
-_, somas, _, _, _ = load_data.load_neurons(allcoordswapped)
+_, somas, _, _, _ = ld.load_neurons(allcoordswapped)
 # = load_data.get_frequencies(cells, somas)
 
 # savefile = r'reconstructions\data\freqs.pkl'

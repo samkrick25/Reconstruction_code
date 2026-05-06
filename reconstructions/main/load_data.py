@@ -3,19 +3,19 @@ import pandas as pd
 from tqdm import tqdm
 import os
 import pickle
-#from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
 import json
 from treelib import Tree
-#import brainrender
 from brainrender.actors import Neuron
-#import vedo
-from reconstructions.utils.filedirs import allen_ccf_10um, allen_parcellationpkl, parcellation_mappkl
 import nibabel as nib
 import time
 import sys
 
 MIDLINEZ = 5750
 MIDLINEZ_10UM = 570
+
+allen_ccf_10um = r"reconstructions\main\annotation_10.nii"
+allen_parcellationpkl = r"reconstructions\main\parcellation.pkl"
+parcellation_mappkl = r"reconstructions\main\parcellation_map.pkl"
 
 allen_ccf = nib.load(allen_ccf_10um)
 allen_ccf_data = np.asanyarray(allen_ccf.dataobj)
@@ -74,25 +74,6 @@ def get_frequencies_from_dict(neurondict, ontlevel='structure'):
     return ser
                     
 def freq_helper(freqdict, end, region, somahem):
-    '''
-    helper function for my frequency annotator
-
-    Parameters
-    ----------
-    freqdict : 
-        DESCRIPTION.
-    end : TYPE
-        DESCRIPTION.
-    region : TYPE
-        DESCRIPTION.
-    somahem : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    '''
     zend = end['z']
     zref = MIDLINEZ_10UM - zend
     #also, should be - for LH, + for RH
@@ -203,6 +184,7 @@ def load_neurons(folderpath):
 
     for file in tqdm(os.listdir(folderpath), desc='Loading neurons'):
         filename = os.path.join(folderpath, file)
+        cell = file.split('.')[0]
         with open(filename, 'r') as f:
             fdict = json.load(f)
             #again, since some of the neurons are annotated in different ccf versions, i have to swap some coords around, going to write a coordinate swapper that takes the version and fdict and will swap around coords if needed
@@ -210,7 +192,13 @@ def load_neurons(folderpath):
             # ver = fdict['neurons'][0]['annotationSpace']['version']
             # if ver == 2.5:
             #     fdict = coord_swapper(fdict)
-            cellname = fdict['neurons'][0]['idString']
+# =============================================================================
+#             checkcell = fdict['neurons'][0]['idString']
+#             if checkcell == file.split('.')[0]:
+#                 cellname = checkcell
+#             else:
+#                 cellname = checkcell
+# =============================================================================
             axon = fdict['neurons'][0]['axon']
 #            alleninfo = fdict['neurons'][0]['allenInformation']
             soma = fdict['neurons'][0]['soma']
@@ -225,7 +213,7 @@ def load_neurons(folderpath):
 #                 regtoaid[name] = aid
 #                 abvtoaid[acronym] = aid
 # =============================================================================
-            neuron_dict[cellname] = {
+            neuron_dict[cell] = {
                 'axon': axon,
                 'soma': soma,
                 'dendrite': dendrite

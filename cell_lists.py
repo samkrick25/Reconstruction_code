@@ -35,7 +35,7 @@ parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
 frequencies_notprocessed = pickle.load(open(frequenciespkl, 'rb'))
 frequencies = preprocess_funcs.preprocess(frequencies_notprocessed).T
 
-# %%
+
 latdf = metrics_funcs.lat_index(frequencies_notprocessed.T)
 
 # %%

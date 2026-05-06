@@ -46,7 +46,7 @@ savedir = r"images\all_cells"#C:\Users\economolab\Documents\GitHub\Reconstructio
 
 #set colors for each cell to be rendered as
 cellcolors = ['blue','red','orange','green','purple']
-output = list(islice(cycle(cellcolors), len(os.listdir(celldir))))
+output = list(islice(cycle(cellcolors), len(os.listdir(celldir)))) 
 
 
 #brainrender scene for top screenshots
