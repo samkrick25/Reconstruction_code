@@ -26,46 +26,46 @@ IRNvertices = IRNmesh.mesh.vertices
 PARNmesh = actors[1]
 PARNvertices = PARNmesh.mesh.vertices
 
-# =============================================================================
-# #find anterior bound and set antIRN/PARN posterior bound
-# IRNap = [vertex[0] for vertex in IRNvertices]
-# PARNap = [vertex[0] for vertex in PARNvertices]
-# IRNPARNap = IRNap+PARNap
-# MedRNa_bound = np.min(IRNPARNap)
-# MedRNp_bound = np.max(IRNPARNap)
-# MedRNrange = MedRNp_bound-MedRNa_bound
-# MedRNmid = MedRNa_bound + 800
-# =============================================================================
+#find anterior bound and set antIRN/PARN posterior bound
+IRNap = [vertex[0] for vertex in IRNvertices]
+PARNap = [vertex[0] for vertex in PARNvertices]
+IRNPARNap = IRNap+PARNap
+MedRNa_bound = np.min(IRNPARNap)
+MedRNp_bound = np.max(IRNPARNap)
+MedRNrange = MedRNp_bound-MedRNa_bound
+MedRNmid = MedRNa_bound + 800
 
-#dorsal ventral separation
-IRNdv = [vertex[1] for vertex in IRNvertices]
-PARNdv = [vertex[1] for vertex in PARNvertices]
-RNdv = IRNdv+PARNdv
-dorsbound = np.min(RNdv)
-ventbound = np.max(RNdv)
-med = np.mean([int(dorsbound), int(ventbound)])
-
+# =============================================================================
+# #dorsal ventral separation (NOT FUNCTIONAL YET)
+# IRNdv = [vertex[1] for vertex in IRNvertices]
+# PARNdv = [vertex[1] for vertex in PARNvertices]
+# RNdv = IRNdv+PARNdv
+# dorsbound = np.min(RNdv)
+# ventbound = np.max(RNdv)
+# med = np.mean([int(dorsbound), int(ventbound)])
+# 
+# =============================================================================
 #get lists of antIRN/PARN vs postIRN/PARN cells
+somas = pickle.load(open(somaspkl, 'rb'))
+antIPARNcells = []
+postIPARNcells = []
+for cell, soma in somas.items():
+    if MedRNa_bound <= soma['x'] < MedRNmid:
+        antIPARNcells.append(cell)
+    if MedRNmid <= soma['x'] <= MedRNp_bound:
+        postIPARNcells.append(cell)
+        
+
 # =============================================================================
 # somas = pickle.load(open(somaspkl, 'rb'))
 # antIPARNcells = []
 # postIPARNcells = []
 # for cell, soma in somas.items():
-#     if MedRNa_bound <= soma['x'] < MedRNmid:
+#     if dorsbound <= soma['x'] < med:
 #         antIPARNcells.append(cell)
-#     if MedRNmid <= soma['x'] <= MedRNp_bound:
+#     if med <= soma['x'] <= ventbound:
 #         postIPARNcells.append(cell)
 # =============================================================================
-        
-
-somas = pickle.load(open(somaspkl, 'rb'))
-antIPARNcells = []
-postIPARNcells = []
-for cell, soma in somas.items():
-    if dorsbound <= soma['x'] < med:
-        antIPARNcells.append(cell)
-    if med <= soma['x'] <= ventbound:
-        postIPARNcells.append(cell)
         
         
 #get endpoints of IRN/PARN cells split by their A->P position
@@ -79,7 +79,7 @@ for file in tqdm(os.listdir(parcellated_neurons), desc='Loading endpoints'):
     if cellname in postIPARNcells:
         postIPARNends[cellname] = endpoints
 
-def show_endpoints(*regions, root, colors, alphas, camera=cams.sagcam, unilat=False):
+def show_endpoints(regions, root, colors, alphas, camera=cams.sagcam, unilat=False, ontlevel='structure'):
     '''
     visualize endpoints of IRN/PARN cells in any region defined by allen ccf 10um v3 
     (will rewrite to use other resolutions, binary expansion of regions and visualization of those)
@@ -115,8 +115,8 @@ def show_endpoints(*regions, root, colors, alphas, camera=cams.sagcam, unilat=Fa
         ccf_scene.add_brain_region(region, color=color, alpha=alpha, silhouette=False)
     
     #this is messing up, returning empty lists
-    antIPARNinreg = pp.get_nodes_in_region(antIPARNends, regions, parcellated=True, kind='by_cell', infunc=True)
-    postIPARNinreg = pp.get_nodes_in_region(postIPARNends, regions, parcellated=True, kind='by_cell', infunc=True)
+    antIPARNinreg = pp.get_nodes_in_region(antIPARNends, regions, parcellated=True, ontlevel=ontlevel, kind='by_cell')
+    postIPARNinreg = pp.get_nodes_in_region(postIPARNends, regions, parcellated=True, ontlevel=ontlevel, kind='by_cell')
     
     antIPARNXIIswapped = pp.tenmicron_to_one(antIPARNinreg, allcoordswapped)
     postIPARNXIIswapped = pp.tenmicron_to_one(postIPARNinreg, allcoordswapped)

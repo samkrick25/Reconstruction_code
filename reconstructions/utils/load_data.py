@@ -353,6 +353,19 @@ def get_endpoints_from_file(neuronjson):
 #         allends.append(endpoints)
 #     return allends
 # =============================================================================
+def swap_swc(fname):
+    swc_df = pd.read_csv(
+         fname,
+         comment='#', 
+         sep=r'\s+',
+         names=['id', 'type', 'x', 'y', 'z', 'r', 'parent']
+    )
+    #need to swap x and z coordinates, brainrender swapped their axes so using swcs as we get them will render them rotated 90 deg
+    x = swc_df['x']
+    z = swc_df['z']
+    swc_df['x'] = z
+    swc_df['z'] = x
+    return swc_df
 
 def coord_swapper(fdict):
     '''

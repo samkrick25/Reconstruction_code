@@ -38,6 +38,9 @@ frequencies = preprocess_funcs.preprocess(frequencies_notprocessed).T
 
 latdf = metrics_funcs.lat_index(frequencies_notprocessed.T)
 
+fnp = frequencies_notprocessed.T 
+
+preprocess_funcs.write_targeted_regions_to_excel(fnp, r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\all_targets.xlsx')
 # %%
 
 freqmerged = preprocess_funcs.merge_regions(frequencies_notprocessed.T)

@@ -5,6 +5,9 @@ import os
 from sklearn.feature_selection import VarianceThreshold
 from warnings import simplefilter
 import json
+from vedo import Lines
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment
 
 MIDLINEZ = 5750
 MIDLINEZ_10UM = 570
@@ -116,7 +119,7 @@ def get_df_for_region(df, region):
 
     return regdf
 
-def get_nodes_in_region(cells, *regions, ontlevel='structure', parcellated, kind=None, infunc=False):
+def get_nodes_in_region(cells, regions, parcellated=True, ontlevel='structure', kind=None, infunc=False):
     '''
     Docstring for get_nodes_in_region
     
@@ -125,8 +128,10 @@ def get_nodes_in_region(cells, *regions, ontlevel='structure', parcellated, kind
     returns a list of nodeIDs that I can then use to pull the specific nodes from coordswapped that have coords for visualizaiton
     or if inputting the non parcellated jsons, will regurn a list of nodes in desired region
     '''
-    if infunc:
-        regions=regions[0]
+# =============================================================================
+#     if infunc:
+#         regions=regions[0]
+# =============================================================================
         
     match kind:
         case 'bulk':
@@ -161,7 +166,7 @@ def get_nodes_in_region(cells, *regions, ontlevel='structure', parcellated, kind
                 cellstonodes[cell] = nodes
             return cellstonodes
 
-def tenmicron_to_one(nodedict, coordswappedpath):
+def tenmicron_to_one(nodedict, onemicronpath):
     '''
     think what i want to do here is read in the dictionary of cells:nodeIds that registered in a given area (will have pulled that info earlier)
     and return a nested dictionary of cells:nodes with the coordinates before transforming to 10 micron resolution
@@ -169,7 +174,7 @@ def tenmicron_to_one(nodedict, coordswappedpath):
     coordswappeddict = {}
     for cell, nodes in nodedict.items():
         cellfile = cell+'.json'
-        cellpath = os.path.join(coordswappedpath,cellfile)
+        cellpath = os.path.join(onemicronpath,cellfile)
         onemicron_nodes = []
         if nodes:
             with open(cellpath, 'r') as coordswappedcell:
@@ -253,4 +258,122 @@ def get_targeted_regions(data, cell):
     '''
     return data.loc[cell, data.columns[data.loc[cell]!=0].tolist()].sort_values(ascending=False)
 
+def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_color='red', lw=2):
+    '''
+    Build vedo Lines actors for axon and dendrite segments directly
+    from a parsed SWC dataframe. Bypasses morphapi/vedo tube merging.
+    '''
     
+    node_coords = swc_df.set_index('id')[['x', 'y', 'z']]
+
+    # Only rows that have a valid parent
+    has_parent = swc_df[swc_df['parent'] != -1]
+
+    actors = []
+    for neurite_type, color in [(2, axon_color), (3, dendrite_color)]:
+        subset = has_parent[has_parent['type'] == neurite_type]
+        if skip_dendrite and neurite_type == 3:
+            continue
+        if subset.empty:
+            continue
+
+        # Build (N, 3) start and end point arrays
+        start_pts = node_coords.loc[subset['id']].values
+        end_pts   = node_coords.loc[subset['parent']].values
+
+        actor = Lines(start_pts, end_pts, c=color, lw=lw)
+        actors.append(actor)
+
+    return actors
+
+def swap_for_brainrender(swcpath, axon='green', dendrite='black', skip_dendrite=False):
+    """
+    swap coordinates of an swc to be rendered with brainrender, when swc is acquired from the Allen Institute
+
+    Parameters
+    ----------
+    swcpath : str
+        path to the swc you need coordinates swapped for.
+
+    Returns
+    -------
+    cell_actors : list
+        a list of brainrender Line actors to be added to a Scene.
+
+    """
+
+    
+    swc_df = pd.read_csv(
+         swcpath,
+         comment='#', 
+         sep=r'\s+',
+         names=['id', 'type', 'x', 'y', 'z', 'r', 'parent']
+    )
+    #need to swap x and z coordinates, brainrender swapped their axes so using swcs as we get them will render them rotated 90 deg
+    x = swc_df['x']
+    z = swc_df['z']
+    swc_df['x'] = z
+    swc_df['z'] = x
+    cell_actors = swc_to_line_actors(swc_df, axon_color=axon, dendrite_color=dendrite, skip_dendrite=skip_dendrite, lw=2)
+    return cell_actors
+
+def write_targeted_regions_to_excel(data, output_path='targeted_regions.xlsx'):
+    '''
+    Runs get_targeted_regions for every cell in data and writes results to one Excel sheet.
+    Each cell gets two adjacent columns: region names and their endpoint counts,
+    under a merged header cell showing the cell name.
+
+    Parameters
+    ----------
+    data        : pd.DataFrame  Regions as columns, cells as rows
+    output_path : str           Path for the output .xlsx file
+    '''
+
+    # Build a plain dict of series for each cell
+    col_data = {}
+    for cell in data.index:
+        series = get_targeted_regions(data, cell)
+        col_data[cell] = {
+            'regions':   series.index.tolist(),
+            'endpoints': series.values.tolist()
+        }
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Targeted Regions'
+
+    cells = list(data.index)
+
+    for i, cell in enumerate(cells):
+        col_start = i * 2 + 1  # 1-indexed
+        col_end   = col_start + 1
+
+        # --- Row 1: merged cell name header ---
+        ws.merge_cells(
+            start_row=1, start_column=col_start,
+            end_row=1,   end_column=col_end
+        )
+        header_cell = ws.cell(row=1, column=col_start, value=cell)
+        header_cell.font      = Font(bold=True)
+        header_cell.alignment = Alignment(horizontal='center')
+
+        # --- Row 2: sub-headers ---
+        region_header    = ws.cell(row=2, column=col_start, value='Region')
+        endpoints_header = ws.cell(row=2, column=col_end,   value='Endpoints')
+        region_header.font    = Font(bold=True)
+        endpoints_header.font = Font(bold=True)
+
+        # --- Row 3+: data ---
+        regions   = col_data[cell]['regions']
+        endpoints = col_data[cell]['endpoints']
+
+        for row_offset, (region, endpoint) in enumerate(zip(regions, endpoints)):
+            ws.cell(row=3 + row_offset, column=col_start, value=region)
+            ws.cell(row=3 + row_offset, column=col_end,   value=endpoint)
+
+    wb.save(output_path)
+    print(f"Results written to '{output_path}'")
+
+
+# --- Usage ---
+# write_targeted_regions_to_excel(your_dataframe, output_path='targeted_regions.xlsx')
