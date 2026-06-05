@@ -57,8 +57,8 @@ def preprocess(df, log1p=True, pct=True):
         return df_pct
     
     if not log1p and not pct:
-        print('what are you using this for')
-        return
+        #print('what are you using this for')
+        return df
     
 def merge_regions(df):
     '''
