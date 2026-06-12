@@ -8,7 +8,7 @@ from brainrender.actors import Points
 from brainrender import Scene
 import vedo
 
-freqs = pickle.load(open(frequenciespkl, 'rb'))
+freqs = pickle.load(open(frequenciespkl, 'rb')).T
 somas = pickle.load(open(somaspkl, 'rb'))
 
 latmerged = preprocess_funcs.merge_regions(freqs)

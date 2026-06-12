@@ -5,9 +5,10 @@ import os
 from sklearn.feature_selection import VarianceThreshold
 from warnings import simplefilter
 import json
-from vedo import Lines
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
+from collections import defaultdict
+from vedo import Tube, Sphere
 
 MIDLINEZ = 5750
 MIDLINEZ_10UM = 570
@@ -258,35 +259,118 @@ def get_targeted_regions(data, cell):
     '''
     return data.loc[cell, data.columns[data.loc[cell]!=0].tolist()].sort_values(ascending=False)
 
-def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_color='red', lw=2):
-    '''
-    Build vedo Lines actors for axon and dendrite segments directly
-    from a parsed SWC dataframe. Bypasses morphapi/vedo tube merging.
-    '''
-    
-    node_coords = swc_df.set_index('id')[['x', 'y', 'z']]
+def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_color='red', soma_color='black', neurite_radius=4, soma_radius=15):
 
-    # Only rows that have a valid parent
-    has_parent = swc_df[swc_df['parent'] != -1]
+    """
+    Build vedo Tube actors per morphological section directly from a
+    parsed SWC DataFrame — no file path or morphio needed.
 
-    actors = []
-    for neurite_type, color in [(2, axon_color), (3, dendrite_color)]:
-        subset = has_parent[has_parent['type'] == neurite_type]
-        if skip_dendrite and neurite_type == 3:
+    Sections are extracted by walking parent-child relationships:
+      - A section starts at any non-soma node whose parent is the soma,
+        has no parent (parentNumber==-1), or is a branch point (2+ children)
+      - The section walks forward along single-child nodes until hitting
+        a tip (0 children) or branch point (2+ children)
+      - The parent node coordinate is prepended to each child section so
+        that adjacent tubes overlap at branch points, giving seamless joins
+    """
+    nodes = swc_df.set_index('id')
+
+    # Build children map: parent_id -> [child_ids]
+    children = defaultdict(list)
+    for node_id, row in nodes.iterrows():
+        if row['parent'] != -1:
+            if skip_dendrite == False: 
+                children[int(row['parent'])].append(node_id)
+            else:
+                if row['type'] == 3:
+                    continue
+                else:
+                    children[int(row['parent'])].append(node_id)
+    # Soma
+    soma_row = nodes[nodes['type'] == 1].iloc[0]
+    soma_id  = int(soma_row.name)
+    soma_pos = soma_row[['x', 'y', 'z']].tolist()
+
+    type_color_map = {2: axon_color, 3: dendrite_color}
+
+    actors = [Sphere(pos=soma_pos, r=soma_radius, c=soma_color)]
+
+    # Section start nodes: non-soma nodes whose parent is either
+    # soma, -1 (orphan root), or a branch point (2+ children)
+    section_starts = [
+        node_id for node_id, row in nodes.iterrows()
+        if row['type'] != 1
+        and (   row['parent'] == -1
+             or int(row['parent']) == soma_id
+             or len(children[int(row['parent'])]) > 1)
+    ]
+
+    n_axon_sections = 0
+    n_dend_sections = 0
+    n_skipped       = 0
+
+    for start_id in section_starts:
+        section_ids = []
+
+        # Prepend the branch-point parent coordinate so this tube overlaps
+        # with the end of its parent tube — fills the gap at the branch point.
+        # Skip if parent is soma (soma sphere already covers that join) or -1.
+        parent_id = int(nodes.loc[start_id, 'parent'])
+        if parent_id != -1 and parent_id != soma_id:
+            section_ids.append(parent_id)
+
+        # Walk the unbranched chain forward
+        current_id = start_id
+        while True:
+            section_ids.append(current_id)
+            kids = children[current_id]
+            if len(kids) == 1:
+                current_id = kids[0]
+            else:
+                break  # tip (0 children) or branch point (2+ children) — stop
+
+        if len(section_ids) < 2:
+            n_skipped += 1
             continue
-        if subset.empty:
-            continue
 
-        # Build (N, 3) start and end point arrays
-        start_pts = node_coords.loc[subset['id']].values
-        end_pts   = node_coords.loc[subset['parent']].values
+        pts   = nodes.loc[section_ids, ['x', 'y', 'z']].values.tolist()
+        ntype = int(nodes.loc[start_id, 'type'])
+        color = type_color_map.get(ntype, axon_color)
 
-        actor = Lines(start_pts, end_pts, c=color, lw=lw)
-        actors.append(actor)
+        actors.append(Tube(pts, r=neurite_radius, c=color, cap=True))
+
+        if ntype == 2:
+            n_axon_sections += 1
+        else:
+            n_dend_sections += 1
+
 
     return actors
+# =============================================================================
+#     node_coords = swc_df.set_index('id')[['x', 'y', 'z']]
+# 
+#     # Only rows that have a valid parent
+#     has_parent = swc_df[swc_df['parent'] != -1]
+# 
+#     actors = []
+#     for neurite_type, color in [(2, axon_color), (3, dendrite_color)]:
+#         subset = has_parent[has_parent['type'] == neurite_type]
+#         if skip_dendrite and neurite_type == 3:
+#             continue
+#         if subset.empty:
+#             continue
+# 
+#         # Build (N, 3) start and end point arrays
+#         start_pts = node_coords.loc[subset['id']].values
+#         end_pts   = node_coords.loc[subset['parent']].values
+# 
+#         actor = Lines(start_pts, end_pts, c=color, lw=lw)
+#         actors.append(actor)
+# 
+#     return actors
+# =============================================================================
 
-def swap_for_brainrender(swcpath, axon='green', dendrite='black', skip_dendrite=False):
+def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black', skip_dendrite=False, neurite_radius=4, soma_radius=15):
     """
     swap coordinates of an swc to be rendered with brainrender, when swc is acquired from the Allen Institute
 
@@ -314,7 +398,10 @@ def swap_for_brainrender(swcpath, axon='green', dendrite='black', skip_dendrite=
     z = swc_df['z']
     swc_df['x'] = z
     swc_df['z'] = x
-    cell_actors = swc_to_line_actors(swc_df, axon_color=axon, dendrite_color=dendrite, skip_dendrite=skip_dendrite, lw=2)
+    cell_actors = swc_to_line_actors(
+        swc_df, axon_color=axon, dendrite_color=dendrite, soma_color=soma, skip_dendrite=skip_dendrite, 
+        neurite_radius=neurite_radius, soma_radius=soma_radius
+        )
     return cell_actors
 
 def write_targeted_regions_to_excel(data, output_path='targeted_regions.xlsx'):

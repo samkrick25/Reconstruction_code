@@ -13,7 +13,11 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from reconstructions.utils import preprocess_funcs as pp
 
-def get_projection_vals_from_reference(df, targets, refList, mult):
+mpl.rcParams['image.composite_image'] = False
+plt.rcParams['svg.fonttype'] = 'none'
+plt.rcParams['font.family'] = 'arial'
+
+def get_projection_vals_from_reference(df, targets, refList, mult, mean=False):
     match mult:
         case False:
             target = targets[0]
@@ -26,14 +30,34 @@ def get_projection_vals_from_reference(df, targets, refList, mult):
                     for cell, val in df.iterrows():
                         if cell in refList:
                             s = val[one] + val[two]
-                            toRet.append(s)
+                            if mean:
+                                s = s/2
+                                toRet.append(s)
+                            else:
+                                toRet.append(s)
                 case 3:
                     one, two, three = (targets[0], targets[1], targets[2])
                     for cell, val in df.iterrows():
                         if cell in refList:
                             s = val[one] + val[two] + val[three]
-                            toRet.append(s)
+                            if mean:
+                                s = s/3
+                                toRet.append(s)
+                            else:
+                                toRet.append(s)
             return toRet
+        
+def meanprojval(df, targets, names, thresh):
+    toRet = []
+    for cell, val in df.iterrows():
+        if cell in names:
+            #get number of targets that are targeted
+            n = sum(1 for target in targets if val[target] > thresh)
+            s = sum(val[target] for target in targets if val[target] > thresh)
+            s = s/n
+            toRet.append(s)
+    return toRet
+
 
 frequencies = pkl.load(open(frequenciespkl, 'rb')).T
 merged = pp.merge_regions(frequencies)
@@ -93,17 +117,21 @@ dlabels2 = ['XII', 'V', 'VII', 'XII/V', 'XII/VII', 'V/VII', 'XII/V/VII']
 acounts = [np.size(distinct), np.size(mixed)]
 dcounts = [np.size(XII), np.size(V), np.size(VII), np.size(mixed)]
 dcounts2 = dcounts[0:3]+[np.size(XIIV), np.size(VIIXII), np.size(VVII), np.size(XIIVIIV)]
+allcounts = [np.size(nonpremotorNames)] + dcounts2
 
-colors = mpl.colormaps['Set1'].colors
-ctouse = colors[1:5]
-
+# =============================================================================
+# colors = mpl.colormaps['Set1'].colors
+# ctouse = colors[1:5]
+# 
+# =============================================================================
+colors = ['xkcd:violet', 'xkcd:moss green', 'xkcd:ocean blue', 'xkcd:marigold', 'xkcd:yellow orange', 'orange', 'darkorange']
 # =============================================================================
 # fig, [aax, dax] = plt.subplots(1,2, figsize=(10,8), dpi=300)
 # 
 # aax.pie(acounts, labels=alabels, colors='Dark2')
 # =============================================================================
 fig, ax = plt.subplots(dpi=300)
-ax.pie(dcounts, labels=dlabels, colors=colors[1:6], autopct='%1.1f%%')
+ax.pie(dcounts, labels=dlabels, colors=colors, autopct='%1.1f%%')
 fig.suptitle('Mixed vs. Distinct Premotor Targets')
 
 fig2, ax2 = plt.subplots(dpi=300)
@@ -111,13 +139,29 @@ ax2.pie([np.size(nonpremotorNames), sum(dcounts)], labels=['Non-premotor', 'Prem
 fig2.suptitle('Premotor vs. Non-premotor')
 
 fig3, ax3 = plt.subplots(dpi=300)
-ax3.pie(dcounts2, labels=dlabels2, colors=colors, autopct='%1.1f%%')
+ax3.bar(dlabels2, dcounts2, color=colors)#ax3.pie(dcounts2, labels=dlabels2, colors=colors, autopct='%1.1f%%')
 fig3.suptitle('Unique and Mixed Motor Nucleus Targeting of IRN/PARN cells')
+fig3.supylabel('# of cells')
+fig3.supxlabel('Targeted Motor Nuclei')
+
+
+fig4, ax4 = plt.subplots(dpi=300)
+ax4.bar(['Non-premotor']+dlabels2, allcounts, color=['xkcd:light blue'] + colors) #ax4.pie(allcounts, labels=['Non-premotor']+dlabels2, colors=['xkcd:light blue']+colors)
+fig4.supylabel('# of Cells')
+for tick in ax4.get_xticklabels():
+    tick.set_rotation(45)
+fig4.align_xlabels()
+ax4.spines['top'].set_visible(False)
+ax4.spines['right'].set_visible(False)
+#ax4.set_yticks(np.arange(0,22,3))
+fig4.savefig(r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\premotorsU19\bar.svg')
 
 #preprocess to normalize for cell size, then plot histograms of both normalized
 #and non normalized endpoints for each population of motor nuc projection pattern
 pp_freq = pp.preprocess(merged, pct=False, log1p=False)
 
+#should change these variable names, they are not % as per my call above, should just remove that and change this
+#but prob won't
 XIIpct = get_projection_vals_from_reference(pp_freq, ['XII'], XII, mult=False)
 VIIpct = get_projection_vals_from_reference(pp_freq, ['VII'], VII, mult=False)
 Vpct = get_projection_vals_from_reference(pp_freq, ['V'], V, mult=False)
@@ -167,3 +211,18 @@ mixfig.tight_layout()
 # iax.set_ylabel('# cells')
 # =============================================================================
 
+#hist for all premotor ends (first plot all, then plot mixed vs distinct to see if theres any difference)
+mnNames = ['XII', 'VII', 'V']
+allpre = meanprojval(merged, mnNames, mixed+distinct, thresh)
+mixedvals = meanprojval(merged, mnNames, mixed, thresh)
+distinctvals = meanprojval(merged, mnNames, distinct, thresh)
+bins = np.histogram_bin_edges(allpre, bins=50)
+allfig, [sumax, diffax] = plt.subplots(2, 1, dpi=300)
+allfig.suptitle('Endpoints in motor nuclei of premotor neurons')
+mixfig.supxlabel('mean # endpoints per motor nucleus targeted')
+mixfig.supylabel('# of cells')
+_,allbins,allhist = sumax.hist(allpre, bins=bins, label='all premotors')
+_,bins,mixhist = diffax.hist(mixedvals, bins=bins, label='mixed premotors', color='orange', alpha=0.5)
+_,_,disthist = diffax.hist(distinctvals, bins=bins, label='distinct premotors', color='blue', alpha=0.3)
+diffax.legend(handles=[mixhist[0], disthist[0]])
+sumax.legend(handles=[allhist[0]])

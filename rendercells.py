@@ -11,7 +11,7 @@ from reconstructions.utils import preprocess_funcs as pf
 from reconstructions.utils import cameras
 
 #path to swc to be visualized
-neuron = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N071-709222.swc"
+neuron = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N030-703070.swc"
 
 settings.SHOW_AXES=None
 
@@ -19,13 +19,15 @@ settings.SHOW_AXES=None
 ccf_scene = Scene(atlas_name='allen_mouse_10um', root=True)
 root = ccf_scene.get_actors()[0]
 root._needs_silhouette = False
+settings.ROOT_COLOR=[0.8, 0.8, 0.8]
+settings.ROOT_ALPHA=0.2
 print('scene set')
 
 #add desired brain regions
 ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
 ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
 #ccf_scene.add_brain_region('MDRN', silhouette=False, color='orange', alpha=0.2)
-ccf_scene.add_brain_region('XII', silhouette=False, color='purple', alpha=0.2)
+ccf_scene.add_brain_region('MRN', silhouette=False, color='purple', alpha=0.2)
 # =============================================================================
 # ccf_scene.add_brain_region('SPVC', silhouette=False, color='yellow', alpha=0.2)
 # ccf_scene.add_brain_region('SPVO', silhouette=False, color='cyan', alpha=0.2)
@@ -33,7 +35,7 @@ ccf_scene.add_brain_region('XII', silhouette=False, color='purple', alpha=0.2)
 # =============================================================================
 
 #add neuron, first create line actors
-lines = pf.swap_for_brainrender(neuron)
+lines = pf.swap_for_brainrender(neuron, skip_dendrite=True, neurite_radius=10, soma_radius=25)
 for actor in lines:
     ccf_scene.add(actor)
     
