@@ -8,7 +8,7 @@ Created on Thu Jun 11 20:40:58 2026
 from brainrender import Scene, settings
 from reconstructions.utils.filedirs import frequenciespkl
 from reconstructions.utils import preprocess_funcs as pp
-from reconstructions.utils import cameras
+
 import pickle
 from tqdm import tqdm
 import os
@@ -23,7 +23,16 @@ mossys = ['AA0922', 'AA1263', 'N010-651324', 'N013-703070', 'N016-715345-HD', 'N
 frequencies = pickle.load(open(frequenciespkl, 'rb')).T
 merged = pp.merge_regions(frequencies)
 
-celldir = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson"
+celldir = r"reconstructions\data\IRNPARN_cells\swcsfromjson"
+savedir = r'images'
+rootcam = dict(
+    pos=(6861.42, -108506, -5802.38),
+    focal_point=(7080.29, 4292.90, -5022.47),
+    viewup=(-1.00000, 0, 0),
+    roll=74.3246,
+    distance=112801,
+    clipping_range=(103739, 123466),
+)
 
 ccf_scene = Scene(atlas_name='allen_mouse_10um')
 settings.SHOW_AXES=False
@@ -51,11 +60,12 @@ for file in tqdm(os.listdir(celldir), desc='Loading neurons'):
     if cellname in mossys:
         continue
     if cellname in GRNcells:
-        actors = pp.swap_for_brainrender(filepath, axon='green', skip_dendrite=True, soma='green', neurite_radius=4, soma_radius=4)
+        actors = pp.swap_for_brainrender(filepath, axon='green', skip_dendrite=True, soma='green', neurite_radius=8, soma_radius=4)
         for actor in actors:
             ccf_scene.add(actor)
     if cellname in nonGRNcells:
-        actors = pp.swap_for_brainrender(filepath, axon='blue', skip_dendrite=True, soma='blue', neurite_radius=4, soma_radius=4)
+        actors = pp.swap_for_brainrender(filepath, axon='blue', skip_dendrite=True, soma='blue', neurite_radius=8, soma_radius=4)
         for actor in actors:
             ccf_scene.add(actor)
-ccf_scene.render(camera=cameras.topcam)
+ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop2.png', camera=rootcam, dpi=300)
+ccf_scene.close()
