@@ -40,17 +40,18 @@ nonGRNdf = merged.loc[merged['GRN'] == 0]
 nonGRNmask = nonGRNdf.astype(bool)
 pMRNnonGRN = nonGRNmask.sum(axis=0)['MRN']/len(nonGRNmask.index)
 
+MRN = len(MRNdf.index)
 GRNMRN = MRNmask.sum(axis=0)['GRN']
 GRNmrn = len(GRNdf.index) - GRNMRN
 
 grnMRN = len(MRNmask['GRN']) - GRNMRN
 
-labels = ['GRN', 'GRN&MRN', 'MRN&~GRN']
+labels = ['MRN', 'GRN&MRN', 'MRN&~GRN']
 colors = ['blue', 'darkorange']
-subsets = {'10':GRNmrn, '01':grnMRN, '11':GRNMRN}
+subsets = {'10':MRN, '01':grnMRN, '11':GRNMRN}
 #fig, ax = plt.subplots(dpi=300)
 venn = venn2(subsets=subsets, set_labels=labels, set_colors=colors)
-plt.savefig(r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\GRNMRNvenn.svg')
+plt.savefig(r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\GRNMRNvenn2.svg')
 
 
 # =============================================================================
