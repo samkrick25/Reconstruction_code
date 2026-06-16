@@ -83,7 +83,10 @@ for cell, vals in tqdm(MRNGRN.iterrows(), desc='Loading neurons'):
     else:
         continue
     #print(f"[BEFORE BUILD] {cell} — key={key}", flush=True)
-    actors = pp.swap_for_brainrender(fn, axon=LUT[key], skip_dendrite=True, soma=LUT[key], alpha=alpha, neurite_radius=15, soma_radius=15, res=12)
+    if key == 'GRN':
+        actors = pp.swap_for_brainrender(fn, axon=LUT[key], skip_dendrite=True, soma=LUT[key], alpha=1, neurite_radius=5, soma_radius=5, res=12)
+    if key == 'MRN':
+        actors = pp.swap_for_brainrender(fn, axon=LUT[key], skip_dendrite=True, soma=LUT[key], alpha=1, neurite_radius=15, soma_radius=5, res=12)
     #print(f"[AFTER BUILD] {cell} — {len(actors)} actors", flush=True)
     for i, actor in enumerate(actors):
         #print(f"[BEFORE ADD] {cell} actor {i}/{len(actors)}", flush=True)
@@ -127,5 +130,5 @@ for cell, vals in tqdm(MRNGRN.iterrows(), desc='Loading neurons'):
 
 
 #ccf_scene.render(camera=cameras.topcam)
-ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop3.png', camera=rootcam, scale=3)
+ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop5.png', camera=rootcam, scale=3)
 ccf_scene.close()
