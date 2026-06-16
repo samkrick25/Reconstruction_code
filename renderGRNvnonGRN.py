@@ -4,11 +4,14 @@ Created on Thu Jun 11 20:40:58 2026
 
 @author: samkr
 """
+import vtk
+vtk.vtkMultiThreader.SetGlobalMaximumNumberOfThreads(1)
+
 
 from brainrender import Scene, settings
 from reconstructions.utils.filedirs import frequenciespkl
 from reconstructions.utils import preprocess_funcs as pp
-
+from reconstructions.utils import cameras
 import pickle
 from tqdm import tqdm
 import os
@@ -34,12 +37,22 @@ rootcam = dict(
     distance=112801,
     clipping_range=(103739, 123466),
 )
+cam2 = dict(
+    pos=(7807.52, -7155.86, -5773.68),
+    focal_point=(7829.74, 4296.07, -5694.50),
+    viewup=(-1.00000, 0, 0),
+    roll=74.3239,
+    distance=11452.2,
+    clipping_range=(2162.03, 24963.9),
+)
 
-ccf_scene = Scene(atlas_name='allen_mouse_10um')
 settings.SHOW_AXES=False
 settings.ROOT_COLOR=[0.8,0.8,0.8]
+#settings.OFFSCREEN=True
+ccf_scene = Scene(atlas_name='allen_mouse_10um')
 root = ccf_scene.get_actors()[0]
 root._needs_silhouette=False
+
 
 ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
 ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
@@ -47,29 +60,46 @@ ccf_scene.add_brain_region('GRN', silhouette=False, alpha=0.2, color='blue')
 ccf_scene.add_brain_region('MRN', silhouette=False, alpha=0.2, color='orange')
 
 masked = merged.astype(bool)
-MRNGRN = merged.loc[(merged['GRN']) != 0 | (merged['MRN'] != 0)]
+MRNGRN = merged.loc[(merged['GRN'] != 0) | (merged['MRN'] != 0)]
 
-LUT = {'MRN':(255,140,0),'GRNMRN':(198,78,198),'GRN':(0,0,255)}
+LUT = {'MRN':(255,140,0),'GRNMRN':(198,78,198),'GRN':(0,0,200)}
+
+actors_by_key = {'MRN': [], 'GRN': [], 'GRNMRN': []}
+
 
 for cell, vals in tqdm(MRNGRN.iterrows(), desc='Loading neurons'):
+    print(f'Processing: {cell}', flush=True)
     fn = os.path.join(celldir, cell+'.swc')
     if vals['GRN'] > 0 and vals['MRN'] > 0:
-        key = 'GRNMRN'
-        actors = pp.swap_for_brainrender(fn, axon=LUT[key], skip_dendrite=True, soma=LUT[key], alpha=0.484, neurite_radius=15, soma_radius=15)
-        for actor in actors:
-            ccf_scene.add(actor)
-        continue
-    if vals['GRN'] > 0:
+        key = 'GRN'
+        alpha = 0.484
+    elif vals['GRN'] > 0 and vals['MRN'] == 0:
         key='GRN'
-        actors = pp.swap_for_brainrender(fn, axon=LUT[key], soma=LUT[key], skip_dendrite=True, alpha=0.603, neurite_radius=15, soma_radius=15)
-        for actor in actors:
-            ccf_scene.add(actor)
+        alpha=0.603
         continue
-    if vals['MRN'] > 0:
+    elif vals['MRN'] > 0 and vals['GRN'] == 0:
         key='MRN'
-        actors = pp.swap_for_brainrender(fn, axon=LUT[key], soma=LUT[key], skip_dendrite=True, alpha=0.603, neurite_radius=15, soma_radius=15)
-        for actor in actors:
-            ccf_scene.add(actor)
+        alpha=0.601
+    else:
+        continue
+    #print(f"[BEFORE BUILD] {cell} — key={key}", flush=True)
+    actors = pp.swap_for_brainrender(fn, axon=LUT[key], skip_dendrite=True, soma=LUT[key], alpha=alpha, neurite_radius=15, soma_radius=15, res=12)
+    #print(f"[AFTER BUILD] {cell} — {len(actors)} actors", flush=True)
+    for i, actor in enumerate(actors):
+        #print(f"[BEFORE ADD] {cell} actor {i}/{len(actors)}", flush=True)
+        ccf_scene.add(actor)
+        #print(f"[AFTER ADD] {cell} actor {i}/{len(actors)}", flush=True)
+
+# =============================================================================
+#     actors_by_key[key].extend(actors)
+#     
+# for key, actors in actors_by_key.items():
+#     if not actors:
+#         continue
+#     merged_actor = merge(actors)   # one VTK object per color group
+#     #merged_actor.alpha(0.484 if key == 'GRNMRN' else 0.603)
+#     ccf_scene.add(merged_actor)
+# =============================================================================
 # =============================================================================
 # GRNcells = []
 # nonGRNcells = []
@@ -94,5 +124,8 @@ for cell, vals in tqdm(MRNGRN.iterrows(), desc='Loading neurons'):
 #         for actor in actors:
 #             ccf_scene.add(actor)
 # =============================================================================
-ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop3.png', camera=rootcam, dpi=300)
+
+
+#ccf_scene.render(camera=cameras.topcam)
+ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop3.png', camera=rootcam, scale=3)
 ccf_scene.close()

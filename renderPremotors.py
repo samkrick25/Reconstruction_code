@@ -12,8 +12,8 @@ from reconstructions.utils import cameras
 from tqdm import tqdm
 from reconstructions.utils import preprocess_funcs as pf
 
-celldir = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\premotorsU19\N071-709222'
-savedir = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\premotorsU19'
+celldir = r'reconstructions\data\IRNPARN_cells\premotorsU19\N071-709222'
+savedir = r'reconstructions\data\IRNPARN_cells\premotorsU19'
 #celldir = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\premotorsU19\alltorender'
 print('setting scene')
 
@@ -33,8 +33,10 @@ ccf_scene.slice(horzplane2)
 # =============================================================================
 print('scene set')
 # =============================================================================
-# ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
-# ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
+ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
+ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
+ccf_scene.add_brain_region('GRN', silhouette=False, alpha=0.2, color='blue')
+ccf_scene.add_brain_region('MRN', silhouette=False, alpha=0.2, color='orange')
 # ccf_scene.add_brain_region('XII', silhouette=False, color='purple', alpha=0.2)
 # ccf_scene.add_brain_region('V', silhouette=False, color='green', alpha=0.2)
 # ccf_scene.add_brain_region('VII', silhouette=False, color='blue', alpha=0.2)
@@ -58,7 +60,7 @@ rootcam = dict(
 #     for line in lines:
 #         ccf_scene.add(line)
 # =============================================================================
-ccf_scene.screenshot(name=savedir+'\\'+'orienting3.png', camera=rootcam, scale=3)
+ccf_scene.screenshot(name=savedir+'\\'+'orientingmrn.png', camera=rootcam, scale=3)
 ccf_scene.close()
 #ccf_scene.render(camera=cameras.MYtopcam)
 print('adding brain regions')

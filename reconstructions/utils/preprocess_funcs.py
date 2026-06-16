@@ -8,7 +8,9 @@ import json
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
 from collections import defaultdict
-from vedo import Tube, Sphere
+from vedo import Tube, Sphere, Line
+import vtk
+from vedo import Mesh
 
 MIDLINEZ = 5750
 MIDLINEZ_10UM = 570
@@ -259,44 +261,27 @@ def get_targeted_regions(data, cell):
     '''
     return data.loc[cell, data.columns[data.loc[cell]!=0].tolist()].sort_values(ascending=False)
 
-def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_color='red', soma_color='black', neurite_radius=4, soma_radius=15, alpha=1):
-
-    """
-    Build vedo Tube actors per morphological section directly from a
-    parsed SWC DataFrame — no file path or morphio needed.
-
-    Sections are extracted by walking parent-child relationships:
-      - A section starts at any non-soma node whose parent is the soma,
-        has no parent (parentNumber==-1), or is a branch point (2+ children)
-      - The section walks forward along single-child nodes until hitting
-        a tip (0 children) or branch point (2+ children)
-      - The parent node coordinate is prepended to each child section so
-        that adjacent tubes overlap at branch points, giving seamless joins
-    """
+def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_color='red',
+                        soma_color='black', neurite_radius=4, soma_radius=15, alpha=1, res=12):
     nodes = swc_df.set_index('id')
 
-    # Build children map: parent_id -> [child_ids]
+    # Build children map
     children = defaultdict(list)
     for node_id, row in nodes.iterrows():
         if row['parent'] != -1:
-            if skip_dendrite == False: 
-                children[int(row['parent'])].append(node_id)
-            else:
-                if row['type'] == 3:
-                    continue
-                else:
-                    children[int(row['parent'])].append(node_id)
-    # Soma
+            if skip_dendrite and row['type'] == 3:
+                continue
+            children[int(row['parent'])].append(node_id)
+
     soma_row = nodes[nodes['type'] == 1].iloc[0]
     soma_id  = int(soma_row.name)
     soma_pos = soma_row[['x', 'y', 'z']].tolist()
 
-    type_color_map = {2: axon_color, 3: dendrite_color}
+    actors = [Sphere(pos=soma_pos, r=soma_radius, c=soma_color, alpha=alpha)]
 
-    actors = [Sphere(pos=soma_pos, r=soma_radius, c=soma_color)]
+    # Collect sections by neurite type instead of building Tube() per section
+    sections_by_type = defaultdict(list)
 
-    # Section start nodes: non-soma nodes whose parent is either
-    # soma, -1 (orphan root), or a branch point (2+ children)
     section_starts = [
         node_id for node_id, row in nodes.iterrows()
         if row['type'] != 1
@@ -305,21 +290,12 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_
              or len(children[int(row['parent'])]) > 1)
     ]
 
-    n_axon_sections = 0
-    n_dend_sections = 0
-    n_skipped       = 0
-
     for start_id in section_starts:
         section_ids = []
-
-        # Prepend the branch-point parent coordinate so this tube overlaps
-        # with the end of its parent tube — fills the gap at the branch point.
-        # Skip if parent is soma (soma sphere already covers that join) or -1.
         parent_id = int(nodes.loc[start_id, 'parent'])
         if parent_id != -1 and parent_id != soma_id:
             section_ids.append(parent_id)
 
-        # Walk the unbranched chain forward
         current_id = start_id
         while True:
             section_ids.append(current_id)
@@ -327,50 +303,32 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_
             if len(kids) == 1:
                 current_id = kids[0]
             else:
-                break  # tip (0 children) or branch point (2+ children) — stop
+                break
 
         if len(section_ids) < 2:
-            n_skipped += 1
             continue
 
-        pts   = nodes.loc[section_ids, ['x', 'y', 'z']].values.tolist()
+        pts   = nodes.loc[section_ids, ['x', 'y', 'z']].values
         ntype = int(nodes.loc[start_id, 'type'])
+        sections_by_type[ntype].append(pts)  # ← collect, don't build yet
+
+    # One vtkTubeFilter per neurite type — not one per section
+    type_color_map = {2: axon_color, 3: dendrite_color}
+
+    for ntype, sections in sections_by_type.items():
+        if skip_dendrite and ntype == 3:
+            continue
         color = type_color_map.get(ntype, axon_color)
-
-        actors.append(Tube(pts, r=neurite_radius, c=color, cap=True, alpha=alpha))
-
-        if ntype == 2:
-            n_axon_sections += 1
-        else:
-            n_dend_sections += 1
-
+        actor = build_tube_actor_from_sections(
+            sections, radius=neurite_radius, color=color, alpha=alpha, res=res
+        )
+        if actor is not None:
+            actors.append(actor)
 
     return actors
-# =============================================================================
-#     node_coords = swc_df.set_index('id')[['x', 'y', 'z']]
-# 
-#     # Only rows that have a valid parent
-#     has_parent = swc_df[swc_df['parent'] != -1]
-# 
-#     actors = []
-#     for neurite_type, color in [(2, axon_color), (3, dendrite_color)]:
-#         subset = has_parent[has_parent['type'] == neurite_type]
-#         if skip_dendrite and neurite_type == 3:
-#             continue
-#         if subset.empty:
-#             continue
-# 
-#         # Build (N, 3) start and end point arrays
-#         start_pts = node_coords.loc[subset['id']].values
-#         end_pts   = node_coords.loc[subset['parent']].values
-# 
-#         actor = Lines(start_pts, end_pts, c=color, lw=lw)
-#         actors.append(actor)
-# 
-#     return actors
-# =============================================================================
 
-def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black', skip_dendrite=False, neurite_radius=4, soma_radius=15, alpha=1):
+
+def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black', skip_dendrite=False, neurite_radius=4, soma_radius=15, alpha=1, res=12):
     """
     swap coordinates of an swc to be rendered with brainrender, when swc is acquired from the Allen Institute
 
@@ -386,7 +344,6 @@ def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black', 
 
     """
 
-    
     swc_df = pd.read_csv(
          swcpath,
          comment='#', 
@@ -400,7 +357,7 @@ def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black', 
     swc_df['z'] = x
     cell_actors = swc_to_line_actors(
         swc_df, axon_color=axon, dendrite_color=dendrite, soma_color=soma, skip_dendrite=skip_dendrite, 
-        neurite_radius=neurite_radius, soma_radius=soma_radius, alpha=alpha
+        neurite_radius=neurite_radius, soma_radius=soma_radius, alpha=alpha, res=res
         )
     return cell_actors
 
@@ -462,5 +419,61 @@ def write_targeted_regions_to_excel(data, output_path='targeted_regions.xlsx'):
     print(f"Results written to '{output_path}'")
 
 
-# --- Usage ---
-# write_targeted_regions_to_excel(your_dataframe, output_path='targeted_regions.xlsx')
+def build_tube_actor_from_sections(sections, radius, color, alpha, res):
+    """
+    Takes a list of point arrays (one per morphological section) and builds
+    them all into a single vtkPolyData, then applies ONE vtkTubeFilter to it.
+    Returns a single vedo Mesh actor.
+
+    This avoids creating one vtkTubeFilter per section, which causes VTK
+    internal state corruption after enough instantiations.
+    """
+    points = vtk.vtkPoints()
+    lines  = vtk.vtkCellArray()
+    pt_offset = 0
+
+    for pts in sections:
+        if len(pts) < 2:
+            continue
+
+        # Guard against degenerate/NaN coordinates
+        pts = np.array(pts, dtype=np.float64)
+        if not np.all(np.isfinite(pts)):
+            continue
+
+        # Remove consecutive duplicate points (zero-length segments crash VTK)
+        keep = np.ones(len(pts), dtype=bool)
+        for i in range(1, len(pts)):
+            if np.linalg.norm(pts[i] - pts[i-1]) < 1e-6:
+                keep[i] = False
+        pts = pts[keep]
+        if len(pts) < 2:
+            continue
+
+        polyline = vtk.vtkPolyLine()
+        polyline.GetPointIds().SetNumberOfIds(len(pts))
+        for i, pt in enumerate(pts):
+            points.InsertNextPoint(float(pt[0]), float(pt[1]), float(pt[2]))
+            polyline.GetPointIds().SetId(i, pt_offset + i)
+        lines.InsertNextCell(polyline)
+        pt_offset += len(pts)
+
+    if pt_offset == 0:
+        return None
+
+    polydata = vtk.vtkPolyData()
+    polydata.SetPoints(points)
+    polydata.SetLines(lines)
+
+    tube = vtk.vtkTubeFilter()
+    tube.SetInputData(polydata)
+    tube.SetRadius(radius)
+    tube.SetNumberOfSides(res)
+    tube.CappingOn()
+    tube.Update()
+
+    # Normalize color to 0-1 range if passed as 0-255 tuple
+    if isinstance(color, (tuple, list)) and any(c > 1 for c in color):
+        color = tuple(c / 255.0 for c in color)
+
+    return Mesh(tube.GetOutput(), c=color, alpha=alpha)
