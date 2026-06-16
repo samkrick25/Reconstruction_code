@@ -259,7 +259,7 @@ def get_targeted_regions(data, cell):
     '''
     return data.loc[cell, data.columns[data.loc[cell]!=0].tolist()].sort_values(ascending=False)
 
-def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_color='red', soma_color='black', neurite_radius=4, soma_radius=15):
+def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_color='red', soma_color='black', neurite_radius=4, soma_radius=15, alpha=1):
 
     """
     Build vedo Tube actors per morphological section directly from a
@@ -337,7 +337,7 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_
         ntype = int(nodes.loc[start_id, 'type'])
         color = type_color_map.get(ntype, axon_color)
 
-        actors.append(Tube(pts, r=neurite_radius, c=color, cap=True))
+        actors.append(Tube(pts, r=neurite_radius, c=color, cap=True, alpha=alpha))
 
         if ntype == 2:
             n_axon_sections += 1
@@ -370,7 +370,7 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_
 #     return actors
 # =============================================================================
 
-def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black', skip_dendrite=False, neurite_radius=4, soma_radius=15):
+def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black', skip_dendrite=False, neurite_radius=4, soma_radius=15, alpha=1):
     """
     swap coordinates of an swc to be rendered with brainrender, when swc is acquired from the Allen Institute
 
@@ -400,7 +400,7 @@ def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black', 
     swc_df['z'] = x
     cell_actors = swc_to_line_actors(
         swc_df, axon_color=axon, dendrite_color=dendrite, soma_color=soma, skip_dendrite=skip_dendrite, 
-        neurite_radius=neurite_radius, soma_radius=soma_radius
+        neurite_radius=neurite_radius, soma_radius=soma_radius, alpha=alpha
         )
     return cell_actors
 

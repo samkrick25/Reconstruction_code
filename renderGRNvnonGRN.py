@@ -21,6 +21,7 @@ mossys = ['AA0922', 'AA1263', 'N010-651324', 'N013-703070', 'N016-715345-HD', 'N
           'N114-708369-HS', 'N115-708369-BP']
 
 frequencies = pickle.load(open(frequenciespkl, 'rb')).T
+frequencies = frequencies.drop('N004-674185-DS', axis=0)
 merged = pp.merge_regions(frequencies)
 
 celldir = r"reconstructions\data\IRNPARN_cells\swcsfromjson"
@@ -42,30 +43,56 @@ root._needs_silhouette=False
 
 ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
 ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
-ccf_scene.add_brain_region('GRN', silhouette=False, alpha=0.2, color='green')
-ccf_scene.add_brain_region('MRN', silhouette=False, alpha=0.2, color='purple')
+ccf_scene.add_brain_region('GRN', silhouette=False, alpha=0.2, color='blue')
+ccf_scene.add_brain_region('MRN', silhouette=False, alpha=0.2, color='orange')
 
-GRNcells = []
-nonGRNcells = []
+masked = merged.astype(bool)
+MRNGRN = merged.loc[(merged['GRN']) != 0 | (merged['MRN'] != 0)]
 
-for cell, targets in merged.iterrows():
-    if targets['GRN'] > THRESH:
-        GRNcells.append(cell)
-    if targets['GRN'] <= THRESH:
-        nonGRNcells.append(cell)
-        
-for file in tqdm(os.listdir(celldir), desc='Loading neurons'):
-    cellname = file.split('.')[0]
-    filepath = os.path.join(celldir, file)
-    if cellname in mossys:
+LUT = {'MRN':(255,140,0),'GRNMRN':(198,78,198),'GRN':(0,0,255)}
+
+for cell, vals in tqdm(MRNGRN.iterrows(), desc='Loading neurons'):
+    fn = os.path.join(celldir, cell+'.swc')
+    if vals['GRN'] > 0 and vals['MRN'] > 0:
+        key = 'GRNMRN'
+        actors = pp.swap_for_brainrender(fn, axon=LUT[key], skip_dendrite=True, soma=LUT[key], alpha=0.484, neurite_radius=15, soma_radius=15)
+        for actor in actors:
+            ccf_scene.add(actor)
         continue
-    if cellname in GRNcells:
-        actors = pp.swap_for_brainrender(filepath, axon='green', skip_dendrite=True, soma='green', neurite_radius=8, soma_radius=4)
+    if vals['GRN'] > 0:
+        key='GRN'
+        actors = pp.swap_for_brainrender(fn, axon=LUT[key], soma=LUT[key], skip_dendrite=True, alpha=0.603, neurite_radius=15, soma_radius=15)
         for actor in actors:
             ccf_scene.add(actor)
-    if cellname in nonGRNcells:
-        actors = pp.swap_for_brainrender(filepath, axon='blue', skip_dendrite=True, soma='blue', neurite_radius=8, soma_radius=4)
+        continue
+    if vals['MRN'] > 0:
+        key='MRN'
+        actors = pp.swap_for_brainrender(fn, axon=LUT[key], soma=LUT[key], skip_dendrite=True, alpha=0.603, neurite_radius=15, soma_radius=15)
         for actor in actors:
             ccf_scene.add(actor)
-ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop2.png', camera=rootcam, dpi=300)
+# =============================================================================
+# GRNcells = []
+# nonGRNcells = []
+# 
+# for cell, targets in merged.iterrows():
+#     if targets['GRN'] > THRESH:
+#         GRNcells.append(cell)
+#     if targets['GRN'] <= THRESH:
+#         nonGRNcells.append(cell)
+#         
+# for file in tqdm(os.listdir(celldir), desc='Loading neurons'):
+#     cellname = file.split('.')[0]
+#     filepath = os.path.join(celldir, file)
+#     if cellname in mossys:
+#         continue
+#     if cellname in GRNcells:
+#         actors = pp.swap_for_brainrender(filepath, axon='green', skip_dendrite=True, soma='green', neurite_radius=8, soma_radius=4)
+#         for actor in actors:
+#             ccf_scene.add(actor)
+#     if cellname in nonGRNcells:
+#         actors = pp.swap_for_brainrender(filepath, axon='blue', skip_dendrite=True, soma='blue', neurite_radius=8, soma_radius=4)
+#         for actor in actors:
+#             ccf_scene.add(actor)
+# =============================================================================
+ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop3.png', camera=rootcam, dpi=300)
 ccf_scene.close()
