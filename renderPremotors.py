@@ -50,19 +50,19 @@ rootcam = dict(
     clipping_range=(103739, 123466),
 )
 
+colors = ['green', 'red', 'blue', 'brown', 'black', 'purple']
+for i, file in enumerate(os.listdir(celldir)):
+    filestr = file.split('.')[0]
+    cellname = filestr
+    filename = os.path.join(celldir, file)
+    lines = pf.swap_for_brainrender(filename, axon=colors[i], skip_dendrite=True)
+    for line in lines:
+        ccf_scene.add(line)
 # =============================================================================
-# colors = ['green', 'red', 'blue', 'brown', 'black', 'purple']
-# for i, file in enumerate(os.listdir(celldir)):
-#     filestr = file.split('.')[0]
-#     cellname = filestr
-#     filename = os.path.join(celldir, file)
-#     lines = pf.swap_for_brainrender(filename, axon=colors[i], skip_dendrite=True)
-#     for line in lines:
-#         ccf_scene.add(line)
+# ccf_scene.screenshot(name=savedir+'\\'+'orientingmrn.png', camera=rootcam, scale=3)
+# ccf_scene.close()
 # =============================================================================
-ccf_scene.screenshot(name=savedir+'\\'+'orientingmrn.png', camera=rootcam, scale=3)
-ccf_scene.close()
-#ccf_scene.render(camera=cameras.MYtopcam)
+ccf_scene.render(camera=cameras.MYtopcam)
 print('adding brain regions')
 # =============================================================================
 # ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
