@@ -11,6 +11,7 @@ from collections import defaultdict
 from vedo import Tube, Sphere, Line
 import vtk
 from vedo import Mesh
+from scipy.spatial import Delaunay
 
 MIDLINEZ = 5750
 MIDLINEZ_10UM = 570
@@ -261,11 +262,186 @@ def get_targeted_regions(data, cell):
     '''
     return data.loc[cell, data.columns[data.loc[cell]!=0].tolist()].sort_values(ascending=False)
 
+# =============================================================================
+# def filter_nodes_by_mesh(swc_df, mesh):
+#     """
+#     Remove SWC nodes that do not fall inside ANY of the provided mesh(es).
+# 
+#     Parameters
+#     ----------
+#     swc_df : pd.DataFrame
+#         SWC data in CCF (pre-axis-swap) space.
+#     mesh : np.ndarray | list[np.ndarray] | np.array([])
+#         One or more (N,3) CCF-space vertex arrays.
+#         Empty array or empty list → no filtering, return swc_df unchanged.
+# 
+#     Returns
+#     -------
+#     pd.DataFrame
+#         Filtered copy (OR logic: node kept if inside any mesh).
+#     """
+#     mesh_list = _normalize_meshes(mesh)
+#     if not mesh_list:
+#         return swc_df
+# 
+#     coords = swc_df[['x', 'y', 'z']].values.copy()   # copy — don't touch DataFrame
+# 
+#     # Vectorized midline reflection (same logic as before, no Python loop)
+#     over = coords[:, 2] > MIDLINEZ
+#     coords[over, 2] = 2 * MIDLINEZ - coords[over, 2]
+# 
+#     # OR across all meshes — keep node if it lands inside at least one
+#     combined_mask = np.zeros(len(coords), dtype=bool)
+#     for verts in mesh_list:
+#         tri = Delaunay(verts)
+#         combined_mask |= tri.find_simplex(coords) >= 0
+#         if combined_mask.all():      # early exit once every node is accounted for
+#             break
+# 
+#     return swc_df[combined_mask].copy()
+# =============================================================================
+def get_inmesh_mask(swc_df, mesh):
+    """
+    Return a boolean numpy array (len == len(swc_df)) where True means the
+    node falls inside at least one of the provided mesh(es).
+
+    Applies midline reflection for contralateral nodes so a single
+    ipsilateral mesh can match bilateral projections to the same region.
+    If mesh is empty, all nodes are True (no filtering).
+    """
+    mesh_list = _normalize_meshes(mesh)
+    if not mesh_list:
+        return np.ones(len(swc_df), dtype=bool)
+
+    coords = swc_df[['x', 'y', 'z']].values.copy()   # copy — never touch swc_df
+    over = coords[:, 2] > MIDLINEZ
+    coords[over, 2] = 2 * MIDLINEZ - coords[over, 2]  # vectorized reflection
+
+    mask = np.zeros(len(coords), dtype=bool)
+    for verts in mesh_list:
+        tri = Delaunay(verts)
+        mask |= tri.find_simplex(coords) >= 0
+        if mask.all():          # early exit once every node is accounted for
+            break
+    return mask
+
+def _normalize_meshes(mesh):
+    """
+    Normalize the mesh argument into a flat list of (N,3) vertex arrays.
+      - np.array([])               → []   (no filtering)
+      - single (N,3) ndarray       → [mesh]
+      - list of (N,3) ndarrays     → mesh (empty arrays dropped)
+    """
+    if isinstance(mesh, np.ndarray):
+        return [] if mesh.size == 0 else [mesh]
+    if isinstance(mesh, list):
+        return [m for m in mesh if isinstance(m, np.ndarray) and m.size > 0]
+    return []
+
+
+def _mesh_has_data(mesh):
+    """Return True when mesh contains at least one non-empty vertex array."""
+    return len(_normalize_meshes(mesh)) > 0
+
+
+# =============================================================================
+# def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_color='red',
+#                        soma_color='black', neurite_radius=4, soma_radius=15, alpha=1, res=12,
+#                        include_soma=True):
+#     """
+#     Build vedo actors from a (possibly pre-filtered) SWC DataFrame.
+# 
+#     Parameters
+#     ----------
+#     include_soma : bool
+#         When False the soma Sphere is omitted — useful when the cell body
+#         lies outside the filtered region (e.g. rendering only axon terminals).
+#     """
+#     nodes = swc_df.set_index('id')
+# 
+#     # Build children map
+#     children = defaultdict(list)
+#     for node_id, row in nodes.iterrows():
+#         if row['parent'] != -1:
+#             if skip_dendrite and row['type'] == 3:
+#                 continue
+#             children[int(row['parent'])].append(node_id)
+# 
+#     soma_rows = nodes[nodes['type'] == 1]
+#     soma_id   = int(soma_rows.iloc[0].name) if len(soma_rows) > 0 else -1
+# 
+#     if include_soma and len(soma_rows) > 0:
+#         soma_pos = soma_rows.iloc[0][['x', 'y', 'z']].tolist()
+#         actors   = [Sphere(pos=soma_pos, r=soma_radius, c=soma_color, alpha=alpha)]
+#     else:
+#         actors = []
+# 
+#     sections_by_type = defaultdict(list)
+# 
+#     section_starts = [
+#         node_id for node_id, row in nodes.iterrows()
+#         if row['type'] != 1
+#         and (row['parent'] == -1
+#              or (include_soma and int(row['parent']) == soma_id)
+#              or len(children[int(row['parent'])]) > 1)
+#     ]
+# 
+#     for start_id in section_starts:
+#         section_ids = []
+#         parent_id   = int(nodes.loc[start_id, 'parent'])
+#         if parent_id != -1 and parent_id != soma_id and parent_id in nodes.index:
+#             section_ids.append(parent_id)
+# 
+#         current_id = start_id
+#         while True:
+#             section_ids.append(current_id)
+#             kids = children[current_id]
+#             if len(kids) == 1:
+#                 current_id = kids[0]
+#             else:
+#                 break
+# 
+#         if len(section_ids) < 2:
+#             continue
+# 
+#         pts   = nodes.loc[section_ids, ['x', 'y', 'z']].values
+#         ntype = int(nodes.loc[start_id, 'type'])
+#         sections_by_type[ntype].append(pts)
+# 
+#     type_color_map = {2: axon_color, 3: dendrite_color}
+# 
+#     for ntype, sections in sections_by_type.items():
+#         if skip_dendrite and ntype == 3:
+#             continue
+#         color = type_color_map.get(ntype, axon_color)
+#         actor = build_tube_actor_from_sections(
+#             sections, radius=neurite_radius, color=color, alpha=alpha, res=res
+#         )
+#         if actor is not None:
+#             actors.append(actor)
+# 
+#     return actors
+# =============================================================================
 def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_color='red',
-                        soma_color='black', neurite_radius=4, soma_radius=15, alpha=1, res=12):
+                       soma_color='black', neurite_radius=4, soma_radius=15, alpha=1, res=12,
+                       include_soma=True, inmesh_ids=None):
+    """
+    Parameters
+    ----------
+    inmesh_ids : set[int] | None
+        Pre-computed set of SWC node IDs whose CCF-space coordinates fell
+        inside at least one region mesh.  A section is rendered only if at
+        least one of its node IDs appears in this set.
+        None → no spatial filtering (render everything).
+
+        Filtering at section level means entire sections are kept or
+        discarded — no mid-section breaks, so crossing-midline paths
+        are never split into two disconnected pieces.
+    """
     nodes = swc_df.set_index('id')
 
-    # Build children map
+    # ── Build children from the FULL, unfiltered node set ────────────────────
+    # Never prune nodes here; intact topology is what prevents mid-path breaks.
     children = defaultdict(list)
     for node_id, row in nodes.iterrows():
         if row['parent'] != -1:
@@ -273,27 +449,31 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_
                 continue
             children[int(row['parent'])].append(node_id)
 
-    soma_row = nodes[nodes['type'] == 1].iloc[0]
-    soma_id  = int(soma_row.name)
-    soma_pos = soma_row[['x', 'y', 'z']].tolist()
+    soma_rows = nodes[nodes['type'] == 1]
+    soma_id   = int(soma_rows.iloc[0].name) if len(soma_rows) > 0 else -1
 
-    actors = [Sphere(pos=soma_pos, r=soma_radius, c=soma_color, alpha=alpha)]
+    if include_soma and len(soma_rows) > 0:
+        soma_pos = soma_rows.iloc[0][['x', 'y', 'z']].tolist()
+        actors   = [Sphere(pos=soma_pos, r=soma_radius, c=soma_color, alpha=alpha)]
+    else:
+        actors = []
 
-    # Collect sections by neurite type instead of building Tube() per section
     sections_by_type = defaultdict(list)
 
+    # soma_id check is always included regardless of include_soma so that
+    # direct soma children are correctly identified as section starts.
     section_starts = [
         node_id for node_id, row in nodes.iterrows()
         if row['type'] != 1
-        and (   row['parent'] == -1
+        and (row['parent'] == -1
              or int(row['parent']) == soma_id
              or len(children[int(row['parent'])]) > 1)
     ]
 
     for start_id in section_starts:
         section_ids = []
-        parent_id = int(nodes.loc[start_id, 'parent'])
-        if parent_id != -1 and parent_id != soma_id:
+        parent_id   = int(nodes.loc[start_id, 'parent'])
+        if parent_id != -1 and parent_id != soma_id and parent_id in nodes.index:
             section_ids.append(parent_id)
 
         current_id = start_id
@@ -308,11 +488,16 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_
         if len(section_ids) < 2:
             continue
 
+        # ── Section-level mesh filter ─────────────────────────────────────────
+        # Keep entire section if ANY of its nodes were inside a mesh region.
+        # Using set intersection is O(min(|inmesh_ids|, |section_ids|)).
+        if inmesh_ids is not None and not inmesh_ids.intersection(section_ids):
+            continue
+
         pts   = nodes.loc[section_ids, ['x', 'y', 'z']].values
         ntype = int(nodes.loc[start_id, 'type'])
-        sections_by_type[ntype].append(pts)  # ← collect, don't build yet
+        sections_by_type[ntype].append(pts)
 
-    # One vtkTubeFilter per neurite type — not one per section
     type_color_map = {2: axon_color, 3: dendrite_color}
 
     for ntype, sections in sections_by_type.items():
@@ -327,38 +512,75 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_
 
     return actors
 
-
-def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black', skip_dendrite=False, neurite_radius=4, soma_radius=15, alpha=1, res=12):
-    """
-    swap coordinates of an swc to be rendered with brainrender, when swc is acquired from the Allen Institute
-
-    Parameters
-    ----------
-    swcpath : str
-        path to the swc you need coordinates swapped for.
-
-    Returns
-    -------
-    cell_actors : list
-        a list of brainrender Line actors to be added to a Scene.
-
-    """
-
+# =============================================================================
+# def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black',
+#                          skip_dendrite=False, neurite_radius=4, soma_radius=15,
+#                          alpha=1, res=12, mesh=np.array([])):
+#     """
+#     Swap SWC coordinates for brainrender display and optionally filter nodes
+#     by one or more region meshes.
+# 
+#     Parameters
+#     ----------
+#     mesh : np.ndarray | list[np.ndarray] | np.array([])
+#         One or more (N,3) vertex arrays in CCF space.
+#         Nodes are kept if they fall inside ANY of the provided meshes.
+#         Default empty array → no spatial filtering.
+#     """
+#     swc_df = pd.read_csv(
+#         swcpath, comment='#', sep=r'\s+',
+#         names=['id', 'type', 'x', 'y', 'z', 'r', 'parent']
+#     )
+# 
+#     # ── 1. Spatial filter in CCF space (BEFORE axis swap) ────────────────────
+#     has_mesh = _mesh_has_data(mesh)
+#     if has_mesh:
+#         swc_df = filter_nodes_by_mesh(swc_df, mesh)
+# 
+#     # ── 2. Axis swap for brainrender display ──────────────────────────────────
+#     swc_df['x'], swc_df['z'] = swc_df['z'].copy(), swc_df['x'].copy()
+# 
+#     # ── 3. Build actors ───────────────────────────────────────────────────────
+#     cell_actors = swc_to_line_actors(
+#         swc_df,
+#         axon_color=axon, dendrite_color=dendrite, soma_color=soma,
+#         skip_dendrite=skip_dendrite, neurite_radius=neurite_radius,
+#         soma_radius=soma_radius, alpha=alpha, res=res,
+#         include_soma=not has_mesh    # omit soma sphere when inside a remote region
+#     )
+#     return cell_actors
+# =============================================================================
+def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black',
+                         skip_dendrite=False, neurite_radius=4, soma_radius=15,
+                         alpha=1, res=12, mesh=np.array([])):
     swc_df = pd.read_csv(
-         swcpath,
-         comment='#', 
-         sep=r'\s+',
-         names=['id', 'type', 'x', 'y', 'z', 'r', 'parent']
+        swcpath, comment='#', sep=r'\s+',
+        names=['id', 'type', 'x', 'y', 'z', 'r', 'parent']
     )
-    #need to swap x and z coordinates, brainrender swapped their axes so using swcs as we get them will render them rotated 90 deg
-    x = swc_df['x']
-    z = swc_df['z']
-    swc_df['x'] = z
-    swc_df['z'] = x
+
+    has_mesh = _mesh_has_data(mesh)
+
+    # ── Step 1: in-mesh check in CCF space (BEFORE axis swap) ────────────────
+    # Mesh vertices are in CCF space; swc_df is also still in CCF space here.
+    # Doing the check now means the coordinate frames always match.
+    if has_mesh:
+        inmesh_mask = get_inmesh_mask(swc_df, mesh)          # boolean ndarray
+        inmesh_ids  = set(swc_df['id'][inmesh_mask].values)  # set of SWC node IDs
+    else:
+        inmesh_ids = None
+
+    # ── Step 2: axis swap for brainrender display ─────────────────────────────
+    swc_df['x'], swc_df['z'] = swc_df['z'].copy(), swc_df['x'].copy()
+
+    # ── Step 3: build actors from full topology, section-level filter ─────────
     cell_actors = swc_to_line_actors(
-        swc_df, axon_color=axon, dendrite_color=dendrite, soma_color=soma, skip_dendrite=skip_dendrite, 
-        neurite_radius=neurite_radius, soma_radius=soma_radius, alpha=alpha, res=res
-        )
+        swc_df,
+        axon_color=axon, dendrite_color=dendrite, soma_color=soma,
+        skip_dendrite=skip_dendrite, neurite_radius=neurite_radius,
+        soma_radius=soma_radius, alpha=alpha, res=res,
+        include_soma=not has_mesh,
+        inmesh_ids=inmesh_ids
+    )
     return cell_actors
 
 def write_targeted_regions_to_excel(data, output_path='targeted_regions.xlsx'):
@@ -477,3 +699,23 @@ def build_tube_actor_from_sections(sections, radius, color, alpha, res):
         color = tuple(c / 255.0 for c in color)
 
     return Mesh(tube.GetOutput(), c=color, alpha=alpha)
+
+
+def get_mesh_onehem(scene, mesh, hem='left'):
+    root_mesh = scene.atlas.get_region('root').mesh
+    if scene.atlas.metadata['symmetric']:
+        mesh_center = (root_mesh.bounds().reshape((3,2)).mean(axis=1))
+    else:
+        mesh_center = root_mesh.center_of_mass()
+    
+    normal = (0, 0, 1) if hem == "right" else (0, 0, -1)
+    plane = scene.atlas.get_plane(pos=mesh_center, norm=normal)
+    if not isinstance(mesh, list):
+        #this is cutting the whole mesh instead of just giving one hem, look into it in a moment
+        mesh.cut_with_plane(origin=plane.center, normal=plane.normal)
+        mesh.cap()
+    else:
+        for m in mesh:
+            m.cut_with_plane(origin=plane.center, normal=plane.normal)
+            m.cap()
+    return mesh

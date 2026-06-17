@@ -48,16 +48,22 @@ cam2 = dict(
 
 settings.SHOW_AXES=False
 settings.ROOT_COLOR=[0.8,0.8,0.8]
-#settings.OFFSCREEN=True
+settings.OFFSCREEN=True
 ccf_scene = Scene(atlas_name='allen_mouse_10um')
 root = ccf_scene.get_actors()[0]
 root._needs_silhouette=False
 
-
-ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
-ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
+regions = ['GRN', 'MRN']
+copies = [ccf_scene.atlas.get_region(r).mesh.clone() for r in regions]
+cut = pp.get_mesh_onehem(ccf_scene, mesh=copies, hem='left')
+verts = [m.vertices for m in cut]
+# =============================================================================
+# ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
+# ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
+# =============================================================================
 ccf_scene.add_brain_region('GRN', silhouette=False, alpha=0.2, color='blue')
 ccf_scene.add_brain_region('MRN', silhouette=False, alpha=0.2, color='orange')
+#ccf_scene.add_brain_region('XII', silhouette=False, alpha=0.2, color='green')
 
 masked = merged.astype(bool)
 MRNGRN = merged.loc[(merged['GRN'] != 0) | (merged['MRN'] != 0)]
@@ -84,9 +90,9 @@ for cell, vals in tqdm(MRNGRN.iterrows(), desc='Loading neurons'):
         continue
     #print(f"[BEFORE BUILD] {cell} — key={key}", flush=True)
     if key == 'GRN':
-        actors = pp.swap_for_brainrender(fn, axon=LUT[key], skip_dendrite=True, soma=LUT[key], alpha=1, neurite_radius=5, soma_radius=5, res=12)
+        actors = pp.swap_for_brainrender(fn, axon=LUT[key], skip_dendrite=True, soma=LUT[key], alpha=1, neurite_radius=5, soma_radius=5, res=12, mesh=verts)
     if key == 'MRN':
-        actors = pp.swap_for_brainrender(fn, axon=LUT[key], skip_dendrite=True, soma=LUT[key], alpha=1, neurite_radius=15, soma_radius=5, res=12)
+        actors = pp.swap_for_brainrender(fn, axon=LUT[key], skip_dendrite=True, soma=LUT[key], alpha=1, neurite_radius=15, soma_radius=5, res=12, mesh=verts)
     #print(f"[AFTER BUILD] {cell} — {len(actors)} actors", flush=True)
     for i, actor in enumerate(actors):
         #print(f"[BEFORE ADD] {cell} actor {i}/{len(actors)}", flush=True)
@@ -130,5 +136,5 @@ for cell, vals in tqdm(MRNGRN.iterrows(), desc='Loading neurons'):
 
 
 #ccf_scene.render(camera=cameras.topcam)
-ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop5.png', camera=rootcam, scale=3)
+ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop6.png', camera=rootcam, scale=3)
 ccf_scene.close()
