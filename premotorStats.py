@@ -63,7 +63,7 @@ def meanprojval(df, targets, names, thresh):
 frequencies = pkl.load(open(frequenciespkl, 'rb')).T
 merged = pp.merge_regions(frequencies)
 
-thresh = 2
+thresh = 10
 premotorNames = []
 nonpremotorNames = []
 distinct = []
