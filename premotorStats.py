@@ -12,6 +12,7 @@ import pickle as pkl
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from reconstructions.utils import preprocess_funcs as pp
+import seaborn as sns
 
 mpl.rcParams['image.composite_image'] = False
 plt.rcParams['svg.fonttype'] = 'none'
@@ -62,7 +63,7 @@ def meanprojval(df, targets, names, thresh):
 frequencies = pkl.load(open(frequenciespkl, 'rb')).T
 merged = pp.merge_regions(frequencies)
 
-thresh = 0
+thresh = 2
 premotorNames = []
 nonpremotorNames = []
 distinct = []
@@ -154,7 +155,7 @@ fig4.align_xlabels()
 ax4.spines['top'].set_visible(False)
 ax4.spines['right'].set_visible(False)
 #ax4.set_yticks(np.arange(0,22,3))
-fig4.savefig(r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\premotorsU19\bar.svg')
+#fig4.savefig(r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\premotorsU19\bar.png')
 
 #preprocess to normalize for cell size, then plot histograms of both normalized
 #and non normalized endpoints for each population of motor nuc projection pattern
@@ -226,3 +227,17 @@ _,bins,mixhist = diffax.hist(mixedvals, bins=bins, label='mixed premotors', colo
 _,_,disthist = diffax.hist(distinctvals, bins=bins, label='distinct premotors', color='blue', alpha=0.3)
 diffax.legend(handles=[mixhist[0], disthist[0]])
 sumax.legend(handles=[allhist[0]])
+
+cutmix = [val for val in mixedvals if val < 150]
+cutdist = [val for val in distinctvals if val < 150]
+cutbins = np.histogram_bin_edges(cutmix)
+fig6, ax6 = plt.subplots(1,1, dpi=300)
+sns.histplot(cutmix, kde=True, bins=cutbins, color='orange', ax=ax6, alpha=0.3, stat='density')
+sns.histplot(cutdist, kde=True, bins=cutbins, color='blue', ax=ax6, alpha=0.3, stat='density')
+# =============================================================================
+# _, _, cutmixhist = ax6.hist(cutmix, label='mixed premotors', bins=cutbins, color='orange', alpha=0.5)
+# _, _, cutdisthist = ax6.hist(cutdist, label='distinct premotors', bins=cutbins, color='blue', alpha=0.3)
+# =============================================================================
+#ax6.legend(handles=[cutmixhist[0], cutdisthist[0]])
+fig6.supxlabel('Mean endpoints in motor nuclei')
+#fig6.supylabel('# of cells')
