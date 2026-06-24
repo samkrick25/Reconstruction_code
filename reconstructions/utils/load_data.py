@@ -13,6 +13,7 @@ from reconstructions.utils.filedirs import allen_ccf_10um, allen_parcellationpkl
 import nibabel as nib
 import time
 import sys
+from collections import defaultdict
 
 MIDLINEZ = 5750
 MIDLINEZ_10UM = 570
@@ -72,7 +73,64 @@ def get_frequencies_from_dict(neurondict, ontlevel='structure'):
             ser = pd.Series(freqdict, name=cell)
             ser = ser.replace(np.nan, 0)
     return ser
+
+def get_axon_length(neurondict, ontlevel='structure'):
+    '''
+    get axon length in regions, lateralized, done at one micron resolution, values are in um
+    '''
+    lengthdict = defaultdict(int)
+    axon = neurondict['axon']
+    somax, somay, somaz = [neurondict['soma']['x'], neurondict['soma']['y'], neurondict['soma']['z']]
+    
+    #get sign of soma relative to midline
+    somaref = MIDLINEZ-somaz
+    somahem = np.sign(somaref)
+    
+    for node in axon:
+        
+        coords = [node['x'], node['y'], node['z']]
+        x, y, z = coords
+        
+        #index allen ccf volume to get parcellation id, needs to be 10 um res
+        tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
+        allenid = allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
+        parcels = parcellation_map.loc[allen_parcellations.loc[allenid]['label']]
+        region = get_allen_region(ontlevel, parcels)
+        
+        #get sign of node relative to midline, get laterality of node
+        zref = MIDLINEZ-z
+        zhem = np.sign(zref)
+        latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
+        
+        #calculate euclidean distance from node to its parent, soma will have parentNumber -1
+        if node['parentNumber'] == -1:
+            length = np.sqrt((x-somax)**2+(y-somay)**2+(z-somaz)**2)
+            lengthdict[latregion] += length
+        else:
+            pnode = axon[node['parentNumber']]
+            px, py, pz = [pnode['x'], pnode['y'], pnode['z']]
+            length = np.sqrt((x-px)**2+(y-py)**2+(z-pz)**2)
+            lengthdict[latregion] += length
+            
+    return lengthdict
                     
+def get_allen_region(ontlevel, parcels):
+    '''
+    find region abbreviation from allen parcellation id
+    '''
+    match ontlevel:
+        case 'organ':
+            region = parcels.loc[parcels['parcellation_term_set_name']=='organ', 'parcellation_term_acronym'].values[0]
+        case 'category':
+            region = parcels.loc[parcels['parcellation_term_set_name']=='category', 'parcellation_term_acronym'].values[0]
+        case 'division':
+            region = parcels.loc[parcels['parcellation_term_set_name']=='division', 'parcellation_term_acronym'].values[0]
+        case 'structure':
+            region = parcels.loc[parcels['parcellation_term_set_name']=='structure', 'parcellation_term_acronym'].values[0]
+        case 'substructure':
+            region = parcels.loc[parcels['parcellation_term_set_name']=='substructure', 'parcellation_term_acronym'].values[0]
+    return region
+
 def freq_helper(freqdict, end, region, somahem):
     '''
     helper function for my frequency annotator

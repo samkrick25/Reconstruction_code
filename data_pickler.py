@@ -7,15 +7,17 @@ import json
 import os
 import numpy as np
 from tqdm import tqdm
-
-_, somas, _, _, _ = ld.load_neurons(allcoordswapped)
-# = load_data.get_frequencies(cells, somas)
-
-# savefile = r'reconstructions\data\freqs.pkl'
-# pickle.dump(freqs, open(savefile, 'wb'))
-
-savefilesomas = r'reconstructions\data\somas.pkl'
-pickle.dump(somas, open(savefilesomas, 'wb'))
+# =============================================================================
+# 
+# _, somas, _, _, _ = ld.load_neurons(allcoordswapped)
+# # = load_data.get_frequencies(cells, somas)
+# 
+# # savefile = r'reconstructions\data\freqs.pkl'
+# # pickle.dump(freqs, open(savefile, 'wb'))
+# 
+# savefilesomas = r'reconstructions\data\somas.pkl'
+# pickle.dump(somas, open(savefilesomas, 'wb'))
+# =============================================================================
 
 # =============================================================================
 # save1 = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\parcellation.pkl'
@@ -40,13 +42,27 @@ pickle.dump(somas, open(savefilesomas, 'wb'))
 #savedict = r'reconstructions\data\neurondict.pkl'
 #pickle.dump(neurondict, open(savedict, 'wb'))
 
-frequencies = pd.DataFrame()
-for file in tqdm(os.listdir(parcellated_neurons), desc='Finding frequencies'):
-    filename = os.path.join(parcellated_neurons, file)
-    with open(filename, 'r') as f:
-        neurondict = json.load(f)
-        freqseries = ld.get_frequencies_from_dict(neurondict, ontlevel='structure')
-    frequencies = pd.concat([frequencies, freqseries], join='outer', axis=1)
-frequencies_nonan = frequencies.replace(np.nan, 0)
-savefile = r'reconstructions\data\frequencies.pkl'
-pickle.dump(frequencies_nonan, open(savefile, 'wb'))
+# =============================================================================
+# frequencies = pd.DataFrame()
+# for file in tqdm(os.listdir(parcellated_neurons), desc='Finding frequencies'):
+#     filename = os.path.join(parcellated_neurons, file)
+#     with open(filename, 'r') as f:
+#         neurondict = json.load(f)
+#         freqseries = ld.get_frequencies_from_dict(neurondict, ontlevel='structure')
+#     frequencies = pd.concat([frequencies, freqseries], join='outer', axis=1)
+# frequencies_nonan = frequencies.replace(np.nan, 0)
+# savefile = r'reconstructions\data\frequencies.pkl'
+# pickle.dump(frequencies_nonan, open(savefile, 'wb'))
+# =============================================================================
+
+neurons = ld.load_neurons(allcoordswapped)
+
+lengthdict = {}
+for neuron, info in tqdm(neurons.items(), desc='finding lengths'):
+    lengths = ld.get_axon_length(info, ontlevel='structure')
+    ser = pd.Series(lengths, name=neuron)
+    lengthdict[neuron] = ser
+    
+lengthdf = pd.DataFrame(lengthdict)
+savefile = r'reconstructions\data\lengths.pkl'
+pickle.dump(lengthdf, open(savefile, 'wb'))

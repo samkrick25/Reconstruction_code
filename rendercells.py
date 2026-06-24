@@ -11,7 +11,7 @@ from reconstructions.utils import preprocess_funcs as pf
 from reconstructions.utils import cameras
 
 #path to swc to be visualized
-neuron = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N030-703070.swc"
+neuron = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N016-651324.swc"
 
 settings.SHOW_AXES=None
 
@@ -26,10 +26,10 @@ print('scene set')
 #add desired brain regions
 ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
 ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
-#ccf_scene.add_brain_region('MDRN', silhouette=False, color='orange', alpha=0.2)
-ccf_scene.add_brain_region('MRN', silhouette=False, color='purple', alpha=0.2)
+ccf_scene.add_brain_region('PVH', silhouette=False, color='orange', alpha=0.2)
+ccf_scene.add_brain_region('LHA', silhouette=False, color='purple', alpha=0.2)
 # =============================================================================
-# ccf_scene.add_brain_region('SPVC', silhouette=False, color='yellow', alpha=0.2)
+# ccf_scene.add_brain_region('V', silhouette=False, color='yellow', alpha=0.2)
 # ccf_scene.add_brain_region('SPVO', silhouette=False, color='cyan', alpha=0.2)
 # ccf_scene.add_brain_region('SPVI', silhouette=False, color='red', alpha=0.2)
 # =============================================================================
