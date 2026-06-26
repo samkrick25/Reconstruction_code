@@ -91,16 +91,28 @@ def get_axon_length(neurondict, ontlevel='structure'):
         coords = [node['x'], node['y'], node['z']]
         x, y, z = coords
         
-        #index allen ccf volume to get parcellation id, needs to be 10 um res
-        tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
-        allenid = allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
-        parcels = parcellation_map.loc[allen_parcellations.loc[allenid]['label']]
-        region = get_allen_region(ontlevel, parcels)
-        
         #get sign of node relative to midline, get laterality of node
         zref = MIDLINEZ-z
         zhem = np.sign(zref)
-        latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
+        
+        #index allen ccf volume to get parcellation id, needs to be 10 um res
+        tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
+        
+        #nodes that have AP outside CCF (spinal cord mostly) will throw error when attempting to index ccf volume
+        #for now, I will call all of them spinal cord although this isn't fully accurate since
+        #allen ccf doens't span the whole ap axis of the brain
+        try:
+            allenid = allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
+        except IndexError:
+            region = 'SpC'
+        
+        #get region abbreviation if node in ccf volume
+        else:
+            parcels = parcellation_map.loc[allen_parcellations.loc[allenid]['label']]
+            region = get_allen_region(ontlevel, parcels)
+        
+        finally:
+            latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
         
         #calculate euclidean distance from node to its parent, soma will have parentNumber -1
         if node['parentNumber'] == -1:

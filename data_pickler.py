@@ -64,5 +64,6 @@ for neuron, info in tqdm(neurons.items(), desc='finding lengths'):
     lengthdict[neuron] = ser
     
 lengthdf = pd.DataFrame(lengthdict)
+lengthdf = lengthdf.replace(np.nan, 0)
 savefile = r'reconstructions\data\lengths.pkl'
 pickle.dump(lengthdf, open(savefile, 'wb'))
