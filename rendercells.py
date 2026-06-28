@@ -9,11 +9,14 @@ from brainrender import Scene
 from brainrender import settings
 from reconstructions.utils import preprocess_funcs as pf
 from reconstructions.utils import cameras
+import numpy as np
 
 #path to swc to be visualized
-neuron = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N016-651324.swc"
+neuron = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\AA0503.swc"
 
 settings.SHOW_AXES=None
+settings.INTERACTIVE=True
+settings.OFFSCREEN=False
 
 #set up brainrender scene
 ccf_scene = Scene(atlas_name='allen_mouse_10um', root=True)
@@ -23,11 +26,16 @@ settings.ROOT_COLOR=[0.8, 0.8, 0.8]
 settings.ROOT_ALPHA=0.2
 print('scene set')
 
+regions = ['tsp']
+copies = [ccf_scene.atlas.get_region(r).mesh.clone() for r in regions]
+cut = pf.get_mesh_onehem(ccf_scene, mesh=copies, hem='left')
+verts = [m.vertices for m in cut]
+
 #add desired brain regions
 ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
 ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
 ccf_scene.add_brain_region('PVH', silhouette=False, color='orange', alpha=0.2)
-ccf_scene.add_brain_region('LHA', silhouette=False, color='purple', alpha=0.2)
+ccf_scene.add_brain_region('tsp', silhouette=False, color='purple', alpha=0.2)
 # =============================================================================
 # ccf_scene.add_brain_region('V', silhouette=False, color='yellow', alpha=0.2)
 # ccf_scene.add_brain_region('SPVO', silhouette=False, color='cyan', alpha=0.2)
@@ -35,7 +43,7 @@ ccf_scene.add_brain_region('LHA', silhouette=False, color='purple', alpha=0.2)
 # =============================================================================
 
 #add neuron, first create line actors
-lines = pf.swap_for_brainrender(neuron, skip_dendrite=True, neurite_radius=10, soma_radius=25)
+lines = pf.swap_for_brainrender(neuron, skip_dendrite=True, neurite_radius=10, soma_radius=25, mesh=verts)
 for actor in lines:
     ccf_scene.add(actor)
     

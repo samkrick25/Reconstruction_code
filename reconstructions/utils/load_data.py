@@ -9,7 +9,7 @@ from treelib import Tree
 #import brainrender
 from brainrender.actors import Neuron
 #import vedo
-from reconstructions.utils.filedirs import allen_ccf_10um, allen_parcellationpkl, parcellation_mappkl
+from reconstructions.utils.filedirs import allen_ccf_10um, allen_parcellationpkl, parcellation_mappkl, ptermpkl
 import nibabel as nib
 import time
 import sys
@@ -22,7 +22,8 @@ allen_ccf = nib.load(allen_ccf_10um)
 allen_ccf_data = np.asanyarray(allen_ccf.dataobj)
 allen_parcellations = pickle.load(open(allen_parcellationpkl, 'rb'))
 parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
-
+allenstr = 'AllenCCF-Ontology-2017-'
+pterm = pickle.load(open(ptermpkl, 'rb'))
 
 def get_frequencies_from_dict(neurondict, ontlevel='structure'):
     '''
@@ -96,24 +97,40 @@ def get_axon_length(neurondict, ontlevel='structure'):
         zhem = np.sign(zref)
         
         #index allen ccf volume to get parcellation id, needs to be 10 um res
-        tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
+        #tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
         
         #nodes that have AP outside CCF (spinal cord mostly) will throw error when attempting to index ccf volume
         #for now, I will call all of them spinal cord although this isn't fully accurate since
         #allen ccf doens't span the whole ap axis of the brain
-        try:
-            allenid = allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
-        except IndexError:
-            region = 'SpC'
-        
-        #get region abbreviation if node in ccf volume
-        else:
-            parcels = parcellation_map.loc[allen_parcellations.loc[allenid]['label']]
-            region = get_allen_region(ontlevel, parcels)
-        
-        finally:
-            latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
-        
+        #writing new version to just take the annotated id from the node since this doesn't seem to match up with
+        #brainrender, unsure if it is a brainrender thing or my code...
+#this version is old vers where i was indexing ccf, although this didn't seem correct for everything 
+#had some issues where tectospinal tract was getting a lot of axon marked as in the region, then when i rendered
+#the axon wasn't close to tsp at all
+
+# =============================================================================
+#         try:
+#             allenid = #allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
+#         except IndexError:
+#             region = 'SpC'
+#         
+#         #get region abbreviation if node in ccf volume
+#         else:
+#             #parcels = parcellation_map.loc[allen_parcellations.loc[allenid]['label']]
+#             parcels = parcellation_map.loc[allenid]['label']
+#             region = get_allen_region(ontlevel, parcels)
+#         
+#         finally:
+#             latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
+# =============================================================================
+        #ok if i write this to pull from the annotated regions in the json, then you have aids that are marked as None
+        #presumably corresponding to spinal cord, which doesn't have a label in the allen ccf. 
+        #think i have to just skip these nodes for now, although it feels like throwing out a lot of information
+        if node['allenId'] == None:
+            continue
+        allenid = allenstr+str(node['allenId'])
+        region = pterm.loc[allenid]['acronym']
+        latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
         #calculate euclidean distance from node to its parent, soma will have parentNumber -1
         if node['parentNumber'] == -1:
             length = np.sqrt((x-somax)**2+(y-somay)**2+(z-somaz)**2)

@@ -1,6 +1,6 @@
 from reconstructions.utils import load_data as ld
 import pickle
-from reconstructions.utils.filedirs import allcoordswapped, allen_ccf_10um, allen_parcellation, allen_2017_to_2020, parcellated_neurons
+from reconstructions.utils.filedirs import pterm, allcoordswapped, allen_ccf_10um, allen_parcellation, allen_2017_to_2020, parcellated_neurons
 import nibabel as nib
 import pandas as pd
 import json
@@ -54,7 +54,11 @@ from tqdm import tqdm
 # savefile = r'reconstructions\data\frequencies.pkl'
 # pickle.dump(frequencies_nonan, open(savefile, 'wb'))
 # =============================================================================
-
+# =============================================================================
+# ptermsave = r'reconstructions/data/pterm.pkl'
+# ptermdf = pd.read_csv(pterm, index_col='label')
+# pickle.dump(ptermdf, open(ptermsave, 'wb'))
+# =============================================================================
 neurons = ld.load_neurons(allcoordswapped)
 
 lengthdict = {}
@@ -65,5 +69,5 @@ for neuron, info in tqdm(neurons.items(), desc='finding lengths'):
     
 lengthdf = pd.DataFrame(lengthdict)
 lengthdf = lengthdf.replace(np.nan, 0)
-savefile = r'reconstructions\data\lengths.pkl'
+savefile = r'reconstructions\data\lengthsfromjson.pkl'
 pickle.dump(lengthdf, open(savefile, 'wb'))

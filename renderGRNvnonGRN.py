@@ -135,6 +135,8 @@ for cell, vals in tqdm(MRNGRN.iterrows(), desc='Loading neurons'):
 # =============================================================================
 
 
-#ccf_scene.render(camera=cameras.topcam)
-ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop6.png', camera=rootcam, scale=3)
-ccf_scene.close()
+ccf_scene.render(camera=cameras.topcam)
+# =============================================================================
+# ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop6.png', camera=rootcam, scale=3)
+# ccf_scene.close()
+# =============================================================================
