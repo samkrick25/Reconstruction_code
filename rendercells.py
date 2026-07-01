@@ -34,7 +34,7 @@ verts = [m.vertices for m in cut]
 #add desired brain regions
 ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
 ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
-ccf_scene.add_brain_region('PVH', silhouette=False, color='orange', alpha=0.2)
+#ccf_scene.add_brain_region('PVH', silhouette=False, color='orange', alpha=0.2)
 ccf_scene.add_brain_region('tsp', silhouette=False, color='purple', alpha=0.2)
 # =============================================================================
 # ccf_scene.add_brain_region('V', silhouette=False, color='yellow', alpha=0.2)

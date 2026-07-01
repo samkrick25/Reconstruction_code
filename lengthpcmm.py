@@ -5,7 +5,7 @@ innervation of regions looking at axon length/mm^3
 @author: samkr
 """
 
-from reconstructions.utils.filedirs import lengthspkl, ccf_structure_vols_mm, frequenciespkl
+from reconstructions.utils.filedirs import lengthspkl, ccf_structure_vols2_mm, frequenciespkl
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,18 +31,21 @@ freqs = pickle.load(open(frequenciespkl, 'rb')).T
 lengths = pickle.load(open(lengthspkl, 'rb')).T
 lmerged = pp.merge_regions(lengths)
 fmerged = pp.merge_regions(freqs)
+lnozero = lmerged.loc[:, (lmerged != 0).any(axis=0)]
+fnozero = fmerged.loc[:, (fmerged != 0).any(axis=0)]
 
 structure_vols = {}
-with open(ccf_structure_vols_mm, 'r') as svols:
+with open(ccf_structure_vols2_mm, 'r') as svols:
     reader = csv.reader(svols)
     for row in reader:
         structure_vols[row[0]] = np.float64(row[1])
 
-lmerged.drop('SpC', axis=1, inplace=True)
+lnozero.drop('SpC', axis=1, inplace=True)
+#fnozero.drop('SpC', axis=1, inplace=True)
 
 #first convert to mm then normalize by region volume
-lnorm = normalize(lmerged, mm=True)
-fnorm = normalize(fmerged)
+lnorm = normalize(lnozero, mm=True)
+fnorm = normalize(fnozero)
 
 lsum = lnorm.sum(axis=0)
 fsum = fnorm.sum(axis=0)

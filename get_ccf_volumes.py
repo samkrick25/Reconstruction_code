@@ -27,16 +27,20 @@ parcel_ontind = parcellation_map.set_index('parcellation_term_label')
 
 savefile = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\ccf_structure_volumes2_mm.csv'
 
-ont2017 = np.unique(parcellation_map['parcellation_term_label'])[304:]
+ont2017 = np.unique(parcellation_map['parcellation_term_label'])#[304:]
 regvols = {}
 
 for ont in ont2017:
     vol = parcel_ontind.loc[ont]['volume_mm3']
     reg = parcel_ontind.loc[ont]['parcellation_term_acronym']
     if isinstance(reg, str):
+        if reg in regvols:
+            continue
         regvols[reg] = vol
     if isinstance(reg, pd.core.series.Series):
         regstr = reg.values[0]
+        if regstr in regvols:
+            continue
         volflt = vol.values[0]
         regvols[regstr] = volflt
 
