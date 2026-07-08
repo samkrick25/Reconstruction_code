@@ -42,16 +42,30 @@ from tqdm import tqdm
 #savedict = r'reconstructions\data\neurondict.pkl'
 #pickle.dump(neurondict, open(savedict, 'wb'))
 
+neurons = ld.load_neurons(allcoordswapped)
+
+frequencies = {}
+for neuron, info in tqdm(neurons.items(), desc='finding endpoint frequencies'):
+    print(neuron)
+    freqs = ld.neuronprop({neuron: info}, mode='frequency', ontlevel='structure', cellname=neuron)
+    frequencies[neuron] = freqs
+
+fdf = pd.DataFrame(frequencies)
+fdf = fdf.replace(np.nan, 0)
+savefile = r'reconstructions\data\freqs_hopefullygood.pkl'
+pickle.dump(fdf, open(savefile, 'wb'))
+
 # =============================================================================
-# frequencies = pd.DataFrame()
+# frequencies = {}
 # for file in tqdm(os.listdir(parcellated_neurons), desc='Finding frequencies'):
 #     filename = os.path.join(parcellated_neurons, file)
 #     with open(filename, 'r') as f:
 #         neurondict = json.load(f)
 #         freqseries = ld.get_frequencies_from_dict(neurondict, ontlevel='structure')
-#     frequencies = pd.concat([frequencies, freqseries], join='outer', axis=1)
-# frequencies_nonan = frequencies.replace(np.nan, 0)
-# savefile = r'reconstructions\data\frequencies.pkl'
+#     frequencies[freqseries.name] = freqseries
+# fdf = pd.DataFrame(frequencies)
+# frequencies_nonan = fdf.replace(np.nan, 0)
+# savefile = r'reconstructions\data\frequencies2.pkl'
 # pickle.dump(frequencies_nonan, open(savefile, 'wb'))
 # =============================================================================
 # =============================================================================
@@ -59,15 +73,16 @@ from tqdm import tqdm
 # ptermdf = pd.read_csv(pterm, index_col='label')
 # pickle.dump(ptermdf, open(ptermsave, 'wb'))
 # =============================================================================
-neurons = ld.load_neurons(allcoordswapped)
+#neurons = ld.load_neurons(allcoordswapped)
 
 lengthdict = {}
 for neuron, info in tqdm(neurons.items(), desc='finding lengths'):
-    lengths = ld.get_axon_length(info, ontlevel='structure')
+    lengths = ld.neuronprop({neuron:info}, mode='length', ontlevel='structure', cellname=neuron)
     ser = pd.Series(lengths, name=neuron)
     lengthdict[neuron] = ser
     
 lengthdf = pd.DataFrame(lengthdict)
 lengthdf = lengthdf.replace(np.nan, 0)
-savefile = r'reconstructions\data\lengthsfromjson.pkl'
+savefile = r'reconstructions\data\lengths_hopefullygood.pkl'
 pickle.dump(lengthdf, open(savefile, 'wb'))
+

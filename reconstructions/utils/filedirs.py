@@ -22,12 +22,14 @@ allen_parcellationpkl = r'reconstructions\data\parcellation.pkl' #C:\Users\samkr
 parcellation_mappkl = r"reconstructions\data\parcellation_map.pkl" #C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\
 ccf_structure_vols_mm = r"reconstructions\data\ccf_structure_volumes_mm.csv"
 ccf_structure_vols2_mm = r"reconstructions\data\ccf_structure_volumes2_mm.csv"
+ccf_vols3 = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\ccf_structure_volumes3_mm.csv'
 pterm = r"D:\allen_brain_atlas\metadata\parcellation_term.csv"
+ccf_vols4= r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\ccf_structure_volumes4_mm.csv'
     
 neurondictpkl = r"C:\Users\economolab\Documents\GitHub\Reconstruction_code\reconstructions\data\neurondict.pkl"
 parcellated_neurons = r'reconstructions\data\IRNPARN_cells\json_parcellated'
 parcellated_copy = r"reconstructions\data\IRNPARN_cells\parcellated_copy"
 structure_ont_info = r'reconstructions\data\structure_ont_info.pkl'
-frequenciespkl = r'reconstructions\data\frequencies.pkl'
-lengthspkl = r'reconstructions\data\lengths.pkl'
+frequenciespkl = r'reconstructions\data\frequencies.pkl' #working is frequencies.pkl
+lengthspkl = r'reconstructions\data\lengths4.pkl' #working is lengths.pkl
 ptermpkl = r'reconstructions\data\pterm.pkl'

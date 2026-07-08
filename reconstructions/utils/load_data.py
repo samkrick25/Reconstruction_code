@@ -3,7 +3,7 @@ import pandas as pd
 from tqdm import tqdm
 import os
 import pickle
-#from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
+from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
 import json
 from treelib import Tree
 #import brainrender
@@ -22,14 +22,20 @@ allen_ccf = nib.load(allen_ccf_10um)
 allen_ccf_data = np.asanyarray(allen_ccf.dataobj)
 allen_parcellations = pickle.load(open(allen_parcellationpkl, 'rb'))
 parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
-allenstr = 'AllenCCF-Ontology-2017-'
+allenstr = 'AllenCCF-Annotation-2020-'
 pterm = pickle.load(open(ptermpkl, 'rb'))
+ccfv3 = BrainGlobeAtlas(atlas_name='allen_mouse_10um')
+ann = ccfv3.annotation
 
-def get_frequencies_from_dict(neurondict, ontlevel='structure'):
+def get_frequencies_from_dict(neurondict, parcellated, ontlevel='structure'):
     '''
     right now im only writing this for axon endpoint analysis, ill have to first pull the endpoints thru helper function
     '''
-    axonalends = get_axonal_endpoints(neurondict)
+    match parcellated:
+        case True:
+            axonalends = get_axonal_endpoints(neurondict)
+        case False:
+            axonalends = get_endpoints_from_file(neurondict)
     for cell, info in axonalends.items():
         soma = info['soma']
         ends = info['ends']
@@ -75,13 +81,149 @@ def get_frequencies_from_dict(neurondict, ontlevel='structure'):
             ser = ser.replace(np.nan, 0)
     return ser
 
+def freq_helper(freqdict, end, region, somahem):
+    '''
+    helper function for my frequency annotator
+
+    Parameters
+    ----------
+    freqdict : 
+        DESCRIPTION.
+    end : TYPE
+        DESCRIPTION.
+    region : TYPE
+        DESCRIPTION.
+    somahem : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    '''
+    zend = end['z']
+    zref = MIDLINEZ_10UM - zend
+    #also, should be - for LH, + for RH
+    zhem = np.sign(zref)
+    ipsstr = 'Ipsilateral ' + region
+    contstr = 'Contralateral ' + region
+    if zhem == somahem:
+        if ipsstr in freqdict:
+            freqdict[ipsstr] += 1
+        else:
+            freqdict[ipsstr] = 1
+    if zhem != somahem:
+        if contstr in freqdict:
+            freqdict[contstr] += 1
+        else:
+            freqdict[contstr] = 1
+    return
+
+def neuronprop(neurondict, mode, ontlevel='structure', cellname=None):
+    '''
+ 
+
+    Parameters
+    ----------
+    neurondict : dictionary
+        dictionary (rewrite to be OO so i can say smth specific here).
+    properties: str
+        'length', 'frequency', 'both', desired property to measure about set of reconstructions
+
+
+    Returns
+    -------
+    one or two dictionaries containing either endpoint frequency or length in allen CCF-defined regions
+    
+    '''
+    
+    if mode == 'length':
+        nodes = neurondict[cellname]['axon']
+        somax, somay, somaz = [neurondict[cellname]['soma']['x'], neurondict[cellname]['soma']['y'], 
+                               neurondict[cellname]['soma']['z']]
+    if mode == 'frequency':
+        cell = get_axonal_endpoints(neurondict)
+        nodes = cell[cellname]['ends']
+        somax, somay, somaz = [cell[cellname]['soma']['x'], cell[cellname]['soma']['y'], 
+                           cell[cellname]['soma']['z']]
+        
+    propdict = defaultdict(int)
+
+    
+    #get sign of soma relative to midline
+    somaref = MIDLINEZ-somaz
+    somahem = np.sign(somaref)
+    
+    for node in nodes:
+        
+        coords = [node['x'], node['y'], node['z']]
+
+        x, y, z = coords
+        
+        #get sign of node relative to midline, get laterality of node
+        zref = MIDLINEZ-z
+        zhem = np.sign(zref)
+
+    #ok if i write this to pull from the annotated regions in the json, then you have aids that are marked as None
+    #presumably corresponding to spinal cord, which doesn't have a label in the allen ccf. 
+    #think i have to just skip these nodes for now, although it feels like throwing out a lot of information
+        if node['allenId'] == None:
+            continue
+        if node['x'] > 13200:
+            continue
+# =============================================================================
+# commenting this out for now and just using the 'N' condition, for some reason I am getting regions
+# annotated that do not have an annotation in the 2020 ccf and no volume associated with them
+#         if 'N' in cellname:
+#             allenid = allenstr+str(node['allenId']) #freqs/lengths4
+#             region = pterm.loc[allenid]['acronym']
+#         else:
+#             region = ccfv3.structure_from_coords(coords, microns=True, as_acronym=True)
+# =============================================================================
+        #region = ccfv3.structure_from_coords(coords, microns=True, as_acronym=True) (freqs/lengths3)
+        #index allen ccf volume to get parcellation id, needs to be 10 um res
+        tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
+        try:
+            allenid = allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
+        except IndexError:
+            region = 'SpC'
+        
+        #get region abbreviation if node in ccf volume
+        else:
+            #parcels = parcellation_map.loc[allen_parcellations.loc[allenid]['label']]
+            #parcels = parcellation_map.loc[allenid]#['label']
+            parcels = parcellation_map[parcellation_map['parcellation_index'] == allenid]
+            region = get_allen_region(ontlevel, parcels)
+        
+        finally:
+            latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
+        #calculate euclidean distance from node to its parent, soma will have parentNumber -1
+        match mode:
+            case 'length':
+                if node['parentNumber'] == -1:
+                    length = np.sqrt((x-somax)**2+(y-somay)**2+(z-somaz)**2)
+                    propdict[latregion] += length
+                else:
+                    pnode = nodes[node['parentNumber']]
+                    px, py, pz = [pnode['x'], pnode['y'], pnode['z']]
+                    length = np.sqrt((x-px)**2+(y-py)**2+(z-pz)**2)
+                    propdict[latregion] += length
+                    
+            
+            case 'frequency':
+                propdict[latregion] += 1
+            
+    return propdict
+                
+
 def get_axon_length(neurondict, ontlevel='structure'):
     '''
     get axon length in regions, lateralized, done at one micron resolution, values are in um
     '''
     lengthdict = defaultdict(int)
     axon = neurondict['axon']
-    somax, somay, somaz = [neurondict['soma']['x'], neurondict['soma']['y'], neurondict['soma']['z']]
+    somax, somay, somaz = [neurondict['soma']['x'], neurondict['soma']['y'], 
+                           neurondict['soma']['z']]
     
     #get sign of soma relative to midline
     somaref = MIDLINEZ-somaz
@@ -348,6 +490,8 @@ def get_axonal_endpoints(neurondict):
         for node in axon:
             nodeID = str(node['sampleNumber'])
             parent = str(node['parentNumber'])
+            if isinstance(parent, str) == False:
+                continue
             if parent == str(-1):
                 parent_child_dict[nodeID] = None
             if parent > str(0):
@@ -361,18 +505,20 @@ def get_axonal_endpoints(neurondict):
     return endsdict
         
 
-def get_endpoints_from_file_parcellated(neuronjson):
+def get_endpoints_from_file(neuronjson):
     '''
     helper func for load_endpoints
     
     :param neuronjson: Description
     '''
+    endsdict
     with open(neuronjson, 'r') as f:
         parent_child_dict = {}
         neuron = json.load(f)
-        cellname = list(neuron.keys())[0]
-        axon = neuron[cellname]['axon']
-        #ver = neuron['neurons'][0]['annotationSpace']['version'] #this will be 2.5 if CCFv2.5 is used, 3 if CCFv3
+        cell = neuron['neurons'][0]['idString']
+        axon = neuron['neurons'][0]['axon']
+        soma = neuron['neurons'][0]['soma']
+        ver = neuron['neurons'][0]['annotationSpace']['version'] #this will be 2.5 if CCFv2.5 is used, 3 if CCFv3
         for node in axon:
             #x = node['x']
             #z = node['z']
@@ -392,39 +538,8 @@ def get_endpoints_from_file_parcellated(neuronjson):
         leaves = tree.leaves()
         ends_from_tree = [int(node.identifier) for node in leaves]
         endpoints = [node for node in axon if node['sampleNumber'] in ends_from_tree]
-    return endpoints
-
-def get_endpoints_from_file(neuronjson):
-    '''
-    helper func for load_endpoints
-    
-    :param neuronjson: Description
-    '''
-    with open(neuronjson, 'r') as f:
-        parent_child_dict = {}
-        neuron = json.load(f)
-        axon = neuron['neurons'][0]['axon']
-        ver = neuron['neurons'][0]['annotationSpace']['version'] #this will be 2.5 if CCFv2.5 is used, 3 if CCFv3
-        for node in axon:
-            x = node['x']
-            z = node['z']
-            #x and z in ccf2.5 are swapped in ccfv3, so swapping those in any cell annotated in ccfv2.5
-            #dont think this is needed anymore, keeping it in in case i get other 2.5 cells?
-            # if ver == 2.5:
-            #     node['z'] = x
-            #     node['x'] = z
-            nodeID = str(node['sampleNumber'])
-            parent = str(node['parentNumber'])
-            if parent == str(-1):
-                parent_child_dict[nodeID] = None
-            if parent > str(0):
-                parent_child_dict[nodeID] = str(parent)
-        tree = Tree()
-        tree = tree.from_map(parent_child_dict)
-        leaves = tree.leaves()
-        ends_from_tree = [int(node.identifier) for node in leaves]
-        endpoints = [node for node in axon if node['sampleNumber'] in ends_from_tree]
-    return endpoints
+        endsdict[cell] = {'ends': endpoints, 'soma': soma} 
+    return endsdict
 # =============================================================================
 # 
 # def load_endpoints(dir):
