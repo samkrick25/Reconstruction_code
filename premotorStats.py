@@ -230,10 +230,10 @@ sumax.legend(handles=[allhist[0]])
 
 cutmix = [val for val in mixedvals if val < 150]
 cutdist = [val for val in distinctvals if val < 150]
-cutbins = np.histogram_bin_edges(cutmix)
+cutbins = np.histogram_bin_edges(mixedvals)
 fig6, ax6 = plt.subplots(1,1, dpi=300)
-sns.histplot(cutmix, kde=True, bins=cutbins, color='orange', ax=ax6, alpha=0.3, stat='density')
-sns.histplot(cutdist, kde=True, bins=cutbins, color='blue', ax=ax6, alpha=0.3, stat='density')
+sns.histplot(mixedvals, bins=cutbins, color='orange', ax=ax6, alpha=0.3) #kde=True, stat='density'
+sns.histplot(distinctvals, bins=cutbins, color='blue', ax=ax6, alpha=0.3)
 # =============================================================================
 # _, _, cutmixhist = ax6.hist(cutmix, label='mixed premotors', bins=cutbins, color='orange', alpha=0.5)
 # _, _, cutdisthist = ax6.hist(cutdist, label='distinct premotors', bins=cutbins, color='blue', alpha=0.3)

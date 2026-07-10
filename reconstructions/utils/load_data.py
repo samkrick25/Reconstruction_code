@@ -511,7 +511,7 @@ def get_endpoints_from_file(neuronjson):
     
     :param neuronjson: Description
     '''
-    endsdict
+    endsdict = {}
     with open(neuronjson, 'r') as f:
         parent_child_dict = {}
         neuron = json.load(f)

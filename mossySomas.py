@@ -24,6 +24,9 @@ mossys = ['AA0922', 'AA1263', 'N010-651324', 'N013-703070', 'N016-715345-HD', 'N
           'N023-715346-PC', 'N024-715345-SA', 'N030-651895', 'N031-651895', 'N031-715345-DS', 'N035-674191-FMR', 'N037-674185-IB',
           'N038-674185', 'N041-674191-AR', 'N044-674191-SP', 'N056-686955-JN', 'N057-686955-SA', 'N113-708369-JN', 
           'N114-708369-HS', 'N115-708369-BP']
+
+
+
 somas = pickle.load(open(somaspkl, 'rb'))
 
 settings.SHOW_AXES=None
@@ -51,3 +54,17 @@ ccf_scene.render(camera=cameras.corcam)
 # ccf_scene.screenshot(name=savedir+'\\'+'mossySomas_cor.png', camera=cameras.corcam, scale=3)
 # ccf_scene.close()
 # =============================================================================
+
+# %%
+import matplotlib.pyplot as plt
+
+latI = [0.1111111111,0.5897435897,-0.6333333333,0.4610778443,1,0.1512195122,0.5111111111,-0.04615384615,1,0.4208494208,1,
+        0.7142857143,0.3757961783,0.3085399449,0.9448698315,0.5511111111,0.4409566517,1,0.785467128,0.2906403941,
+        0.1474103586,-0.3314285714,0.2230215827]
+
+fig, ax = plt.subplots(dpi=300)
+ax.hist(latI)
+ax.set_xlabel('Laterality Index')
+ax.set_ylabel('# cells')
+fig.suptitle('Laterality of mossy fibers')
+ax.set_xticks(np.arange(-1,1.2,0.2))

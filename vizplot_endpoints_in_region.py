@@ -9,7 +9,7 @@ from reconstructions.utils import visualize, cameras, plotting_funcs
 from brainrender import Scene
 import numpy as np
 
-antnodes, postnodes = visualize.show_endpoints(regions=['PB'], colors=['purple'], ontlevel='structure', root=True, alphas=[0.2], unilat=True, camera=cameras.sagcam)
+antnodes, postnodes = visualize.show_endpoints(regions=['MRN', 'SCm'], colors=['pink', 'orange'], ontlevel='structure', root=True, alphas=[0.2], unilat=True, camera=cameras.sagcam)
 
 antnonempty=[]
 for cell, nodes in antnodes.items():

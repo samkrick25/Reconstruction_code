@@ -20,8 +20,8 @@ cols = ['XII', 'V', 'VII']
 pattern_order = ['100', '010', '001', '110', '101', '011', '111']
 
 def get_pattern(row):
-    """Create binary pattern (1=non-zero, 0=zero)"""
-    return ''.join(['1' if val != 0 else '0' for val in row])
+    """Create binary pattern (1=above threshold, 0=zero)"""
+    return ''.join(['1' if val >= thresh else '0' for val in row])
 
 def get_max_in_pattern(row):
     """Get max value among columns marked as 1 in the pattern"""
@@ -45,7 +45,7 @@ premotorMNs['_max_val'] = premotorMNs.apply(get_max_in_pattern, axis=1)
 premotorMNs['_pattern'] = pd.Categorical(premotorMNs['_pattern'], categories=pattern_order, ordered=True)
 premotorSorted = premotorMNs.sort_values(['_pattern', '_max_val'], ascending = [True, False])
 
-premotorSorted = premotorSorted.drop(columns=['_pattern', '_max_val']).reset_index(drop=True)
+premotorSorted = premotorSorted.drop(columns=['_pattern', '_max_val'])
 
 premotorLog = pp.preprocess(premotorSorted, pct=False)
 
@@ -61,6 +61,6 @@ premotorLog = pp.preprocess(premotorSorted, pct=False)
 # cmap = mcolors.ListedColormap(colors)
 # norm = mcolors.BoundaryNorm(bounds, cmap.N, clip=True)
 # =============================================================================
-
+#, cmap='jet'
 fig, ax = plt.subplots(figsize=(20, 3),dpi=300)
-sns.heatmap(premotorLog.T, ax=ax, xticklabels=premotorMNs.index, cmap='jet', cbar_kws={'location':'left', 'label':'ln(# of endpoints + 1)'})
+sns.heatmap(premotorLog.T, ax=ax, xticklabels=premotorSorted.index, cbar_kws={'location':'left', 'label':'ln(# of endpoints + 1)'})

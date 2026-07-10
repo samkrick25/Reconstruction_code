@@ -50,25 +50,39 @@ with open(ccf_vols3, 'r') as svols:
     for row in reader:
         structure_vols[row[0]] = np.float64(row[1])
 
-fregtodrop = ['SpC', 'VL-unassigned', 'mfbc', 'ECT', 'SSs', 'LSc', 'VISC', 'EPd', 'IA', 'TT',
-       'ACB', 'epsc', 'DP', 'cc', 'AIp', 'LSv', 'BMA', 'BST', 'MPO', 'ADP', 'LSv', 'BMA', 'BST', 'MPO', 'ADP', 'fiber tracts-unassigned',
-              'HY-unassigned', 'VMH', 'LPO', 'NLOT', 'AVPV', 'DMH', 'PMv', 'ARH',
-              'PS', 'LSr', 'AP', 'SBPV', 'MS', 'PMd', 'MPN', 'PVpo', 'COAa', 'PVH', 'GPi',
-              'MEA', 'LHA', 'RL', 'VM', 'SAG', 'PoT', 'SPFp', 'VPMpc', 'IO', 'PIL', 'SNr', 'SNc', 'ZI', 'PVHd', 'ECU']
-lregtodrop =['SpC', 'GPi', 'VL-unassigned', 'mfbc', 'ECT', 'SSs', 'LSc', 'VISC', 'EPd', 'IA', 'TT',
-       'ACB', 'epsc', 'cc', 'AIp', 'LSv', 'BMA', 'BST', 'MPO', 'ADP', 'LSv', 'BMA', 'BST', 'MPO', 'ADP', 'fiber tracts-unassigned',
-              'HY-unassigned', 'VMH', 'LPO', 'NLOT', 'AVPV', 'DMH', 'PMv', 'ARH',
-              'PS', 'LSr', 'AP', 'SBPV', 'MS', 'PMd', 'MPN', 'PVpo', 'COAa', 'PVH',
-              'MEA', 'LHA', 'RL', 'VM', 'SAG', 'PoT', 'SPFp', 'VPMpc', 'IO', 'SNr', 'SNc', 'ZI', 'PVHd', 'ECU']
+# =============================================================================
+# fregtodrop = ['SpC', 'VL-unassigned', 'mfbc', 'ECT', 'SSs', 'LSc', 'VISC', 'EPd', 'IA', 'TT',
+#        'ACB', 'epsc', 'DP', 'cc', 'AIp', 'LSv', 'BMA', 'BST', 'MPO', 'ADP', 'LSv', 'BMA', 'BST', 'MPO', 'ADP', 'fiber tracts-unassigned',
+#               'HY-unassigned', 'VMH', 'LPO', 'NLOT', 'AVPV', 'DMH', 'PMv', 'ARH',
+#               'PS', 'LSr', 'AP', 'SBPV', 'MS', 'PMd', 'MPN', 'PVpo', 'COAa', 'PVH', 'GPi',
+#               'MEA', 'LHA', 'RL', 'VM', 'SAG', 'PoT', 'SPFp', 'VPMpc', 'IO', 'PIL', 'SNr', 'SNc', 'ZI', 'PVHd', 'ECU']
+# lregtodrop =['SpC', 'GPi', 'VL-unassigned', 'mfbc', 'ECT', 'SSs', 'LSc', 'VISC', 'EPd', 'IA', 'TT',
+#        'ACB', 'epsc', 'cc', 'AIp', 'LSv', 'BMA', 'BST', 'MPO', 'ADP', 'LSv', 'BMA', 'BST', 'MPO', 'ADP', 'fiber tracts-unassigned',
+#               'HY-unassigned', 'VMH', 'LPO', 'NLOT', 'AVPV', 'DMH', 'PMv', 'ARH',
+#               'PS', 'LSr', 'AP', 'SBPV', 'MS', 'PMd', 'MPN', 'PVpo', 'COAa', 'PVH',
+#               'MEA', 'LHA', 'RL', 'VM', 'SAG', 'PoT', 'SPFp', 'VPMpc', 'IO', 'SNr', 'SNc', 'ZI', 'PVHd', 'ECU']
+# =============================================================================
 
-lnozero = lnozero.drop(lregtodrop, axis=1)
-fnozero = fnozero.drop(fregtodrop, axis=1)
+forebrain = ["N016-651324", 'N063-709222', 'N067-685221-HS','N068-685221', 'N040-709222', 'AA1521']
+
+lnozero = lnozero.drop('SpC', axis=1)
+fnozero = fnozero.drop('SpC', axis=1)
+fnozero = fnozero.drop(forebrain, axis=0)
+#fnozero = fnozero.drop('SpC', axis=1)
+# =============================================================================
+# fnoz = fnozero.drop(forebrain, axis=0)
+# 
+# fnz = fnoz.loc[:, (fnoz != 0).any(axis=0)]
+# =============================================================================
 
 #region hindbrain (HB) does not have a volume attached to it, the nodes that are
 #getting assigned here
-thresh = 50
+fthresh = 20
+lthresh = 150
 fns = fnozero.sum(axis=0)
-ut = fns[fns<thresh].index.to_list()
+lns = lnozero.sum(axis=0)
+fut = fns[fns<fthresh].index.to_list()
+lut = lns[lns<lthresh].index.to_list()
 
 #first convert to mm then normalize by region volume
 #lnozero['sV'] = lnozero['sV'] + lnozero['sptV']
@@ -93,46 +107,7 @@ ax[0].set_title('axon length/mm^3')
 ax[1].bar(fssort.head(10).index, fssort.head(10).values)
 ax[1].set_title('endpoints/mm^3')
 
-# =============================================================================
-# ontology_order = {'AQ':0, 'Isocortex':1, 'CTXsp':2, 'HPF':3, 'OLF':4, 'CB':5, 'PAL':6, 'STR':7, 'TH':8, 'HY':9, 'MB':10, 'P':11, 'MY':12,
-#                   'V3':13,'V4':14, 'VL':15, 'brain-unassigned':16, 'c':17, 'cbf':18, 'cm':19, 'eps':20, 'fiber tracts-unassigned':21,'lfbs':22,
-#                   'mfbs':23, 'scwm':24, 'unassigned':25}
-# laterality_order = {'Ipsilateral':0, 'Contralateral':1}
-# freqsT = fmerged.T
-# index_df = pd.DataFrame(index=freqsT.index, columns=['regionDivision', 'meanProjection'])
-# for region in index_df.index:
-# 
-#     regstr = region
-#     ontinfo = structure_to_ont[regstr]
-#     division = ontinfo['acronymInfo']['division']
-#     index_df.loc[region, 'regionDivision'] = division
-#     
-# index_df['meanProjection'] = freqsT.mean(axis=1).values
-# index_df['ontologyOrder'] = index_df['regionDivision'].map(ontology_order)
-# 
-# sorted_regions = index_df.sort_values(by=[ 'ontologyOrder', 'meanProjection'], ascending=[True, False])
-# freq_sorted = freqsT.reindex(sorted_regions.index)
-# =============================================================================
-#row_colors = [hexvals[division] for division in sorted
-# =============================================================================
-# index_df = pd.DataFrame(index=freqsT.index, columns=['regionDivision', 'laterality', 'meanProjection'])
-# for region in index_df.index:
-#     regstrparts = region.split()[1:]
-#     lat = region.split()[0]
-#     index_df.loc[region, 'laterality'] = lat
-#     regstr = ' '.join(regstrparts)
-#     ontinfo = structure_to_ont[regstr]
-#     division = ontinfo['acronymInfo']['division']
-#     index_df.loc[region, 'regionDivision'] = division
-#     
-# index_df['meanProjection'] = freqsT.mean(axis=1).values
-# index_df['lateralityOrder'] = index_df['laterality'].map(laterality_order)
-# index_df['ontologyOrder'] = index_df['regionDivision'].map(ontology_order)
-# 
-# sorted_regions = index_df.sort_values(by=['lateralityOrder', 'ontologyOrder', 'meanProjection'], ascending=[True, True, False])
-# freq_sorted = freqsT.reindex(sorted_regions.index)
-# #row_colors = [hexvals[division] for division in sorted_regions['regionDivision']]
-# =============================================================================
+
 def cluster_corr(corr_array, regidx, inplace=False):
     """
     Rearranges the correlation matrix, corr_array, so that groups of highly 
@@ -165,15 +140,17 @@ def cluster_corr(corr_array, regidx, inplace=False):
         return corr_array.iloc[idx, :].T.iloc[idx, :]
     return corr_array[idx, :][:, idx], idx_reg
 
-#fdrop = fnorm.drop(ut, axis=1)
+fdrop = fnorm.drop(fut, axis=1)
 
-cef = np.corrcoef(fnorm.T)
-lcef = np.corrcoef(lnorm.T)
+ldrop = lnorm.drop(lut, axis=1)
+
+cef = np.corrcoef(fdrop.T)
+lcef = np.corrcoef(ldrop.T)
 # %%
 
 
-lcc, lidx = cluster_corr(lcef, lnorm.T.index)
-cov_clust, idxreg = cluster_corr(cef, fnorm.T.index)
+lcc, lidx = cluster_corr(lcef, ldrop.T.index)
+cov_clust, idxreg = cluster_corr(cef, fdrop.T.index)
 # %%
 
 
@@ -198,6 +175,7 @@ def zoom_heatmap(hmap, idx, start=None, end=None):
     fig, ax = plt.subplots(dpi=300)
     if start:
         labels = idx[start:end]
+        
         sns.heatmap(hmap[start:end, start:end], ax=ax, xticklabels=labels, yticklabels=labels)
         return labels
     else:
@@ -207,20 +185,18 @@ def zoom_heatmap(hmap, idx, start=None, end=None):
 #zoom_heatmap(cov_clust, idxreg, start=32, end=50) #14-32 for MB module
 
 # %%
-
-
         
 zoom_heatmap(lcc, lidx)
 
 zoom_heatmap(cov_clust, idxreg)
 # %%
-
-
-zoom_heatmap(cov_clust, idxreg, start=14, end=27) #sensory/autonomic
+#zoom_heatmap(cov_clust, idxreg, start=12, end=16)
+zoom_heatmap(cov_clust, idxreg, start=31,end=57) #43-63 shows vestibular, sensory, medial, 30-40 trigeminal/PB
+#zoom_heatmap(cov_clust, idxreg, start=14, end=27) #sensory/autonomic
 # %%
 
 #zoom_heatmap(cov_clust, idxreg, start=25, end=35)
-zoom_heatmap(cov_clust, idxreg, start=81, end=91)
+#zoom_heatmap(cov_clust, idxreg, start=81, end=95)
 # =============================================================================
 # hylabels = zoom_heatmap(cov_clust, idxreg, start=165, end=193)
 # 
