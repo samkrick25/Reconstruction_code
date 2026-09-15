@@ -26,7 +26,7 @@ scRNAseq_meta = pd.read_csv(scRNAseq_meta)
 scRNAseq_all = pd.DataFrame(scRNAseq_raw, columns=scRNAseq_genes, index=scRNAseq_meta.index)
 
 #%%
-#genes of interest
+#genes of interest, filter scRNAseq data
 GOI = ['Calb2', 'Cartpt', 'Crh', 'Dbh', 'Gal', 'Grp', 'Ntrk1', 'Sim1', 'Sst', 'Slc32a1', 'Slc17a7', 'Slc17a6']
 scRNAseq_goi = scRNAseq_all[GOI]
 
@@ -70,6 +70,9 @@ mean_counts = plot_metric(scRNAseq_goi, metric='mean')
 #plot distributions of types for cells that express a given gene in scRNAseq data
 thresh = 0
 for gene in GOI:
+    geneSer = scRNAseq_all[gene]
+    idx = geneSer.to_numpy().nonzero()[0]
+    cells = scRNAseq_meta.iloc[idx]
     
 
 #savedir for plots
