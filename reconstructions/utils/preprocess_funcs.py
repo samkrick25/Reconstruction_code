@@ -66,7 +66,7 @@ def preprocess(df, log1p=True, pct=True):
     
 def merge_regions(df):
     '''
-    merge ipsilateral/contralateral regions into one column
+    merge ipsilateral/contralateral regions into one column, takes output of load_data.neuronprops
     (GPT assist)
 
     :param df: DataFrame with frequency information for cells, columns must be 'Ipsilateral [region]' or 'Contralateral [region]'
@@ -422,9 +422,9 @@ def _mesh_has_data(mesh):
 # 
 #     return actors
 # =============================================================================
-def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_color='red',
+def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color='blue', dendrite_color='red',
                        soma_color='black', neurite_radius=4, soma_radius=15, alpha=1, res=12,
-                       include_soma=True, inmesh_ids=None):
+                       include_soma=True, inmesh_ids=None, mirror_soma=False):
     """
     Parameters
     ----------
@@ -454,7 +454,15 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_
 
     if include_soma and len(soma_rows) > 0:
         soma_pos = soma_rows.iloc[0][['x', 'y', 'z']].tolist()
-        actors   = [Sphere(pos=soma_pos, r=soma_radius, c=soma_color, alpha=alpha)]
+        if mirror_soma:
+            x, _, _ = soma_pos
+            if x>MIDLINEZ:
+                diff = x-MIDLINEZ
+                x = MIDLINEZ - diff
+                soma_pos[0] = x
+        actors = [Sphere(pos=soma_pos, r=soma_radius, c=soma_color, alpha=alpha)]
+        if skip_axon and skip_dendrite:
+            return actors
     else:
         actors = []
 
@@ -502,6 +510,8 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_
 
     for ntype, sections in sections_by_type.items():
         if skip_dendrite and ntype == 3:
+            continue
+        if skip_axon and ntype==2:
             continue
         color = type_color_map.get(ntype, axon_color)
         actor = build_tube_actor_from_sections(
@@ -551,8 +561,8 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, axon_color='blue', dendrite_
 #     return cell_actors
 # =============================================================================
 def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black',
-                         skip_dendrite=False, neurite_radius=4, soma_radius=15,
-                         alpha=1, res=12, mesh=np.array([])):
+                         skip_dendrite=False, skip_axon=False, neurite_radius=4, soma_radius=15,
+                         alpha=1, res=12, mesh=np.array([]), mirror_soma=False):
     swc_df = pd.read_csv(
         swcpath, comment='#', sep=r'\s+',
         names=['id', 'type', 'x', 'y', 'z', 'r', 'parent']
@@ -576,10 +586,10 @@ def swap_for_brainrender(swcpath, axon='green', dendrite='black', soma='black',
     cell_actors = swc_to_line_actors(
         swc_df,
         axon_color=axon, dendrite_color=dendrite, soma_color=soma,
-        skip_dendrite=skip_dendrite, neurite_radius=neurite_radius,
+        skip_dendrite=skip_dendrite, skip_axon=skip_axon, neurite_radius=neurite_radius,
         soma_radius=soma_radius, alpha=alpha, res=res,
         include_soma=not has_mesh,
-        inmesh_ids=inmesh_ids
+        inmesh_ids=inmesh_ids, mirror_soma=mirror_soma
     )
     return cell_actors
 

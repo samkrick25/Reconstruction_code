@@ -60,6 +60,7 @@ def meanprojval(df, targets, names, thresh):
     return toRet
 
 
+
 frequencies = pkl.load(open(frequenciespkl, 'rb')).T
 merged = pp.merge_regions(frequencies)
 
@@ -241,3 +242,40 @@ sns.histplot(distinctvals, bins=cutbins, color='blue', ax=ax6, alpha=0.3)
 #ax6.legend(handles=[cutmixhist[0], cutdisthist[0]])
 fig6.supxlabel('Mean endpoints in motor nuclei')
 #fig6.supylabel('# of cells')
+
+#%%
+import numpy as np
+from reconstructions.utils.filedirs import frequenciespkl
+from reconstructions.utils.filedirs import plotdir
+import pickle as pkl
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import os
+
+frequencies = pkl.load(open(frequenciespkl, 'rb')).T
+merged = pp.merge_regions(frequencies)
+
+motor_nuc = ['XII', 'VII', 'V']
+
+thresh = 4
+
+premotor = merged[(merged['XII']+merged['VII']+merged['V']) > thresh]
+
+barX = [len(premotor.index), (len(merged.index)-len(premotor.index))]
+pieplt, pieax = plt.subplots(dpi=300)
+
+#sim diff thresh vals
+ts = np.arange(1, 20, 1)
+YP = []
+YNP = []
+for t in ts:
+    p = merged[(merged['XII']+merged['VII']+merged['V']) > t]
+    YP.append(len(p.index))
+    YNP.append(len(merged) - len(p.index))
+
+simplt, simax = plt.subplots(dpi=300)
+line = simax.plot(ts, YP, c='orange', label='# premotor cells')
+simax.legend(loc='upper right')
+
+threshf = os.path.join(plotdir, 'premotor')
+threshf = os.path.join(threshf, 'premotor_thresh.png')

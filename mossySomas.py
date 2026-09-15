@@ -62,9 +62,13 @@ latI = [0.1111111111,0.5897435897,-0.6333333333,0.4610778443,1,0.1512195122,0.51
         0.7142857143,0.3757961783,0.3085399449,0.9448698315,0.5511111111,0.4409566517,1,0.785467128,0.2906403941,
         0.1474103586,-0.3314285714,0.2230215827]
 
-fig, ax = plt.subplots(dpi=300)
+fig, ax = plt.subplots(dpi=300, figsize=(4,6))
 ax.hist(latI)
-ax.set_xlabel('Laterality Index')
+ax.set_xlabel('<----------Contralateral   Ipsilateral---------->')
 ax.set_ylabel('# cells')
 fig.suptitle('Laterality of mossy fibers')
-ax.set_xticks(np.arange(-1,1.2,0.2))
+ax.set_xticks(np.arange(-1,1.5,0.5))
+ax.spines[['right', 'top']].set_visible(False)
+fig.tight_layout()
+sf = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\mossy_latI.png'
+fig.savefig(sf)

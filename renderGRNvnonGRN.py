@@ -7,14 +7,16 @@ Created on Thu Jun 11 20:40:58 2026
 import vtk
 vtk.vtkMultiThreader.SetGlobalMaximumNumberOfThreads(1)
 
-
+#%%
 from brainrender import Scene, settings
 from reconstructions.utils.filedirs import frequenciespkl
 from reconstructions.utils import preprocess_funcs as pp
 from reconstructions.utils import cameras
+from reconstructions.utils.cellLists import cells_by_pheno
 import pickle
 from tqdm import tqdm
 import os
+#%%
 
 THRESH = 2
 
@@ -45,13 +47,14 @@ cam2 = dict(
     distance=11452.2,
     clipping_range=(2162.03, 24963.9),
 )
-
+#%%
 settings.SHOW_AXES=False
 settings.ROOT_COLOR=[0.8,0.8,0.8]
 settings.OFFSCREEN=False
 ccf_scene = Scene(atlas_name='allen_mouse_10um')
 root = ccf_scene.get_actors()[0]
 root._needs_silhouette=False
+#%%
 
 regions = ['GRN', 'MRN']
 copies = [ccf_scene.atlas.get_region(r).mesh.clone() for r in regions]
@@ -118,23 +121,43 @@ ccf_scene.render(camera=cameras.topcam)
 #         GRNcells.append(cell)
 #     if targets['GRN'] <= THRESH:
 #         nonGRNcells.append(cell)
-#         
-# for file in tqdm(os.listdir(celldir), desc='Loading neurons'):
-#     cellname = file.split('.')[0]
-#     filepath = os.path.join(celldir, file)
-#     if cellname in mossys:
-#         continue
-#     if cellname in GRNcells:
-#         actors = pp.swap_for_brainrender(filepath, axon='green', skip_dendrite=True, soma='green', neurite_radius=8, soma_radius=4)
-#         for actor in actors:
-#             ccf_scene.add(actor)
-#     if cellname in nonGRNcells:
-#         actors = pp.swap_for_brainrender(filepath, axon='blue', skip_dendrite=True, soma='blue', neurite_radius=8, soma_radius=4)
-#         for actor in actors:
-#             ccf_scene.add(actor)
 # =============================================================================
+#%%
+from reconstructions.utils import preprocess_funcs as pp
+from reconstructions.utils import cameras
+from reconstructions.utils.cellLists import cells_by_pheno
+from brainrender import Scene, settings
 
+ccf_scene = Scene(atlas_name='allen_mouse_10um')
 
+#set brainrender parameters
+settings.SHOW_AXES=False
+settings.ROOT_ALPHA = 0.075
+settings.OFFSCREEN=True
+settings.INTERACTIVE=False
+settings.BACKGROUND_COLOR='black'
+ccf_scene = Scene(atlas_name='allen_mouse_10um')
+root = ccf_scene.get_actors()[0]
+root._needs_silhouette=False
+
+#load GRN v nonGRN projecting cells
+for file in tqdm(os.listdir(celldir), desc='Loading neurons'):
+    cellname = file.split('.')[0]
+    filepath = os.path.join(celldir, file)
+    if cellname in mossys:
+        continue
+    if cellname in cells_by_pheno['GRN']:
+        actors = pp.swap_for_brainrender(filepath, axon='green', skip_dendrite=True, soma='green', neurite_radius=8, soma_radius=4)
+        for actor in actors:
+            ccf_scene.add(actor)
+    if cellname not in cells_by_pheno['GRN']:
+        actors = pp.swap_for_brainrender(filepath, axon='purple', skip_dendrite=True, soma='purple', neurite_radius=8, soma_radius=4)
+        for actor in actors:
+            ccf_scene.add(actor)
+
+sf = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\images\phenos\GRN\GRNvnonGRN.png'
+ccf_scene.screenshot(sf, camera=cameras.rootcam, scale=6)
+#%%
 #ccf_scene.render(camera=cameras.topcam)
 # =============================================================================
 # ccf_scene.screenshot(name=savedir+'\\'+'GRNvnonGRNtop6.png', camera=rootcam, scale=3)

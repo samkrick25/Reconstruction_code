@@ -24,8 +24,8 @@ allen_parcellations = pickle.load(open(allen_parcellationpkl, 'rb'))
 parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
 allenstr = 'AllenCCF-Annotation-2020-'
 pterm = pickle.load(open(ptermpkl, 'rb'))
-ccfv3 = BrainGlobeAtlas(atlas_name='allen_mouse_10um')
-ann = ccfv3.annotation
+#ccfv3 = BrainGlobeAtlas(atlas_name='allen_mouse_10um')
+#ann = ccfv3.annotation
 
 def get_frequencies_from_dict(neurondict, parcellated, ontlevel='structure'):
     '''
