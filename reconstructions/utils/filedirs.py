@@ -29,17 +29,11 @@ neurondictpkl = r"C:\Users\economolab\Documents\GitHub\Reconstruction_code\recon
 parcellated_neurons = r'reconstructions\data\IRNPARN_cells\json_parcellated'
 parcellated_copy = r"reconstructions\data\IRNPARN_cells\parcellated_copy"
 structure_ont_info = r'reconstructions\data\structure_ont_info.pkl'
-<<<<<<< Updated upstream
 frequenciespkl = r'reconstructions\data\freqs_hopefullygood.pkl' 
 lengthspkl = r'reconstructions\data\lengths_hopefullygood.pkl'
 ptermpkl = r'reconstructions\data\pterm.pkl'
-<<<<<<< Updated upstream
 
 celldir = r"reconstructions\data\IRNPARN_cells\swcsfromjson"
-=======
-=======
-frequenciespkl = r'reconstructions\data\frequencies.pkl'
-lengthspkl = r'reconstructions\data\lengths.pkl'
 ptermpkl = r'reconstructions\data\pterm.pkl'
 
 abc_dir = r'D:\allen_brain_atlas' #specific for shared PC but i think is the same on mine
@@ -48,5 +42,3 @@ data_dir = r'H:\allen-brain-cell-atlas'
 local_data_dir = r'reconstructions\data\ABC_files'
 
 plotdir = r'reconstructions\plots'
->>>>>>> Stashed changes
->>>>>>> Stashed changes

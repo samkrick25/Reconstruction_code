@@ -16,6 +16,7 @@ import seaborn as sns
 from brainrender import Scene
 from brainrender.actors import Line, Points
 import vedo
+from reconstructions.utils import cameras as c
 
 mpl.rcParams['image.composite_image'] = False
 plt.rcParams['svg.fonttype'] = 'none'
@@ -133,7 +134,7 @@ plane_configs = [
     (xzax, ('x', 'z'), 'y', y_fixed),   # xz plot: fix y (DV)
     (zyax, ('z', 'y'), 'x', x_fixed),   # zy plot: fix x (AP)
 ]
-chosen = plane_configs[1]
+chosen = plane_configs[0]
 
 ax, free_axes, fixed_axis, fixed_val = chosen
 for pts3d, rgba in extract_contours_3d(ax, free_axes, fixed_axis, fixed_val):
@@ -142,4 +143,4 @@ for pts3d, rgba in extract_contours_3d(ax, free_axes, fixed_axis, fixed_val):
 
 plt.close('all')
 ccf_scene.add_brain_region('root', alpha=0.05)
-ccf_scene.render()
+ccf_scene.render(camera=c.corcam)

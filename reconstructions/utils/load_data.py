@@ -339,6 +339,70 @@ def freq_helper(freqdict, end, region, somahem):
         else:
             freqdict[contstr] = 1
     return
+
+def get_nodes_in_region(cells, regions, parcellated=True, ontlevel='structure', kind=None, infunc=False, mirror=False):
+    '''
+    Docstring for get_nodes_in_region
+    
+    :param cells: Description
+    :param regions: Description
+    returns a list of nodeIDs that I can then use to pull the specific nodes from coordswapped that have coords for visualizaiton
+    or if inputting the non parcellated jsons, will regurn a list of nodes in desired region
+    '''
+# =============================================================================
+#     if infunc:
+#         regions=regions[0]
+# =============================================================================
+        
+    match kind:
+        case 'bulk':
+            nodes = []
+            for _, axon in cells.items():
+                for node in axon:
+                    if parcellated:
+                        try: 
+                            if node[ontlevel] in regions:
+                                nodes.append(node['sampleNumber'])
+                        except KeyError:
+                            print(node)
+                    #if you want not parcellated, then regions has to be the ont id (numbers), if using parcellated can find the region abv
+                    if not parcellated:
+                        if node['allenId'] in regions:
+                            nodes.append(node)
+            return nodes
+        case 'by_cell':
+            cellstonodes = {}
+            for cell, axon in tqdm(cells.items(), desc='Finding nodes in region'):
+                nodes = []
+                for node in axon:
+                    if parcellated:
+                        try:
+                            if node[ontlevel] in regions:
+                                nodes.append(node['sampleNumber'])
+                        except KeyError:
+                            print(node)
+                    if not parcellated:
+                        if node['allenId'] == None:
+                            continue
+                        if node['x'] > 13200:
+                            continue
+                        coords = [node['x'], node['y'], node['z']]
+                        tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
+                        try:
+                            allenid = allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
+                        except IndexError:
+                            region = 'SpC'
+                        else:
+                            parcels = parcellation_map[parcellation_map['parcellation_index'] == allenid]
+                            region = get_allen_region(ontlevel, parcels)
+                        if mirror:
+                            if node['z'] < 5700:
+                                diff = 5700 - node['z']
+                                node['z'] = 5700+diff
+                        if region in regions:
+                            nodes.append(node)
+                cellstonodes[cell] = nodes
+            return cellstonodes
     
 def parcellation_annotator(node):
     #round coordinates to 10um resolution
@@ -483,7 +547,7 @@ def load_brainrender_neurons(dir, color=None):
 
 def get_axonal_endpoints(neurondict):
     endsdict = {}
-    for cell, info in neurondict.items():
+    for cell, info in tqdm(neurondict.items(), desc='Finding endpoints'):
         axon = info['axon']
         soma = info['soma']
         parent_child_dict = {}

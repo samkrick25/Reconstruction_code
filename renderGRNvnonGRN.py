@@ -128,6 +128,9 @@ from reconstructions.utils import cameras
 from reconstructions.utils.cellLists import cells_by_pheno
 from brainrender import Scene, settings
 
+celldir = r"reconstructions\data\IRNPARN_cells\swcsfromjson"
+savedir = r'images'
+
 ccf_scene = Scene(atlas_name='allen_mouse_10um')
 
 #set brainrender parameters
@@ -147,11 +150,11 @@ for file in tqdm(os.listdir(celldir), desc='Loading neurons'):
     if cellname in mossys:
         continue
     if cellname in cells_by_pheno['GRN']:
-        actors = pp.swap_for_brainrender(filepath, axon='green', skip_dendrite=True, soma='green', neurite_radius=8, soma_radius=4)
+        actors = pp.swap_for_brainrender(filepath, axon='purple', skip_dendrite=True, soma='green', neurite_radius=8, soma_radius=4)
         for actor in actors:
             ccf_scene.add(actor)
     if cellname not in cells_by_pheno['GRN']:
-        actors = pp.swap_for_brainrender(filepath, axon='purple', skip_dendrite=True, soma='purple', neurite_radius=8, soma_radius=4)
+        actors = pp.swap_for_brainrender(filepath, axon='green', skip_dendrite=True, soma='purple', neurite_radius=8, soma_radius=4)
         for actor in actors:
             ccf_scene.add(actor)
 

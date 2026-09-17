@@ -251,19 +251,28 @@ import pickle as pkl
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import os
+from reconstructions.utils import preprocess_funcs as pp
 
 frequencies = pkl.load(open(frequenciespkl, 'rb')).T
 merged = pp.merge_regions(frequencies)
 
 motor_nuc = ['XII', 'VII', 'V']
+#%%
 
-thresh = 4
+#setting endpoint threshold for considering a cell premotor
+thresh = 0
 
 premotor = merged[(merged['XII']+merged['VII']+merged['V']) > thresh]
 
-barX = [len(premotor.index), (len(merged.index)-len(premotor.index))]
+#%%
+#pie chart of premotors vs non
+pieX = [len(premotor.index), (len(merged.index)-len(premotor.index))]
 pieplt, pieax = plt.subplots(dpi=300)
+pieax.pie(pieX, labels=['Premotor', 'Non-premotor'], colors=['orange', 'tab:blue'], autopct='%1.1f%%')
+pieplt.suptitle('% of premotor vs non-premotor cells')
+pieplt.tight_layout()
 
+#%%
 #sim diff thresh vals
 ts = np.arange(1, 20, 1)
 YP = []
@@ -273,9 +282,35 @@ for t in ts:
     YP.append(len(p.index))
     YNP.append(len(merged) - len(p.index))
 
+#plot # premotors at diff thresholds
 simplt, simax = plt.subplots(dpi=300)
 line = simax.plot(ts, YP, c='orange', label='# premotor cells')
 simax.legend(loc='upper right')
+simax.set_xlabel('endpoint threshold to be considered premotor')
 
+#%%
+#find number of ends in motor nuclei for each cell
+premotor_restrict = premotor[['XII', 'VII', 'V']]
+premotor_sum = premotor_restrict.sum(axis=1)
+endsfig, endsax = plt.subplots(dpi=300)
+hist, bins, _ = endsax.hist(premotor_sum.values)
+endsfig.suptitle('# ends in motor nuclei of premotor neurons')
+endsax.set_xticks(np.round(bins))
+endsax.set_xlabel('# ends')
+endsax.set_ylabel('# cells')
+endsfig.tight_layout()
+
+#%%
+#save plots
 threshf = os.path.join(plotdir, 'premotor')
 threshf = os.path.join(threshf, 'premotor_thresh.png')
+simplt.savefig(threshf)
+
+pief = os.path.join(plotdir, 'premotor')
+pief = os.path.join(pief, 'premotor_pie.png')
+pieplt.savefig(pief)
+
+endsf = os.path.join(plotdir, 'premotor')
+endsf = os.path.join(endsf, 'premotor_ends_hist.png')
+endsfig.savefig(endsf)
+

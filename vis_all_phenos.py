@@ -17,7 +17,8 @@ savefile = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\images
 settings.INTERACTIVE = False
 settings.OFFSCREEN = True
 settings.BACKGROUND_COLOR = 'black'
-settings.ROOT_ALPHA = 0.05
+settings.ROOT_ALPHA=0.075
+settings.ROOT_COLOR='white'
 
 zoomsagcam = dict(
     pos=(13035.2, 2056.86, 28708.8),
@@ -54,12 +55,20 @@ root._needs_silhouette = False
 # ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.075, color='pink')
 # =============================================================================
 
-regs = ['PSV', 'SPVI', 'SPVC', 'SPVO', 'NTS'    ]
-for reg in regs:
-    ccf_scene.add_brain_region(reg, color='red', alpha=0.2, silhouette=False)
+# =============================================================================
+# sregs = ['PSV', 'SPVI', 'SPVC', 'SPVO', 'NTS']
+# for reg in sregs:
+#     ccf_scene.add_brain_region(reg, color='red', alpha=0.2, silhouette=False)
+# =============================================================================
+    
+pregs = ['PB']
+for reg in pregs:
+    ccf_scene.add_brain_region(reg, color='grey', alpha=0.1, silhouette=False)
 
-medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,1))
-ccf_scene.slice(plane=medplane)
+# =============================================================================
+# medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,1))
+# ccf_scene.slice(plane=medplane)
+# =============================================================================
 
 #ccf_scene.render(camera=c.topcam)
 
@@ -72,19 +81,19 @@ for file in tqdm(os.listdir(celldir), desc='Adding neurons to scene'):
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['sensory'], 
                                          skip_dendrite = True, neurite_radius = 5, soma_radius=0, alpha=0.7)
     if cellname in cells_by_pheno['sensorimotor']:
-        continue
+        #continue
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['sensorimotor'], 
                                          skip_dendrite = True, neurite_radius = 5, soma_radius=0)
     if cellname in cells_by_pheno['premotor']:
-        continue
+        #continue
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['premotor'], 
                                          skip_dendrite = True, neurite_radius = 5, soma_radius=0)
     if cellname in cells_by_pheno['GRN']:
-        continue
+        #continue
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['GRN'], 
                                          skip_dendrite = True, neurite_radius = 5, soma_radius=0)
     if cellname in cells_by_pheno['forebrain']:
-        continue
+        #continue
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['forebrain'], 
                                          skip_dendrite = True, neurite_radius = 5, soma_radius=0)
     if cellname in cells_by_pheno['mossy']:
@@ -99,7 +108,7 @@ for file in tqdm(os.listdir(celldir), desc='Adding neurons to scene'):
     for actor in actors:
         ccf_scene.add(actor)
 
-sf = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\images\phenos\sens\sens_w_reg_sag.png'
+sf = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\images\phenos\all_to_PB.png'
 ccf_scene.screenshot(sf, camera=c.sagcam, scale=6)
 #ccf_scene.render(camera=c.corcam)
 

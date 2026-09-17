@@ -12,19 +12,26 @@ from reconstructions.utils import cameras
 from tqdm import tqdm
 from reconstructions.utils import preprocess_funcs as pf
 
-celldir = r'reconstructions\data\IRNPARN_cells\premotorsU19\N071-709222'
+celldir = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N010-703070.swc"
 savedir = r'reconstructions\data\IRNPARN_cells\premotorsU19'
 #celldir = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\premotorsU19\alltorender'
 print('setting scene')
 
+settings.INTERACTIVE = False
+settings.OFFSCREEN = True
+
 ccf_scene = Scene(atlas_name='allen_mouse_10um')
 root = ccf_scene.get_actors()[0]
-root._silhouette_kwargs['lw'] = 20
+root._needs_silhouette = False
 
-horzplane1 = ccf_scene.atlas.get_plane((0,4000,0),plane='horizontal')
-horzplane2 = ccf_scene.atlas.get_plane((0,4001,0),norm=(0,-1,0), plane='horizontal')
-ccf_scene.slice(horzplane1)
-ccf_scene.slice(horzplane2)
+#root._silhouette_kwargs['lw'] = 20
+
+# =============================================================================
+# horzplane1 = ccf_scene.atlas.get_plane((0,4000,0),plane='horizontal')
+# horzplane2 = ccf_scene.atlas.get_plane((0,4001,0),norm=(0,-1,0), plane='horizontal')
+# ccf_scene.slice(horzplane1)
+# ccf_scene.slice(horzplane2)
+# =============================================================================
 #root.make_silhouette({'lw':10})
 # =============================================================================
 # root._needs_silhouette = True
@@ -33,13 +40,13 @@ ccf_scene.slice(horzplane2)
 # =============================================================================
 print('scene set')
 # =============================================================================
-ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
-ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
-ccf_scene.add_brain_region('GRN', silhouette=False, alpha=0.2, color='blue')
-ccf_scene.add_brain_region('MRN', silhouette=False, alpha=0.2, color='orange')
-# ccf_scene.add_brain_region('XII', silhouette=False, color='purple', alpha=0.2)
-# ccf_scene.add_brain_region('V', silhouette=False, color='green', alpha=0.2)
-# ccf_scene.add_brain_region('VII', silhouette=False, color='blue', alpha=0.2)
+#ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
+#ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
+#ccf_scene.add_brain_region('GRN', silhouette=False, alpha=0.2, color='blue')
+#ccf_scene.add_brain_region('MRN', silhouette=False, alpha=0.2, color='orange')
+ccf_scene.add_brain_region('XII', silhouette=False, color='purple', alpha=0.2)
+ccf_scene.add_brain_region('V', silhouette=False, color='green', alpha=0.2)
+ccf_scene.add_brain_region('VII', silhouette=False, color='blue', alpha=0.2)
 # =============================================================================
 rootcam = dict(
     pos=(6861.42, -108506, -5802.38),
@@ -51,18 +58,23 @@ rootcam = dict(
 )
 
 colors = ['green', 'red', 'blue', 'brown', 'black', 'purple']
-for i, file in enumerate(os.listdir(celldir)):
-    filestr = file.split('.')[0]
-    cellname = filestr
-    filename = os.path.join(celldir, file)
-    lines = pf.swap_for_brainrender(filename, axon=colors[i], skip_dendrite=True)
-    for line in lines:
-        ccf_scene.add(line)
+actors = pf.swap_for_brainrender(celldir, axon='green', dendrite='black', neurite_radius=10)
+for actor in actors:
+    ccf_scene.add(actor)
+# =============================================================================
+# for i, file in enumerate(os.listdir(celldir)):
+#     filestr = file.split('.')[0]
+#     cellname = filestr
+#     filename = os.path.join(celldir, file)
+#     lines = pf.swap_for_brainrender(filename, axon=colors[i], skip_dendrite=True)
+#     for line in lines:
+#         ccf_scene.add(line)
+# =============================================================================
 # =============================================================================
 # ccf_scene.screenshot(name=savedir+'\\'+'orientingmrn.png', camera=rootcam, scale=3)
 # ccf_scene.close()
 # =============================================================================
-ccf_scene.render(camera=cameras.MYtopcam)
+ccf_scene.screenshot(os.path.join(savedir, 'N126-708369-HD_top.png'), camera=cameras.rootcam)
 print('adding brain regions')
 # =============================================================================
 # ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)

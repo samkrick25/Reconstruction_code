@@ -48,16 +48,19 @@ gmap = ListedColormap(list(gColors.values()))
 pDict = GP.to_dict(orient='list')
 gDict = GP.T.to_dict(orient='list')
 
+
 #stacked, phenos in genos, normalized
 fign, (gaxn, paxn) = plt.subplots(1,2, figsize=(20,8), layout='constrained')
 Pnorm.plot(kind='bar', stacked=True, ax=gaxn, colormap=pmap, legend=False)
 #gaxn.legend(loc='upper left')
 gaxn.tick_params(rotation=90, axis='x')
+gaxn.tick_params(axis='both', labelsize=18)
 
 pbot = np.zeros(7)
 Gnorm.plot(kind='bar', stacked=True, ax=paxn, colormap=gmap, legend=False)
 #paxn.legend(loc='upper right')
 paxn.tick_params(rotation=90, axis='x')
+paxn.tick_params(axis='both', labelsize=18)
 
 fign.supylabel('# cells')
 gaxn.set_title('Phenotype distribution across genotypes')
@@ -68,16 +71,18 @@ fign.savefig(os.path.join(savedir,nsf))
 #stacked, not normalized 
 fig, (gax, pax) = plt.subplots(1,2, figsize=(20,8), layout='constrained')
 GP.plot(kind='bar', stacked=True, ax=gax, colormap=pmap)
-gax.legend(loc='upper left')
+gax.legend(loc='upper left', fontsize='large')
 gax.tick_params(rotation=90, axis='x')
+gax.tick_params(axis='both', labelsize=18)
 
 pbot = np.zeros(7)
 GP.T.plot(kind='bar', stacked=True, ax=pax, colormap=gmap)
-pax.legend(loc='upper right')
+pax.legend(loc='upper right', fontsize='large')
 pax.tick_params(rotation=90, axis='x')
+pax.tick_params(labelsize=18, axis='both')
 
-fig.supylabel('# cells')
-gax.set_title('Phenotype distribution across genotypes')
-pax.set_title('Genotype distribution across phenotypes')
+fig.supylabel('# cells', size=18)
+gax.set_title('Phenotype distribution across genotypes', size=28)
+pax.set_title('Genotype distribution across phenotypes', size=28)
 
-fig.savefig(os.path.join(savedir,sf))
+#fig.savefig(os.path.join(savedir,sf))
