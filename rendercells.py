@@ -11,43 +11,63 @@ from reconstructions.utils import preprocess_funcs as pf
 from reconstructions.utils import cameras
 import numpy as np
 
-#path to swc to be visualized
-neuron = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N032-674185-IB.swc"
+#premotors for u19
+#AA0947, AA1196, AL0006, N023-703070, N034-674191-IB, N071-709222
 
+#path to swc to be visualized
+n1 = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N071-709222.swc"
+#n2 = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\AA0947.swc"
+
+#edit brainrender settings
 settings.SHOW_AXES=None
-settings.INTERACTIVE=True
-settings.OFFSCREEN=False
+settings.INTERACTIVE=False
+settings.OFFSCREEN=True
+settings.ROOT_COLOR='grey'
+settings.ROOT_ALPHA=0.075
+settings.BACKGROUND_COLOR='white'
+
 
 #set up brainrender scene
 ccf_scene = Scene(atlas_name='allen_mouse_10um', root=True)
 root = ccf_scene.get_actors()[0]
 root._needs_silhouette = False
-settings.ROOT_COLOR=[0.8, 0.8, 0.8]
-settings.ROOT_ALPHA=0.2
 print('scene set')
 
-regions = ['Acs5']
-copies = [ccf_scene.atlas.get_region(r).mesh.clone() for r in regions]
-cut = pf.get_mesh_onehem(ccf_scene, mesh=copies, hem='left')
-verts = [m.vertices for m in cut]
+# =============================================================================
+# regions = ['Acs5']
+# copies = [ccf_scene.atlas.get_region(r).mesh.clone() for r in regions]
+# cut = pf.get_mesh_onehem(ccf_scene, mesh=copies, hem='left')
+# verts = [m.vertices for m in cut]
+# =============================================================================
 
 #add desired brain regions
 ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
 ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
 #ccf_scene.add_brain_region('PVH', silhouette=False, color='orange', alpha=0.2)
-ccf_scene.add_brain_region('Acs5', silhouette=False, color='purple', alpha=0.2)
+#ccf_scene.add_brain_region('Acs5', silhouette=False, color='purple', alpha=0.2)
 # =============================================================================
-# ccf_scene.add_brain_region('V', silhouette=False, color='yellow', alpha=0.2)
+ccf_scene.add_brain_region('V', silhouette=False, color='green', alpha=0.2)
+ccf_scene.add_brain_region('XII', silhouette=False, color='purple', alpha=0.2)
+ccf_scene.add_brain_region('VII', silhouette=False, color='blue', alpha=0.2)
+#ccf_scene.add_brain_region('PSV', silhouette=False, color='red', alpha=0.2)
 # ccf_scene.add_brain_region('SPVO', silhouette=False, color='cyan', alpha=0.2)
 # ccf_scene.add_brain_region('SPVI', silhouette=False, color='red', alpha=0.2)
 # =============================================================================
 
 #add neuron, first create line actors
-lines = pf.swap_for_brainrender(neuron, skip_dendrite=False, neurite_radius=3, soma_radius=25, mesh=verts)
-for actor in lines:
+l1 = pf.swap_for_brainrender(n1, skip_dendrite=False, neurite_radius=10, soma_radius=25, axon='purple', dendrite='black')
+for actor in l1:
     ccf_scene.add(actor)
+
+# =============================================================================
+# l2 = pf.swap_for_brainrender(n2, skip_dendrite=False, neurite_radius=5, soma_radius=25, axon='cyan', dendrite='white')
+# for actor in l2:
+#     ccf_scene.add(actor)
+# =============================================================================
     
-ccf_scene.render(camera=cameras.MYtopcam)
+sf = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\images\u19\n034-674191_top.png'
+ccf_scene.screenshot(sf, camera=cameras.rootcam, scale=12)
+#ccf_scene.render(camera=cameras.MYtopcam)
 
 '''
     i     print info about the last clicked object     

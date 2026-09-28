@@ -18,7 +18,7 @@ settings.INTERACTIVE = False
 settings.OFFSCREEN = True
 settings.BACKGROUND_COLOR = 'black'
 settings.ROOT_ALPHA=0.075
-settings.ROOT_COLOR='white'
+settings.ROOT_COLOR='grey'
 
 zoomsagcam = dict(
     pos=(13035.2, 2056.86, 28708.8),
@@ -50,25 +50,41 @@ ccf_scene = Scene(atlas_name = 'allen_mouse_10um')
 root = ccf_scene.get_actors()[0]
 root._needs_silhouette = False
 
+#adding diff regions depending on what phenotype image im generating
 # =============================================================================
 # ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.075)
 # ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.075, color='pink')
 # =============================================================================
 
+sregs = ['PSV', 'SPVI', 'SPVC', 'SPVO', 'NTS']
+for reg in sregs:
+    ccf_scene.add_brain_region(reg, color='red', alpha=0.2, silhouette=True)
 # =============================================================================
-# sregs = ['PSV', 'SPVI', 'SPVC', 'SPVO', 'NTS']
-# for reg in sregs:
-#     ccf_scene.add_brain_region(reg, color='red', alpha=0.2, silhouette=False)
+# IDK THIS SHIT DOESN'T WORK actually spyder might have been broke
+# but its 0017 im not fixing this rn
+# actors = ccf_scene.get_actors()
+# for i, actor in enumerate(actors):
+#     if i == 0:
+#         continue
+#     silhouette = actor.make_silhouette()
+#     silhouette = silhouette.c('white')
+#     ccf_scene.add(silhouette)
 # =============================================================================
-    
-pregs = ['PB']
-for reg in pregs:
-    ccf_scene.add_brain_region(reg, color='grey', alpha=0.1, silhouette=False)
 
 # =============================================================================
-# medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,1))
-# ccf_scene.slice(plane=medplane)
+# mregs = ['XII', 'V', 'VII']
+# for reg in mregs:
+#     ccf_scene.add_brain_region(reg, color='cyan', alpha=0.2, silhouette=False)
 # =============================================================================
+
+# =============================================================================
+# pregs = ['PB']
+# for reg in pregs:
+#     ccf_scene.add_brain_region(reg, color='grey', alpha=0.1, silhouette=False)
+# =============================================================================
+
+medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,1))
+ccf_scene.slice(plane=medplane)
 
 #ccf_scene.render(camera=c.topcam)
 
@@ -77,29 +93,30 @@ colors = {'sensory': 'red', 'premotor': 'cyan', 'mossy': 'green', 'GRN': 'purple
 for file in tqdm(os.listdir(celldir), desc='Adding neurons to scene'):
     cellname = file.split('.')[0]
     if cellname in cells_by_pheno['sensory']:
-        #continue
+        continue
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['sensory'], 
-                                         skip_dendrite = True, neurite_radius = 5, soma_radius=0, alpha=0.7)
+                                         skip_dendrite = False, dendrite='black', neurite_radius = 5, soma_radius=0, 
+                                         alpha=0.7)
     if cellname in cells_by_pheno['sensorimotor']:
         #continue
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['sensorimotor'], 
-                                         skip_dendrite = True, neurite_radius = 5, soma_radius=0)
+                                         skip_dendrite = True, dendrite='white', neurite_radius = 5, soma_radius=0)
     if cellname in cells_by_pheno['premotor']:
-        #continue
+        continue
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['premotor'], 
-                                         skip_dendrite = True, neurite_radius = 5, soma_radius=0)
+                                         skip_dendrite = True, dendrite='white', neurite_radius = 5, soma_radius=0)
     if cellname in cells_by_pheno['GRN']:
-        #continue
+        continue
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['GRN'], 
-                                         skip_dendrite = True, neurite_radius = 5, soma_radius=0)
+                                         skip_dendrite = True, dendrite='white', neurite_radius = 5, soma_radius=0)
     if cellname in cells_by_pheno['forebrain']:
-        #continue
+        continue
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['forebrain'], 
-                                         skip_dendrite = True, neurite_radius = 5, soma_radius=0)
+                                         skip_dendrite = True, dendrite='white', neurite_radius = 5, soma_radius=0)
     if cellname in cells_by_pheno['mossy']:
         continue
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['mossy'], 
-                                         skip_dendrite = True, neurite_radius = 5, soma_radius=0)
+                                         skip_dendrite = True, dendrite='white', neurite_radius = 5, soma_radius=0)
     if cellname in cells_by_pheno['vestibular']:
         continue
         actors = pp.swap_for_brainrender(os.path.join(celldir, file), axon=colors['vestibular'], 
@@ -108,49 +125,61 @@ for file in tqdm(os.listdir(celldir), desc='Adding neurons to scene'):
     for actor in actors:
         ccf_scene.add(actor)
 
-sf = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\images\phenos\all_to_PB.png'
-ccf_scene.screenshot(sf, camera=c.sagcam, scale=6)
+sf = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\images\phenos\sensorimotor\sm_sens_reg_sag.png'
+ccf_scene.screenshot(sf, camera=c.sagcam, scale=12)
+ccf_scene.close()
 #ccf_scene.render(camera=c.corcam)
+#%% render somas
 
-#render somas
+settings.ROOT_COLOR='black'
+settings.ROOT_ALPHA=0.075
 
-# =============================================================================
-# for file in tqdm(os.listdir(celldir), desc='Adding somas to scene'):
-#     cellname = file.split('.')[0]
-#     if cellname in cl.sensory:
-#         #continue
-#         actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['sensory'], 
-#                                          skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
-#     if cellname in cl.sensorimotor:
-#         #continue
-#         actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['sensorimotor'], 
-#                                          skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
-#     if cellname in cl.premotor:
-#         #continue
-#         actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['premotor'], 
-#                                          skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
-#     if cellname in cl.GRN:
-#         #continue
-#         actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['GRN'], 
-#                                          skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
-#     if cellname in cl.forebrain:
-#         #continue
-#         actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['forebrain'], 
-#                                          skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
-#     if cellname in cl.mossy:
-#         #continue
-#         actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['mossy'], 
-#                                          skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
-#     if cellname in cl.vestibular:
-#         #continue
-#         actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['vestibular'], 
-#                                          skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
-#     
-#     for actor in actors:
-#         ccf_scene.add(actor)
-# =============================================================================
+soma_scene = Scene(atlas_name = 'allen_mouse_10um')
+
+root = soma_scene.get_actors()[0]
+root._needs_silhouette = False
+
+soma_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.075)
+soma_scene.add_brain_region('PARN', silhouette=False, alpha=0.075, color='pink')
+
+medplane=soma_scene.atlas.get_plane(plane='sagittal',norm=(0,0,1))
+soma_scene.slice(plane=medplane)
+
+for file in tqdm(os.listdir(celldir), desc='Adding somas to scene'):
+    cellname = file.split('.')[0]
+    if cellname in cells_by_pheno['sensory']:
+        #continue
+        actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['sensory'], 
+                                         skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
+    if cellname in cells_by_pheno['sensorimotor']:
+        #continue
+        actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['sensorimotor'], 
+                                         skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
+    if cellname in cells_by_pheno['premotor']:
+        #continue
+        actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['premotor'], 
+                                         skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
+    if cellname in cells_by_pheno['GRN']:
+        #continue
+        actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['GRN'], 
+                                         skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
+    if cellname in cells_by_pheno['forebrain']:
+        #continue
+        actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['forebrain'], 
+                                         skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
+    if cellname in cells_by_pheno['mossy']:
+        #continue
+        actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['mossy'], 
+                                         skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
+    if cellname in cells_by_pheno['vestibular']:
+        #continue
+        actors = pp.swap_for_brainrender(os.path.join(celldir, file), soma=colors['vestibular'], 
+                                         skip_dendrite = True, skip_axon=True, soma_radius=30, mirror_soma=True)
+    
+    for actor in actors:
+        soma_scene.add(actor)
   
         
 #ccf_scene.render()
-  
-#ccf_scene.screenshot(savefile, scale=6, camera=zoomsagcam)
+savefile = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\images\phenos\somas\allsomas_sag.png'
+soma_scene.screenshot(savefile, scale=6, camera=zoomsagcam)

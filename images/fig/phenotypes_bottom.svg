@@ -8,9 +8,9 @@
    version="1.1"
    id="svg1"
    xml:space="preserve"
-   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
    sodipodi:docname="phenotypes_bottom.svg"
-   inkscape:export-filename="phenotypes_bottom2.png"
+   inkscape:export-filename="phenotypes_bot_blackbkg.png"
    inkscape:export-xdpi="1200"
    inkscape:export-ydpi="1200"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -19,7 +19,7 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
      id="namedview1"
-     pagecolor="#ffffff"
+     pagecolor="#000000"
      bordercolor="#000000"
      borderopacity="0.25"
      inkscape:showpageshadow="2"
@@ -28,16 +28,21 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      inkscape:zoom="0.69670057"
-     inkscape:cx="338.7395"
-     inkscape:cy="330.84514"
+     inkscape:cx="581.31142"
+     inkscape:cy="275.58467"
      inkscape:window-width="1920"
-     inkscape:window-height="1009"
-     inkscape:window-x="1912"
-     inkscape:window-y="-8"
+     inkscape:window-height="991"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
      inkscape:window-maximized="1"
      inkscape:current-layer="g1"
-     inkscape:export-bgcolor="#ffffffff" /><defs
-     id="defs1"><clipPath
+     inkscape:export-bgcolor="#000000ff" /><defs
+     id="defs1"><rect
+       x="143.53368"
+       y="58.848811"
+       width="757.85786"
+       height="654.5136"
+       id="rect1" /><clipPath
        clipPathUnits="userSpaceOnUse"
        id="clipPath2"><rect
          style="fill:#000000;stroke-width:1.00157"
@@ -177,7 +182,10 @@
        x="61.835022"
        y="91.142853"
        clip-path="url(#clipPath24)"
-       transform="matrix(1.7110653,0,0,1.7110653,-88.674309,-66.996273)" /><image
+       transform="matrix(1.7110653,0,0,1.7110653,-88.674309,-66.996273)"
+       inkscape:export-filename="phenos_bot_blackbkg.png"
+       inkscape:export-xdpi="1200"
+       inkscape:export-ydpi="1200" /><image
        width="224.77937"
        height="168.58452"
        preserveAspectRatio="none"
@@ -252,17 +260,17 @@
            id="tspan11"
            x="344.8046"
            y="45.188541"
-           style="font-size:12px;text-align:center;text-anchor:middle;stroke-width:1.38336">All phenotypes</tspan><tspan
+           style="font-size:12px;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">All phenotypes</tspan><tspan
            sodipodi:role="line"
            x="344.8046"
            y="61.302418"
-           style="font-size:12px;text-align:center;text-anchor:middle;stroke-width:1.38336"
+           style="font-size:12px;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1.38336"
            id="tspan16">n=128</tspan><tspan
            sodipodi:role="line"
            x="344.8046"
            y="77.41629"
            id="tspan15"
-           style="font-size:12.8911px;text-align:center;text-anchor:middle;stroke-width:1.38336" /></text><text
+           style="font-size:12.8911px;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1.38336" /></text><text
          xml:space="preserve"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;stroke-width:1.38336"
          x="529.31592"
@@ -272,11 +280,11 @@
            id="tspan12"
            x="529.31592"
            y="45.818722"
-           style="font-size:12px;text-align:center;text-anchor:middle;stroke-width:1.38336">Forebrain-projecting</tspan><tspan
+           style="font-size:12px;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">Forebrain-projecting</tspan><tspan
            sodipodi:role="line"
            x="529.31592"
            y="60.818722"
-           style="font-size:12px;text-align:center;text-anchor:middle;stroke-width:1.38336"
+           style="font-size:12px;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1.38336"
            id="tspan17">n=4</tspan></text><text
          xml:space="preserve"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;stroke-width:1.38336"
@@ -287,11 +295,11 @@
            id="tspan13"
            x="714.33112"
            y="45.815792"
-           style="font-size:12px;text-align:center;text-anchor:middle;stroke-width:1.38336">GRN-projecting</tspan><tspan
+           style="font-size:12px;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">GRN-projecting</tspan><tspan
            sodipodi:role="line"
            x="714.33112"
            y="60.815792"
-           style="font-size:12px;text-align:center;text-anchor:middle;stroke-width:1.38336"
+           style="font-size:12px;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1.38336"
            id="tspan18">n=36</tspan></text><text
          xml:space="preserve"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;stroke-width:1.38336"
@@ -302,11 +310,11 @@
            id="tspan14"
            x="898.87756"
            y="45.815792"
-           style="font-size:12px;text-align:center;text-anchor:middle;stroke-width:1.38336">Mossy fibers</tspan><tspan
+           style="font-size:12px;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">Mossy fibers</tspan><tspan
            sodipodi:role="line"
            x="898.87756"
            y="60.815792"
-           style="font-size:12px;text-align:center;text-anchor:middle;stroke-width:1.38336"
+           style="font-size:12px;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1.38336"
            id="tspan19">n=23</tspan></text><text
          xml:space="preserve"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;stroke-width:1.38336"
@@ -317,12 +325,12 @@
            id="tspan20"
            x="344.01944"
            y="603.72858"
-           style="font-size:12px;stroke-width:1.38336">Premotor</tspan><tspan
+           style="font-size:12px;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">Premotor</tspan><tspan
            sodipodi:role="line"
            x="344.01944"
            y="618.72858"
            id="tspan21"
-           style="font-size:12px;stroke-width:1.38336">n=22</tspan></text><text
+           style="font-size:12px;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">n=22</tspan></text><text
          xml:space="preserve"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;stroke-width:1.38336"
          x="529.53857"
@@ -332,12 +340,12 @@
            id="tspan22"
            x="529.53857"
            y="603.72858"
-           style="font-size:12px;stroke-width:1.38336">Sensorimotor-projecting</tspan><tspan
+           style="font-size:12px;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">Sensorimotor-projecting</tspan><tspan
            sodipodi:role="line"
            x="529.53857"
            y="618.72858"
            id="tspan23"
-           style="font-size:12px;stroke-width:1.38336">n=10</tspan></text><text
+           style="font-size:12px;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">n=10</tspan></text><text
          xml:space="preserve"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;stroke-width:1.38336"
          x="714.38092"
@@ -347,12 +355,12 @@
            id="tspan24"
            x="714.38092"
            y="603.80182"
-           style="font-size:12px;stroke-width:1.38336">Sensory-projecting</tspan><tspan
+           style="font-size:12px;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">Sensory-projecting</tspan><tspan
            sodipodi:role="line"
            x="714.38092"
            y="618.80182"
            id="tspan25"
-           style="font-size:12px;stroke-width:1.38336">n=22</tspan></text><text
+           style="font-size:12px;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">n=22</tspan></text><text
          xml:space="preserve"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;stroke-width:1.38336"
          x="899.46643"
@@ -362,9 +370,13 @@
            id="tspan26"
            x="899.46643"
            y="603.6524"
-           style="font-size:12px;stroke-width:1.38336">Vestibular-projecting</tspan><tspan
+           style="font-size:12px;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">Vestibular-projecting</tspan><tspan
            sodipodi:role="line"
            x="899.46643"
            y="618.6524"
            id="tspan27"
-           style="font-size:12px;stroke-width:1.38336">n=3</tspan></text></g></g></svg>
+           style="font-size:12px;fill:#ffffff;fill-opacity:1;stroke-width:1.38336">n=3</tspan></text><text
+         xml:space="preserve"
+         transform="translate(134.52381,-37.696303)"
+         id="text1"
+         style="font-size:9.33333px;text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect1);display:inline;fill:#ffffff;fill-opacity:1" /></g></g></svg>

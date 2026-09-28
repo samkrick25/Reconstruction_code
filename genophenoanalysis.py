@@ -68,20 +68,23 @@ paxn.set_title('Genotype distribution across phenotypes')
 
 fign.savefig(os.path.join(savedir,nsf))
 
+#%%%
 #stacked, not normalized 
-fig, (gax, pax) = plt.subplots(1,2, figsize=(20,8), layout='constrained')
+gfig, gax = plt.subplots(figsize=(10,10), layout='constrained')
 GP.plot(kind='bar', stacked=True, ax=gax, colormap=pmap)
-gax.legend(loc='upper left', fontsize='large')
+gax.legend(loc='upper left', fontsize='xx-large')
 gax.tick_params(rotation=90, axis='x')
 gax.tick_params(axis='both', labelsize=18)
 
+pfig, pax = plt.subplots(figsize=(10,10), layout='constrained')
 pbot = np.zeros(7)
 GP.T.plot(kind='bar', stacked=True, ax=pax, colormap=gmap)
 pax.legend(loc='upper right', fontsize='large')
 pax.tick_params(rotation=90, axis='x')
 pax.tick_params(labelsize=18, axis='both')
 
-fig.supylabel('# cells', size=18)
+gax.set_ylabel('# cells', size=18)
+pax.set_ylabel('# cells', size=18)
 gax.set_title('Phenotype distribution across genotypes', size=28)
 pax.set_title('Genotype distribution across phenotypes', size=28)
 

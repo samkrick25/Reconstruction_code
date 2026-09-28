@@ -16,7 +16,7 @@ jsons = filedirs.allcoordswapped
 
 ends_by_pheno = {}
 
-pColors = {'sensory': 'firebrick', 'premotor': 'royalblue', 'mossy': 'seagreen', 'GRN': 'purple', 'sensorimotor': 'pink',
+pColors = {'sensory': 'red', 'premotor': 'cyan', 'mossy': 'seagreen', 'GRN': 'purple', 'sensorimotor': 'pink',
            'vestibular': 'navy', 'forebrain': 'orange'}
 
 #%%

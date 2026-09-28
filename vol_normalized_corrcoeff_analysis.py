@@ -49,7 +49,7 @@ with open(ccf_vols3, 'r') as svols:
     reader = csv.reader(svols)
     for row in reader:
         structure_vols[row[0]] = np.float64(row[1])
-
+#%%
 # =============================================================================
 # fregtodrop = ['SpC', 'VL-unassigned', 'mfbc', 'ECT', 'SSs', 'LSc', 'VISC', 'EPd', 'IA', 'TT',
 #        'ACB', 'epsc', 'DP', 'cc', 'AIp', 'LSv', 'BMA', 'BST', 'MPO', 'ADP', 'LSv', 'BMA', 'BST', 'MPO', 'ADP', 'fiber tracts-unassigned',
@@ -107,7 +107,7 @@ ax[0].set_title('axon length/mm^3')
 ax[1].bar(fssort.head(10).index, fssort.head(10).values)
 ax[1].set_title('endpoints/mm^3')
 
-
+#%%
 def cluster_corr(corr_array, regidx, inplace=False):
     """
     Rearranges the correlation matrix, corr_array, so that groups of highly 
@@ -140,6 +140,7 @@ def cluster_corr(corr_array, regidx, inplace=False):
         return corr_array.iloc[idx, :].T.iloc[idx, :]
     return corr_array[idx, :][:, idx], idx_reg
 
+#%%
 fdrop = fnorm.drop(fut, axis=1)
 
 ldrop = lnorm.drop(lut, axis=1)
@@ -213,3 +214,21 @@ zoom_heatmap(cov_clust, idxreg, start=31,end=57) #43-63 shows vestibular, sensor
 # ctplabels = zoom_heatmap(cov_clust, idxreg, start=151, end=170)
 # =============================================================================
 
+#%% same thing but for cells
+ 
+lnozero = lnozero.drop('SpC', axis=1)
+fnozero = fnozero.drop('SpC', axis=1)
+
+#mm converts from microns to mm
+lnorm = normalize(lnozero, mm=True)
+#this will have endpoint frequency of cells in reg in ends/um^3
+fnorm = normalize(fnozero)
+
+#%% cluster cells
+
+cellcef = np.corrcoef(fnorm)
+cellclust, cellidx = cluster_corr(cellcef, fnorm.index)
+
+#%% plot
+
+zoom_heatmap(cellclust, cellidx)

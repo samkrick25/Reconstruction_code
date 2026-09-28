@@ -268,8 +268,8 @@ premotor = merged[(merged['XII']+merged['VII']+merged['V']) > thresh]
 #pie chart of premotors vs non
 pieX = [len(premotor.index), (len(merged.index)-len(premotor.index))]
 pieplt, pieax = plt.subplots(dpi=300)
-pieax.pie(pieX, labels=['Premotor', 'Non-premotor'], colors=['orange', 'tab:blue'], autopct='%1.1f%%')
-pieplt.suptitle('% of premotor vs non-premotor cells')
+pieax.pie(pieX, labels=['>= 1 end in a motor nucleus', '0 ends in motor nuclei'], colors=['orange', 'tab:blue'], autopct='%1.1f%%')
+pieplt.suptitle('% of cells with an end in a motor nucleus', size=18)
 pieplt.tight_layout()
 
 #%%
@@ -300,6 +300,18 @@ endsax.set_xlabel('# ends')
 endsax.set_ylabel('# cells')
 endsfig.tight_layout()
 
+#%%
+scatfig, scatax = plt.subplots(figsize=(1,5), dpi=300)
+x = np.zeros(len(premotor_sum.values))
+scatax.scatter(x, premotor_sum.values, s=5, c='k', alpha=0.7)
+scatax.tick_params(labelbottom=False)
+scatax.set_xticks([])
+scatax.set_yscale('log', base=10)
+#scatax.set_ylabel('log(# of endpoints in motor nuclei)')
+#scatax.set_xlabel('Cells')
+#light = [72, 45, 54, 15]
+heavy = [422, 736, 273, 187, 567, 352]
+scatax.scatter(np.zeros(len(heavy)), heavy, s=50, c='g', alpha=1)
 #%%
 #save plots
 threshf = os.path.join(plotdir, 'premotor')
