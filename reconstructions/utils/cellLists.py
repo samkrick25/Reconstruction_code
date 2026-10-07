@@ -237,3 +237,6 @@ cells_by_geno = {
                  'N032-703070',
                  'N020-703070']
                 }
+
+pColors = {'sensory': 'red', 'premotor': 'cyan', 'mossy': 'seagreen', 'GRN': 'purple', 'sensorimotor': 'pink',
+           'vestibular': 'yellow', 'forebrain': 'orange'}

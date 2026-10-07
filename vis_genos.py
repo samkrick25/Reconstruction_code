@@ -6,7 +6,7 @@ visualize genotypes
 """
 
 from brainrender import Scene, settings
-from reconstructions.utils import preprocess_funcs as pp
+from reconstructions.utils import visualize as vis
 from reconstructions.utils.cellLists import cells_by_geno, cells_by_pheno
 from reconstructions.utils.filedirs import celldir
 from reconstructions.utils import cameras
@@ -52,7 +52,7 @@ for geno, cells in tqdm(cells_by_geno.items(), desc='Taking screenshots'):
     savef = os.path.join(savedir, geno+'_top.png')
     for cell in tqdm(cells, desc='Adding cells to scene:'):
         cf = os.path.join(celldir,cell+'.swc')
-        actors = pp.swap_for_brainrender(cf, dendrite='black', soma='black', axon=pColors[cellMap[cell]])
+        actors = vis.create_cell_actors(cf, dendrite='black', soma='black', axon=pColors[cellMap[cell]])
         for actor in actors:
             scene.add(actor)
     

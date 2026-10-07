@@ -10,6 +10,19 @@ from brainrender import settings
 from reconstructions.utils import preprocess_funcs as pf
 from reconstructions.utils import cameras
 import numpy as np
+from reconstructions.utils import visualize as vis
+from reconstructions.utils.cellLists import cells_by_pheno, pColors
+from reconstructions.utils.filedirs import celldir
+
+#create a mapping from cell name to pheno identity
+def map_val_to_key(d):
+    nd = {}
+    for k, v in d.items():
+        for val in v:
+            nd[val]=k
+    return nd
+
+cells_to_pheno = map_val_to_key(cells_by_pheno)
 
 #premotors for u19
 #AA0947, AA1196, AL0006, N023-703070, N034-674191-IB, N071-709222
@@ -18,13 +31,20 @@ import numpy as np
 n1 = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N071-709222.swc"
 #n2 = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\AA0947.swc"
 
+#list of cells to be visualized
+celllist = ['N032-674185-IB', 'N031-674185-FMR', 'N029-703070',
+       'N016-651324', 'AL0015', 'AA1405', 'AA0947', 'AA1196', 'AA1535',
+       'AA1521', 'AA1513', 'AA1460', 'N004-703070', 'AL0019', 'N034-674191-IB',
+       'N040-709222', 'N063-709222', 'N061-665081', 'N053-653159-YP',
+       'N039-674185-IB', 'N074-709222', 'N067-685221-HS']
+
 #edit brainrender settings
 settings.SHOW_AXES=None
 settings.INTERACTIVE=False
 settings.OFFSCREEN=True
-settings.ROOT_COLOR='grey'
+settings.ROOT_COLOR='white'
 settings.ROOT_ALPHA=0.075
-settings.BACKGROUND_COLOR='white'
+settings.BACKGROUND_COLOR='black'
 
 
 #set up brainrender scene
@@ -46,27 +66,30 @@ ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
 #ccf_scene.add_brain_region('PVH', silhouette=False, color='orange', alpha=0.2)
 #ccf_scene.add_brain_region('Acs5', silhouette=False, color='purple', alpha=0.2)
 # =============================================================================
-ccf_scene.add_brain_region('V', silhouette=False, color='green', alpha=0.2)
-ccf_scene.add_brain_region('XII', silhouette=False, color='purple', alpha=0.2)
-ccf_scene.add_brain_region('VII', silhouette=False, color='blue', alpha=0.2)
+#ccf_scene.add_brain_region('V', silhouette=False, color='green', alpha=0.2)
+# =============================================================================
+# ccf_scene.add_brain_region('XII', silhouette=False, color='purple', alpha=0.2)
+# ccf_scene.add_brain_region('VII', silhouette=False, color='blue', alpha=0.2)
+# =============================================================================
 #ccf_scene.add_brain_region('PSV', silhouette=False, color='red', alpha=0.2)
 # ccf_scene.add_brain_region('SPVO', silhouette=False, color='cyan', alpha=0.2)
 # ccf_scene.add_brain_region('SPVI', silhouette=False, color='red', alpha=0.2)
 # =============================================================================
 
-#add neuron, first create line actors
-l1 = pf.swap_for_brainrender(n1, skip_dendrite=False, neurite_radius=10, soma_radius=25, axon='purple', dendrite='black')
-for actor in l1:
-    ccf_scene.add(actor)
+#get cell to color mapping
+color_map = {}
+for cell in celllist:
+    pheno = cells_to_pheno[cell]
+    color = pColors[pheno]
+    color_map[cell] = color
 
-# =============================================================================
-# l2 = pf.swap_for_brainrender(n2, skip_dendrite=False, neurite_radius=5, soma_radius=25, axon='cyan', dendrite='white')
-# for actor in l2:
-#     ccf_scene.add(actor)
-# =============================================================================
+sf = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\PCA\allregs_volnorm_length_sPCA\cluster_images\5_rootcam.png'
+
+#render cells
+vis.render_cells(celllist, celldir, ccf_scene, camera=cameras.rootcam, screenshot=True, savef=sf, scale=3, color_map=color_map)
     
-sf = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\images\u19\n034-674191_top.png'
-ccf_scene.screenshot(sf, camera=cameras.rootcam, scale=12)
+
+#ccf_scene.screenshot(sf, camera=cameras.rootcam, scale=12)
 #ccf_scene.render(camera=cameras.MYtopcam)
 
 '''

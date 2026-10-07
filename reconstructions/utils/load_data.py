@@ -24,8 +24,6 @@ allen_parcellations = pickle.load(open(allen_parcellationpkl, 'rb'))
 parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
 allenstr = 'AllenCCF-Annotation-2020-'
 pterm = pickle.load(open(ptermpkl, 'rb'))
-#ccfv3 = BrainGlobeAtlas(atlas_name='allen_mouse_10um')
-#ann = ccfv3.annotation
 
 def get_frequencies_from_dict(neurondict, parcellated, ontlevel='structure'):
     '''
@@ -119,9 +117,10 @@ def freq_helper(freqdict, end, region, somahem):
             freqdict[contstr] = 1
     return
 
-def neuronprop(neurondict, mode, ontlevel='structure', cellname=None):
+def neuronprop(neurondict, mode, cellname, ontlevel='structure'):
     '''
- 
+    measure properties of a neuron, either length in annotated ccf regions or endpoint frequency
+    works with neuron dictionary as loaded in by load_neurons, iterate over dictionary and call this on each entry
 
     Parameters
     ----------
@@ -129,8 +128,10 @@ def neuronprop(neurondict, mode, ontlevel='structure', cellname=None):
         dictionary (rewrite to be OO so i can say smth specific here).
     properties: str
         'length', 'frequency', 'both', desired property to measure about set of reconstructions
-
-
+    ontlevel: str
+        desired ontology level of ccf, default structure
+    cellname: name of neuron to be measured
+    
     Returns
     -------
     one or two dictionaries containing either endpoint frequency or length in allen CCF-defined regions
@@ -148,7 +149,6 @@ def neuronprop(neurondict, mode, ontlevel='structure', cellname=None):
                            cell[cellname]['soma']['z']]
         
     propdict = defaultdict(int)
-
     
     #get sign of soma relative to midline
     somaref = MIDLINEZ-somaz
@@ -163,40 +163,28 @@ def neuronprop(neurondict, mode, ontlevel='structure', cellname=None):
         #get sign of node relative to midline, get laterality of node
         zref = MIDLINEZ-z
         zhem = np.sign(zref)
-
-    #ok if i write this to pull from the annotated regions in the json, then you have aids that are marked as None
-    #presumably corresponding to spinal cord, which doesn't have a label in the allen ccf. 
-    #think i have to just skip these nodes for now, although it feels like throwing out a lot of information
-        if node['allenId'] == None:
-            continue
-        if node['x'] > 13200:
-            continue
-# =============================================================================
-# commenting this out for now and just using the 'N' condition, for some reason I am getting regions
-# annotated that do not have an annotation in the 2020 ccf and no volume associated with them
-#         if 'N' in cellname:
-#             allenid = allenstr+str(node['allenId']) #freqs/lengths4
-#             region = pterm.loc[allenid]['acronym']
-#         else:
-#             region = ccfv3.structure_from_coords(coords, microns=True, as_acronym=True)
-# =============================================================================
-        #region = ccfv3.structure_from_coords(coords, microns=True, as_acronym=True) (freqs/lengths3)
+        
         #index allen ccf volume to get parcellation id, needs to be 10 um res
         tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
-        try:
-            allenid = allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
-        except IndexError:
+        spc = check_if_spinal_cord(tenmicron)
+        if spc:
             region = 'SpC'
-        
-        #get region abbreviation if node in ccf volume
-        else:
-            #parcels = parcellation_map.loc[allen_parcellations.loc[allenid]['label']]
-            #parcels = parcellation_map.loc[allenid]#['label']
-            parcels = parcellation_map[parcellation_map['parcellation_index'] == allenid]
-            region = get_allen_region(ontlevel, parcels)
-        
-        finally:
-            latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
+            
+        if not spc:
+            try:
+                allenid = allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
+                if allenid == 0:
+                    continue
+            except IndexError:
+                continue
+            
+            #get region abbreviation if node in ccf volume
+            else:
+                parcels = parcellation_map[parcellation_map['parcellation_index'] == allenid]
+                region = get_allen_region(ontlevel, parcels)
+            
+        latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
+            
         #calculate euclidean distance from node to its parent, soma will have parentNumber -1
         match mode:
             case 'length':
@@ -216,6 +204,23 @@ def neuronprop(neurondict, mode, ontlevel='structure', cellname=None):
     return propdict
                 
 
+def check_if_spinal_cord(node):
+    '''
+    checks if a node is in the spinal cord
+
+    Parameters
+    ----------
+    node : list
+        x, y, z coordinates of node in ten micron resolution.
+
+    Returns
+    -------
+    bool. True if node is in spinal cord
+
+    '''
+    
+    ccf_for_check = allen_ccf_data[:, ]
+    
 def get_axon_length(neurondict, ontlevel='structure'):
     '''
     get axon length in regions, lateralized, done at one micron resolution, values are in um
