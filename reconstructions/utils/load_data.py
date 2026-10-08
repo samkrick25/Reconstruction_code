@@ -9,7 +9,7 @@ from treelib import Tree
 #import brainrender
 from brainrender.actors import Neuron
 #import vedo
-from reconstructions.utils.filedirs import allen_ccf_10um, allen_parcellationpkl, parcellation_mappkl, ptermpkl
+from reconstructions.utils.filedirs import allen_ccf_10um, allen_parcellationpkl, parcellation_mappkl, ptermpkl, bin_ccf
 import nibabel as nib
 import time
 import sys
@@ -20,10 +20,13 @@ MIDLINEZ_10UM = 570
 
 allen_ccf = nib.load(allen_ccf_10um)
 allen_ccf_data = np.asanyarray(allen_ccf.dataobj)
+bin_ccf_img = nib.load(bin_ccf)
+bin_ccf_data = bin_ccf_img.dataobj
 allen_parcellations = pickle.load(open(allen_parcellationpkl, 'rb'))
 parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
 allenstr = 'AllenCCF-Annotation-2020-'
 pterm = pickle.load(open(ptermpkl, 'rb'))
+
 
 def get_frequencies_from_dict(neurondict, parcellated, ontlevel='structure'):
     '''
@@ -117,6 +120,65 @@ def freq_helper(freqdict, end, region, somahem):
             freqdict[contstr] = 1
     return
 
+def load_from_swc(swcdir):
+    '''
+    load neurons into a dictionary, read from .swc files
+
+    Parameters
+    ----------
+    swcdir : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    neurondict: dictionary with keys being cell names and values being dictionaries containing soma, axon, dendrite nodes.
+
+    '''
+    neurondict = {}
+    
+    for file in tqdm(os.listdir(swcdir), desc='Loading neurons: '):
+        fullfile = os.path.join(swcdir, file)
+        cellname = file.split('.')[0]
+        celldict = {'soma': None, 'axon': [], 'dendrite': []}
+        with open(fullfile, 'r') as f:
+            for line in f: 
+                if line.lstrip().startswith('#'):
+                    continue
+                
+                keys = ['sampleNumber', 'structureIdentifier', 'x', 'y', 'z', 'radius', 'parentNumber']
+                node_dict = {key: None for key in keys}
+                
+                toks = line.split(' ')
+                
+                node_dict['sampleNumber'] = int(toks[0])
+                node_dict['structureIdentifier'] = int(toks[1])
+                node_dict['x'] = float(toks[2])
+                node_dict['y'] = float(toks[3])
+                node_dict['z'] = float(toks[4])
+                node_dict['radius'] = float(toks[5])
+                node_dict['parentNumber'] = int(toks[6])
+                
+                #check if node is soma, dendrite or axon and add to corresponding key
+                match node_dict['structureIdentifier']:
+                    #soma
+                    case 1:
+                        
+                        celldict['soma'] = node_dict
+                        
+                    #axon
+                    case 2:
+                        
+                        celldict['axon'].append(node_dict)
+                        
+                    #dendrite
+                    case 3:
+                        celldict['dendrite'].append(node_dict)
+                        
+            neurondict[cellname] = celldict
+            
+    return neurondict
+
+
 def neuronprop(neurondict, mode, cellname, ontlevel='structure'):
     '''
     measure properties of a neuron, either length in annotated ccf regions or endpoint frequency
@@ -166,7 +228,7 @@ def neuronprop(neurondict, mode, cellname, ontlevel='structure'):
         
         #index allen ccf volume to get parcellation id, needs to be 10 um res
         tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
-        spc = check_if_spinal_cord(tenmicron)
+        spc = check_if_spinal_cord(coords, bin_ccf_data)
         if spc:
             region = 'SpC'
             
@@ -196,6 +258,8 @@ def neuronprop(neurondict, mode, cellname, ontlevel='structure'):
                     px, py, pz = [pnode['x'], pnode['y'], pnode['z']]
                     length = np.sqrt((x-px)**2+(y-py)**2+(z-pz)**2)
                     propdict[latregion] += length
+                    #technically, if a parent is in a different region than its child this length will count the whole length between the two
+                    #as in the child's region, but nodes are usually placed close enough that I don't think this matters
                     
             
             case 'frequency':
@@ -204,7 +268,7 @@ def neuronprop(neurondict, mode, cellname, ontlevel='structure'):
     return propdict
                 
 
-def check_if_spinal_cord(node):
+def check_if_spinal_cord(node, binarized_ccf):
     '''
     checks if a node is in the spinal cord
 
@@ -212,14 +276,36 @@ def check_if_spinal_cord(node):
     ----------
     node : list
         x, y, z coordinates of node in ten micron resolution.
+    binarized_ccf : array-like
+        binarized ccf volume
 
     Returns
     -------
     bool. True if node is in spinal cord
 
     '''
+    #initially check if node is outside posterior bound and below cerebellum
+    #do this before rounding
+    if node[0] > 13192.5 and node[1] > 4642:
+        string = 'posterior'
+        return True, string
     
-    ccf_for_check = allen_ccf_data[:, ]
+    #if not, index binarized ccf
+    
+    tenmicron = np.round([x/10 for x in node]).astype(int).tolist()
+    ccf_bool = binarized_ccf[tenmicron[0], tenmicron[1], tenmicron[2]]
+    
+    #in ccf vol
+    if ccf_bool == 1:
+        string = 'in ccf'
+        return False, string
+    
+    #not in ccf vol
+    if ccf_bool == 0:
+        string = 'not posterior, wrapping'
+        return True, string
+    
+    
     
 def get_axon_length(neurondict, ontlevel='structure'):
     '''
@@ -484,7 +570,7 @@ def get_node_parcellations(neurondict):
         print(f'Total time to annotate cell: {np.sum(ttlist)}')
     return
 
-def load_neurons(folderpath):
+def load_neurons_from_json(folderpath):
     '''
     load all neurons into a dictionary with cell names as keys and a nested dictionary containing soma, axon, and dendrite
     

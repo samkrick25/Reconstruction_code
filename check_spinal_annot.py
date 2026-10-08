@@ -5,9 +5,10 @@ verify my spinal cord annotation
 @author: samkr
 """
 
-from reconstructions.utils.filedirs import allen_ccf_10um, celldir
+from reconstructions.utils.filedirs import celldir, bin_ccf
+from reconstructions.utils.load_data import check_if_spinal_cord
 from brainrender import Scene, settings
-import tqdm
+from tqdm import tqdm
 import nibabel as nib
 from collections import defaultdict
 from vedo import Sphere, Mesh
@@ -19,8 +20,9 @@ from scipy.spatial import Delaunay
 MIDLINEZ = 5750
 MIDLINEZ_10UM = 570
 
-allen_ccf = nib.load(allen_ccf_10um)
-allen_ccf_data = np.asanyarray(allen_ccf.dataobj)
+bin_ccf_img = nib.load(bin_ccf)
+bin_ccf_data = bin_ccf_img.dataobj
+
 
 def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color='blue', dendrite_color='red',
                        soma_color='black', neurite_radius=4, soma_radius=15, alpha=1, res=12,
@@ -44,29 +46,28 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color=
     # Never prune nodes here; intact topology is what prevents mid-path breaks.
     children = defaultdict(list)
     count=0
-    coords_out = []
-    for node_id, row in nodes.iterrows():
+    ids = []
+    for node_id, row in tqdm(nodes.iterrows(), desc='Parsing nodes'):
         if row['parent'] != -1:
             if skip_dendrite and row['type'] == 3:
                 continue
             if filter_spinal:
-                coords = [row['z'], row['y'], row['x']]
-                tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
-
-                try:
-                    _ = allen_ccf_data[tenmicron[0],tenmicron[1],tenmicron[2]]
-                except IndexError:
-                    row['type'] = 4
+                ccfcoords = [row['z'], row['y'], row['x']]
+                #tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
+                spinal_check, kind = check_if_spinal_cord(ccfcoords, bin_ccf_data)
+                if spinal_check:
+                    nodes.at[node_id, 'type'] = 4
                     count+=1
-                    coords_out.append(tenmicron)
-            
+                    ids.append(node_id)
+            if row['type'] == 5 or row['type'] == 6:
+                nodes.at[node_id, 'type'] = nodes.loc[int(row['parent'])]['type']
             children[int(row['parent'])].append(node_id)
     
     if filter_spinal:
         print(count)
         
     soma_rows = nodes[nodes['type'] == 1]
-    soma_id   = int(soma_rows.iloc[0].name) if len(soma_rows) > 0 else -1
+    soma_id   = int(soma_rows.iloc[0].name) if len(soma_rows) > 0 else -1 #this check was written for multiple soma nodes, which shouldn't exist
 
     if include_soma and len(soma_rows) > 0:
         soma_pos = soma_rows.iloc[0][['x', 'y', 'z']].tolist()
@@ -88,10 +89,11 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color=
     # direct soma children are correctly identified as section starts.
     section_starts = [
         node_id for node_id, row in nodes.iterrows()
-        if row['type'] != 1
-        and (row['parent'] == -1
-             or int(row['parent']) == soma_id
-             or len(children[int(row['parent'])]) > 1)
+        if row['type'] != 1 #not soma
+        and (row['parent'] == -1 #parent is soma
+             or int(row['parent']) == soma_id #parent is soma
+             or len(children[int(row['parent'])]) > 1) #has multiple children
+             or row['type'] == 4 #nodes in spinal cord always count as starts
     ]
 
     for start_id in section_starts:
@@ -122,7 +124,7 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color=
         ntype = int(nodes.loc[start_id, 'type'])
         sections_by_type[ntype].append(pts)
 
-    type_color_map = {2: axon_color, 3: dendrite_color, 6: spinal_color}
+    type_color_map = {2: axon_color, 3: dendrite_color, 4: spinal_color}
 
     for ntype, sections in sections_by_type.items():
         if skip_dendrite and ntype == 3:

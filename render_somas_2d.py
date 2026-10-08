@@ -6,9 +6,11 @@ rendering soma locations 2d coronal
 """
 
 from brainrender import Scene, settings
+from brainrender.actors import Points
 from reconstructions.utils import preprocess_funcs as pp
 from reconstructions.utils import cameras
 from brainglobe_atlasapi import BrainGlobeAtlas as bga
+import numpy as np
 
 # =============================================================================
 # swcs =  [
@@ -17,26 +19,30 @@ from brainglobe_atlasapi import BrainGlobeAtlas as bga
 #          ]
 # =============================================================================
 
-swcs = [r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N016-651324.swc"]
+#swcs = [r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N016-651324.swc"]
 
 
-settings.SHOW_AXES = False
-settings.OFFSCREEN=True
-settings.INTERACTIVE=False
+settings.SHOW_AXES = True
+settings.OFFSCREEN=False
+settings.INTERACTIVE=True
 
 atlas = bga(atlas_name='allen_mouse_10um', check_latest=False)
+p = atlas.get_structure_descendants('P')
 my = atlas.get_structure_descendants('MY')
 cb = atlas.get_structure_descendants('CB')
 ft = atlas.get_structure_descendants('fiber tracts')
  
 scene = Scene(atlas_name = 'allen_mouse_10um', check_latest=False)
 
+scene.add_brain_region(*p, silhouette=True, alpha=0.2, color='orange')
 scene.add_brain_region(*my, silhouette=True, alpha = 0.2, color='pink')
 scene.add_brain_region(*cb, silhouette=True, alpha = 0.2, color='yellow')
 scene.add_brain_region(*ft, silhouette=True, alpha=0.2, color='grey')
 
-planeA = scene.atlas.get_plane(plane = 'frontal', pos = (11935.5572-1, 6415.2435, 	6683.219), norm= (1,0,0))
-planeP = scene.atlas.get_plane(plane = 'frontal', pos = (11935.5572+1, 6415.2435, 	6683.219), norm = (-1,0,0))
+soma = [10318.933800, 5368.879300, 4180.165900]
+
+planeA = scene.atlas.get_plane(plane = 'frontal', pos = (soma[0]-5, soma[1], soma[2]), norm= (1,0,0))
+planeP = scene.atlas.get_plane(plane = 'frontal', pos = (soma[0]+5, soma[1], soma[2]), norm = (-1,0,0))
 scene.slice(planeA)
 scene.slice(planeP)
 
@@ -48,12 +54,17 @@ scene.slice(planeP, actors=IRN)
 medplane=scene.atlas.get_plane(plane='sagittal',norm=(0,0,-1))
 scene.slice(plane=medplane, actors=IRN)
 
-for swc in swcs:
-    actors = pp.swap_for_brainrender(swc, skip_axon = True, skip_dendrite = True, soma = 'orange', soma_radius=30)
-    for actor in actors:
-        scene.add(actor)
+# =============================================================================
+# for swc in swcs:
+#     actors = pp.swap_for_brainrender(swc, skip_axon = True, skip_dendrite = True, soma = 'orange', soma_radius=30)
+#     for actor in actors:
+#         scene.add(actor)
+#     
+# =============================================================================
     
-    
+point = Points(np.array([soma]), radius=30)
+scene.add(point)
+
 frontcam = dict(
     pos=(-34007.2, -4240.85, -5572.80),
     focal_point=(12708.8, 4633.06, -5725.75),
@@ -64,8 +75,8 @@ frontcam = dict(
 )
 
 savefile = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\images\cor_somas\N016-651324.png'
-#scene.render(camera='frontal')
-scene.screenshot(name=savefile, scale=3, camera=cameras.corcam)
+scene.render(camera='frontal')
+#scene.screenshot(name=savefile, scale=3, camera=cameras.corcam)
 
 #%%
 from reconstructions.utils.filedirs import allcoordswapped, celldir

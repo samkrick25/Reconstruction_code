@@ -1,6 +1,6 @@
 from reconstructions.utils import load_data as ld
 import pickle
-from reconstructions.utils.filedirs import pterm, allcoordswapped, allen_ccf_10um, allen_parcellation, allen_2017_to_2020, parcellated_neurons
+from reconstructions.utils.filedirs import celldir, pterm, allcoordswapped, allen_ccf_10um, allen_parcellation, allen_2017_to_2020, parcellated_neurons
 import nibabel as nib
 import pandas as pd
 import json
@@ -42,18 +42,20 @@ from tqdm import tqdm
 #savedict = r'reconstructions\data\neurondict.pkl'
 #pickle.dump(neurondict, open(savedict, 'wb'))
 
-neurons = ld.load_neurons(allcoordswapped)
-
-frequencies = {}
-for neuron, info in tqdm(neurons.items(), desc='finding endpoint frequencies'):
-    print(neuron)
-    freqs = ld.neuronprop({neuron: info}, mode='frequency', ontlevel='structure', cellname=neuron)
-    frequencies[neuron] = freqs
-
-fdf = pd.DataFrame(frequencies)
-fdf = fdf.replace(np.nan, 0)
-savefile = r'reconstructions\data\freqs_hopefullygood.pkl'
-pickle.dump(fdf, open(savefile, 'wb'))
+# =============================================================================
+# neurons = ld.load_neurons(allcoordswapped)
+# 
+# frequencies = {}
+# for neuron, info in tqdm(neurons.items(), desc='finding endpoint frequencies'):
+#     print(neuron)
+#     freqs = ld.neuronprop({neuron: info}, mode='frequency', ontlevel='structure', cellname=neuron)
+#     frequencies[neuron] = freqs
+# 
+# fdf = pd.DataFrame(frequencies)
+# fdf = fdf.replace(np.nan, 0)
+# savefile = r'reconstructions\data\freqs_hopefullygood.pkl'
+# pickle.dump(fdf, open(savefile, 'wb'))
+# =============================================================================
 
 # =============================================================================
 # frequencies = {}
@@ -73,7 +75,7 @@ pickle.dump(fdf, open(savefile, 'wb'))
 # ptermdf = pd.read_csv(pterm, index_col='label')
 # pickle.dump(ptermdf, open(ptermsave, 'wb'))
 # =============================================================================
-#neurons = ld.load_neurons(allcoordswapped)
+neurons = ld.load_from_swc(celldir)
 
 lengthdict = {}
 for neuron, info in tqdm(neurons.items(), desc='finding lengths'):
@@ -83,6 +85,6 @@ for neuron, info in tqdm(neurons.items(), desc='finding lengths'):
     
 lengthdf = pd.DataFrame(lengthdict)
 lengthdf = lengthdf.replace(np.nan, 0)
-savefile = r'reconstructions\data\lengths_hopefullygood.pkl'
+savefile = r'reconstructions\data\lengths_fromswc.pkl'
 pickle.dump(lengthdf, open(savefile, 'wb'))
 
