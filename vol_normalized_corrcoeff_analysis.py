@@ -42,7 +42,7 @@ with open(ccf_vols3, 'r') as svols:
 # %%
 # could log scale this data to try to reduce effects of IRN/PARN being so highly targeted? idk its worth a thought
 from reconstructions.utils import preprocess_funcs as pp
-from reconstructions.utils.filedirs import lengthspkl, ccf_vols3, frequenciespkl, structure_ont_info
+from reconstructions.utils.filedirs import lengthspkl, ccf_vols3, structure_ont_info
 structure_to_ont = pickle.load(open(structure_ont_info, 'rb'))
 freqs = pickle.load(open(r'reconstructions\data\freqs_hopefullygood.pkl', 'rb')).T
 lengths = pickle.load(open(lengthspkl, 'rb')).T

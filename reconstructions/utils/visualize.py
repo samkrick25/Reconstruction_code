@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Apr  7 14:23:38 2026
-code to visualize IRN/PARN cells with brainrender
-@author: economolab
+code to visualize Allen Institute swcs with brainrender/vedo
+@author: samkr
 """
-
 
 from reconstructions.utils.filedirs import parcellation_mappkl, allen_ccf_10um
 import pickle
@@ -28,7 +27,8 @@ allen_ccf_data = np.asanyarray(allen_ccf.dataobj)
 parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
 
 
-def get_parcel_id_from_reg(regabv):
+#INTERNAL FUNCTIONS
+def _get_parcel_id_from_reg(regabv):
     '''
     find allen parcellation id from region abbreviation
 
@@ -46,7 +46,7 @@ def get_parcel_id_from_reg(regabv):
     return parcellation_map.loc[parcellation_map['parcellation_term_acronym']==regabv]['parcellation_index']
 
 
-def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color='blue', dendrite_color='red',
+def _swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color='blue', dendrite_color='red',
                        soma_color='black', neurite_radius=4, soma_radius=15, alpha=1, res=12,
                        include_soma=True, regs_to_render=None, mirror_soma=False):
     """
@@ -69,7 +69,7 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color=
 
     #find parcellation ids for desired regions to render, will filter nodes based on this
     if regs_to_render:
-        parcel_ids = [get_parcel_id_from_reg(abv).iloc[0].astype(np.float64) for abv in regs_to_render]
+        parcel_ids = [_get_parcel_id_from_reg(abv).iloc[0].astype(np.float64) for abv in regs_to_render]
 
     # ── Build children from the FULL, unfiltered node set ────────────────────
     # Never prune nodes here; intact topology is what prevents mid-path breaks.
@@ -154,7 +154,7 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color=
         if skip_axon and ntype==2:
             continue
         color = type_color_map.get(ntype, axon_color)
-        actor = build_tube_actor_from_sections(
+        actor = _build_tube_actor_from_sections(
             sections, radius=neurite_radius, color=color, alpha=alpha, res=res, parcelIDs=parcel_ids if regs_to_render else None
         )
         if actor is not None:
@@ -162,70 +162,7 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color=
 
     return actors
 
-
-def create_cell_actors(swcpath, axon='green', dendrite='black', soma='black',
-                         skip_dendrite=False, skip_axon=False, neurite_radius=4, soma_radius=15,
-                         alpha=1, res=12, regs_to_render=None, mirror_soma=False):
-    '''
-    create actors for brainrender visualization
-
-    Parameters
-    ----------
-    swcpath : str
-        path to swc file containing reconstructed neuron.
-    axon : str, optional
-        color to render axon as. The default is 'green'. Color info for axon, dendrite, soma i believe can be found here
-        https://vedo.embl.es/site/api/colors/
-    dendrite : str, optional
-        color to render dendrite as. The default is 'black'.
-    soma : str, optional
-        color to render soma as. The default is 'black'.
-    skip_dendrite : bool, optional
-        True to not render dendrite. The default is False.
-    skip_axon : bool, optional
-        True to not render axon. The default is False.
-    neurite_radius : int, optional
-        desired radius for neurites. The default is 4.
-    soma_radius : int, optional
-        desired soma radius. The default is 15.
-    alpha : float, optional
-        alpha for reconstructions to be rendered at. The default is 1.
-    res : int, optional
-        desired resolution for brainrender to take a screenshot at. The default is 12.
-    regs_to_render : list, optional
-        list of allen CCF region abbreviations that you want to render axon in. The default is None/render axon everywhere.
-    mirror_soma : bool, optional
-        True to mirror soma over midline. The default is False.
-
-    Returns
-    -------
-    cell_actors : list
-        list of Actor objects to be added to brainrender scene.
-
-    '''
-    swc_df = pd.read_csv(
-        swcpath, comment='#', sep=r'\s+',
-        names=['id', 'type', 'x', 'y', 'z', 'r', 'parent', 'parcelID']
-    )
-
-    # ── Step 2: axis swap for brainrender display ─────────────────────────────
-    swc_df['x'], swc_df['z'] = swc_df['z'].copy(), swc_df['x'].copy()
-
-    #do not include soma if you are rendering axon in specific regions
-    include_soma = False if regs_to_render else True
-    
-    # ── Step 3: build actors from full topology, section-level filter ─────────
-    cell_actors = swc_to_line_actors(
-        swc_df,
-        axon_color=axon, dendrite_color=dendrite, soma_color=soma,
-        skip_dendrite=skip_dendrite, skip_axon=skip_axon, neurite_radius=neurite_radius,
-        soma_radius=soma_radius, alpha=alpha, res=res,
-        include_soma=include_soma,
-        regs_to_render=regs_to_render, mirror_soma=mirror_soma
-    )
-    return cell_actors
-
-def build_tube_actor_from_sections(sections, radius, color, alpha, res, parcelIDs=None):
+def _build_tube_actor_from_sections(sections, radius, color, alpha, res, parcelIDs=None):
     '''
     Takes a list of point arrays (one per morphological section) and builds
     them all into a single vtkPolyData, then applies ONE vtkTubeFilter to it.
@@ -301,6 +238,68 @@ def build_tube_actor_from_sections(sections, radius, color, alpha, res, parcelID
 
     return Mesh(tube.GetOutput(), c=color, alpha=alpha)
 
+#CALLABLES
+def create_cell_actors(swcpath, axon='green', dendrite='black', soma='black',
+                         skip_dendrite=False, skip_axon=False, neurite_radius=4, soma_radius=15,
+                         alpha=1, res=12, regs_to_render=None, mirror_soma=False):
+    '''
+    create actors for brainrender visualization
+
+    Parameters
+    ----------
+    swcpath : str
+        path to swc file containing reconstructed neuron.
+    axon : str, optional
+        color to render axon as. The default is 'green'. Color info for axon, dendrite, soma i believe can be found here
+        https://vedo.embl.es/site/api/colors/
+    dendrite : str, optional
+        color to render dendrite as. The default is 'black'.
+    soma : str, optional
+        color to render soma as. The default is 'black'.
+    skip_dendrite : bool, optional
+        True to not render dendrite. The default is False.
+    skip_axon : bool, optional
+        True to not render axon. The default is False.
+    neurite_radius : int, optional
+        desired radius for neurites. The default is 4.
+    soma_radius : int, optional
+        desired soma radius. The default is 15.
+    alpha : float, optional
+        alpha for reconstructions to be rendered at. The default is 1.
+    res : int, optional
+        desired resolution for brainrender to take a screenshot at. The default is 12.
+    regs_to_render : list, optional
+        list of allen CCF region abbreviations that you want to render axon in. The default is None/render axon everywhere.
+    mirror_soma : bool, optional
+        True to mirror soma over midline. The default is False.
+
+    Returns
+    -------
+    cell_actors : list
+        list of Actor objects to be added to brainrender scene.
+
+    '''
+    swc_df = pd.read_csv(
+        swcpath, comment='#', sep=r'\s+',
+        names=['id', 'type', 'x', 'y', 'z', 'r', 'parent', 'parcelID']
+    )
+
+    # ── Step 2: axis swap for brainrender display ─────────────────────────────
+    swc_df['x'], swc_df['z'] = swc_df['z'].copy(), swc_df['x'].copy()
+
+    #do not include soma if you are rendering axon in specific regions
+    include_soma = False if regs_to_render else True
+    
+    # ── Step 3: build actors from full topology, section-level filter ─────────
+    cell_actors = _swc_to_line_actors(
+        swc_df,
+        axon_color=axon, dendrite_color=dendrite, soma_color=soma,
+        skip_dendrite=skip_dendrite, skip_axon=skip_axon, neurite_radius=neurite_radius,
+        soma_radius=soma_radius, alpha=alpha, res=res,
+        include_soma=include_soma,
+        regs_to_render=regs_to_render, mirror_soma=mirror_soma
+    )
+    return cell_actors
 
 def render_cells(scene, camera, celldir=None, cellfile=None, celllist=None, screenshot=False, savef=None, scale=None, color_map=None, **kwargs):
     '''
