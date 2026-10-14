@@ -39,7 +39,7 @@ scene.add_brain_region(*my, silhouette=True, alpha = 0.2, color='pink')
 scene.add_brain_region(*cb, silhouette=True, alpha = 0.2, color='yellow')
 scene.add_brain_region(*ft, silhouette=True, alpha=0.2, color='grey')
 
-soma = [10318.933800, 5368.879300, 4180.165900]
+soma = [10826.238293125, 5958.449205, 6828.08222975]
 
 planeA = scene.atlas.get_plane(plane = 'frontal', pos = (soma[0]-5, soma[1], soma[2]), norm= (1,0,0))
 planeP = scene.atlas.get_plane(plane = 'frontal', pos = (soma[0]+5, soma[1], soma[2]), norm = (-1,0,0))

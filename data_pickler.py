@@ -75,7 +75,7 @@ from tqdm import tqdm
 # ptermdf = pd.read_csv(pterm, index_col='label')
 # pickle.dump(ptermdf, open(ptermsave, 'wb'))
 # =============================================================================
-neurons = ld.load_from_swc(celldir)
+neurons = ld.load_from_swc(swcdir=celldir)
 
 lengthdict = {}
 for neuron, info in tqdm(neurons.items(), desc='finding lengths'):

@@ -28,99 +28,7 @@ allenstr = 'AllenCCF-Annotation-2020-'
 pterm = pickle.load(open(ptermpkl, 'rb'))
 
 
-def get_frequencies_from_dict(neurondict, parcellated, ontlevel='structure'):
-    '''
-    right now im only writing this for axon endpoint analysis, ill have to first pull the endpoints thru helper function
-    '''
-    match parcellated:
-        case True:
-            axonalends = get_axonal_endpoints(neurondict)
-        case False:
-            axonalends = get_endpoints_from_file(neurondict)
-    for cell, info in axonalends.items():
-        soma = info['soma']
-        ends = info['ends']
-        freqdict = {}
-        somaz = soma['z']
-        somaref = MIDLINEZ_10UM - somaz
-        #set somahem to - if LH, + if RH, to find lateralization of axonal ends
-        somahem = np.sign(somaref)
-        for end in ends:
-            match ontlevel:
-                case 'organ':
-                    if end['organ'] is None:
-                        continue
-                    else:
-                        freq_helper(freqdict, end, end['organ'], somahem)
-                case 'category':
-                    if end['category'] is None:
-                        continue
-                    else:
-                        freq_helper(freqdict, end, end['category'], somahem)
-                case 'division':
-                    if end['division'] is None:
-                        continue
-                    else:    
-                        freq_helper(freqdict, end, end['division'], somahem)
-                case 'structure':
-                    try: 
-                        if end['structure'] is None:
-                            continue               
-                        else:
-                            freq_helper(freqdict, end, end['structure'], somahem)
-                    except KeyError:
-                        print(cell, end)
-                        continue
-                case 'substructure':
-                    if end['substructure'] is None:
-                        continue
-                    else:
-                        freq_helper(freqdict, end, end['substructure'], somahem)
-                case None:
-                    raise ValueError('Please specify desired ontology level for annotation!')
-            ser = pd.Series(freqdict, name=cell)
-            ser = ser.replace(np.nan, 0)
-    return ser
-
-def freq_helper(freqdict, end, region, somahem):
-    '''
-    helper function for my frequency annotator
-
-    Parameters
-    ----------
-    freqdict : 
-        DESCRIPTION.
-    end : TYPE
-        DESCRIPTION.
-    region : TYPE
-        DESCRIPTION.
-    somahem : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    '''
-    zend = end['z']
-    zref = MIDLINEZ_10UM - zend
-    #also, should be - for LH, + for RH
-    zhem = np.sign(zref)
-    ipsstr = 'Ipsilateral ' + region
-    contstr = 'Contralateral ' + region
-    if zhem == somahem:
-        if ipsstr in freqdict:
-            freqdict[ipsstr] += 1
-        else:
-            freqdict[ipsstr] = 1
-    if zhem != somahem:
-        if contstr in freqdict:
-            freqdict[contstr] += 1
-        else:
-            freqdict[contstr] = 1
-    return
-
-def load_from_swc(swcdir):
+def load_from_swc(swcdir = None, swc = None):
     '''
     load neurons into a dictionary, read from .swc files
 
@@ -135,11 +43,19 @@ def load_from_swc(swcdir):
 
     '''
     neurondict = {}
-    
-    for file in tqdm(os.listdir(swcdir), desc='Loading neurons: '):
-        fullfile = os.path.join(swcdir, file)
-        cellname = file.split('.')[0]
+    if swcdir:
+        gen = os.listdir(swcdir)
+    if swc:
+        gen=[swc]
+    for file in tqdm(gen, desc='Loading neurons: '):
+        if swcdir:
+            fullfile = os.path.join(swcdir, file)
+            cellname = file.split('.')[0]
+        if swc:
+            fullfile = swc
+            cellname = file.split('\\')[-1].split('.')[0]
         celldict = {'soma': None, 'axon': [], 'dendrite': []}
+        node_to_struct = {}
         with open(fullfile, 'r') as f:
             for line in f: 
                 if line.lstrip().startswith('#'):
@@ -158,21 +74,46 @@ def load_from_swc(swcdir):
                 node_dict['radius'] = float(toks[5])
                 node_dict['parentNumber'] = int(toks[6])
                 
+                #track structure id of each node for branch and end points
+                node_to_struct[int(toks[0])] = {'structure' : int(toks[1]), 'parent': int(toks[6])}
+                
                 #check if node is soma, dendrite or axon and add to corresponding key
                 match node_dict['structureIdentifier']:
                     #soma
                     case 1:
-                        
                         celldict['soma'] = node_dict
                         
                     #axon
                     case 2:
-                        
                         celldict['axon'].append(node_dict)
                         
                     #dendrite
                     case 3:
                         celldict['dendrite'].append(node_dict)
+                        
+                    #5 is branch, 6 is end
+                    #these will appear in both axon and dendrite, so need to handle
+                    #by referring to the parent node and using its structure id to assign
+                    case 5 | 6:
+                        
+                        #search through parents until you find one that is axon or dendrite
+                        #possible edge case is if the node after the soma is a branch, this will skip the node
+                        #but i feel like that isn't a thing? hopefully but definitely something to think of a way to fix
+                        #ideally you would have to check that node's children but that requires loading the 
+                        #whole cell first? idk something to think about at some point hopefully won't be an issue
+                        parent = node_dict['parentNumber']
+                        parent_compartment = node_to_struct[parent]['structure']
+                        while parent_compartment not in (2, 3):
+                            parent = node_to_struct[parent]['parent']
+                            parent_compartment = node_to_struct[parent]['structure']
+
+                        match parent_compartment:
+                            
+                            case 2:
+                                celldict['axon'].append(node_dict)
+                                
+                            case 3:
+                                celldict['dendrite'].append(node_dict)
                         
             neurondict[cellname] = celldict
             
@@ -202,6 +143,7 @@ def neuronprop(neurondict, mode, cellname, ontlevel='structure'):
     
     if mode == 'length':
         nodes = neurondict[cellname]['axon']
+        dendrite = neurondict[cellname]['dendrite']
         somax, somay, somaz = [neurondict[cellname]['soma']['x'], neurondict[cellname]['soma']['y'], 
                                neurondict[cellname]['soma']['z']]
     if mode == 'frequency':
@@ -209,14 +151,20 @@ def neuronprop(neurondict, mode, cellname, ontlevel='structure'):
         nodes = cell[cellname]['ends']
         somax, somay, somaz = [cell[cellname]['soma']['x'], cell[cellname]['soma']['y'], 
                            cell[cellname]['soma']['z']]
-        
-    propdict = defaultdict(int)
+    
+    #just axon nodes
+    nodedf = pd.DataFrame(nodes)
+    #axon and dendrite nodes, used if an axon node's parent is a dendrite
+    #only happens for the first node in an axon
+    neuritedf = pd.DataFrame(dendrite+nodes)
+    
+    propdict = defaultdict(np.float64)
     
     #get sign of soma relative to midline
     somaref = MIDLINEZ-somaz
     somahem = np.sign(somaref)
     
-    for node in nodes:
+    for _, node in nodedf.iterrows():
         
         coords = [node['x'], node['y'], node['z']]
 
@@ -226,47 +174,85 @@ def neuronprop(neurondict, mode, cellname, ontlevel='structure'):
         zref = MIDLINEZ-z
         zhem = np.sign(zref)
         
-        #index allen ccf volume to get parcellation id, needs to be 10 um res
-        tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
-        spc = check_if_spinal_cord(coords, bin_ccf_data)
-        if spc:
-            region = 'SpC'
-            
-        if not spc:
-            try:
-                allenid = allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
-                if allenid == 0:
-                    continue
-            except IndexError:
-                continue
-            
-            #get region abbreviation if node in ccf volume
-            else:
-                parcels = parcellation_map[parcellation_map['parcellation_index'] == allenid]
-                region = get_allen_region(ontlevel, parcels)
-            
-        latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
+        #index allen ccf volume to get parcellation id if node is in annotated ccf
+        region, _ = find_region_annotation(coords, ontlevel)
+        if region == 'node not in ccf':
+            continue
+        else:  
+            latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
             
         #calculate euclidean distance from node to its parent, soma will have parentNumber -1
         match mode:
             case 'length':
-                if node['parentNumber'] == -1:
+                if node['parentNumber'] == 1:
                     length = np.sqrt((x-somax)**2+(y-somay)**2+(z-somaz)**2)
                     propdict[latregion] += length
                 else:
-                    pnode = nodes[node['parentNumber']]
-                    px, py, pz = [pnode['x'], pnode['y'], pnode['z']]
+                    try:    
+                        pnode = neuritedf[neuritedf['sampleNumber'] == node['parentNumber']]
+                        px, py, pz = [pnode['x'].values[0], pnode['y'].values[0], pnode['z'].values[0]]
+                    except IndexError:
+                        print(node, cellname)
+                        print()
                     length = np.sqrt((x-px)**2+(y-py)**2+(z-pz)**2)
-                    propdict[latregion] += length
+                    propdict[latregion] = propdict[latregion] + length
                     #technically, if a parent is in a different region than its child this length will count the whole length between the two
                     #as in the child's region, but nodes are usually placed close enough that I don't think this matters
-                    
+
             
             case 'frequency':
                 propdict[latregion] += 1
             
     return propdict
-                
+
+def find_region_annotation(coords, ontlevel):                
+    '''
+    get region annotaion for a node in Allen CCFv3
+    
+    cerebellum check is an edge case for cells that project within cerebellum but outside of 
+    CCF volume since the posterior bound of the CCF doesn't extend to the end of the cerebellum
+
+    Parameters
+    ----------
+    coords : list
+        x,y,z coordinates of the node you want to find region annotation for.
+    ontlevel : string
+        desired ontology level of the Allen CCF. valid options are: 
+        ['organ', 'category', 'division', 'structure', 'substructure']
+
+    Returns
+    -------
+    str, Allen CCF region abbreviation, or a string saying that the node is in 
+    an unannotated part of the ccf/outside ccf
+
+    '''
+    tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
+    spc, string = check_if_spinal_cord(coords, bin_ccf_data)
+    if spc == True:
+        region = 'SpC'
+        allenid = 0
+        return region, allenid
+        
+    #posterior cerebellum check
+    if string == 'cerebellum':
+        region = 'CB'
+        allenid = 502
+        return region, allenid
+        
+    if spc == False and string != 'cerebellum':
+        try:
+            allenid = allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
+            if allenid == 0:
+                return 'node not in ccf', allenid
+        except IndexError:
+            allenid = 0
+            return 'node not in ccf', allenid
+        
+        #get region abbreviation if node in ccf volume
+        else:
+            region = get_allen_region(ontlevel, allenid)
+            
+            return region, allenid
 
 def check_if_spinal_cord(node, binarized_ccf):
     '''
@@ -282,104 +268,65 @@ def check_if_spinal_cord(node, binarized_ccf):
     Returns
     -------
     bool. True if node is in spinal cord
-
+    string. used for debugging purposes
     '''
-    #initially check if node is outside posterior bound and below cerebellum
+    #initially check if node is outside posterior bound of CCF and below cerebellum
     #do this before rounding
     if node[0] > 13192.5 and node[1] > 4642:
         string = 'posterior'
         return True, string
     
+    if node[0] > 13192.5 and node[1] < 4642:
+        string = 'cerebellum'
+        return False, string
+    
     #if not, index binarized ccf
-    
     tenmicron = np.round([x/10 for x in node]).astype(int).tolist()
-    ccf_bool = binarized_ccf[tenmicron[0], tenmicron[1], tenmicron[2]]
+    #below ventral bound of ccf, only nodes that fulfill this condition are those in the spinal cord
+    if tenmicron[1] >= 800:
+        string = 'below ventral bound'
+        return True, string
     
+    #in case any spinal cord ones go outside lateral bound of ccf
+    if tenmicron[2] >= 1140:
+        string = 'outside lateral bound'
+        return True, string
+    
+    try:
+        ccf_bool = binarized_ccf[tenmicron[0], tenmicron[1], tenmicron[2]]
+    except IndexError:
+        print('ya screwed up')
+
     #in ccf vol
     if ccf_bool == 1:
         string = 'in ccf'
         return False, string
     
-    #not in ccf vol
+    #not in ccf vol, this and the ML check are really only for cells in sample 703070 since the spinal cord stayed attached
+    #and cells were traced into spinal cord
     if ccf_bool == 0:
         string = 'not posterior, wrapping'
         return True, string
-    
-    
-    
-def get_axon_length(neurondict, ontlevel='structure'):
-    '''
-    get axon length in regions, lateralized, done at one micron resolution, values are in um
-    '''
-    lengthdict = defaultdict(int)
-    axon = neurondict['axon']
-    somax, somay, somaz = [neurondict['soma']['x'], neurondict['soma']['y'], 
-                           neurondict['soma']['z']]
-    
-    #get sign of soma relative to midline
-    somaref = MIDLINEZ-somaz
-    somahem = np.sign(somaref)
-    
-    for node in axon:
-        
-        coords = [node['x'], node['y'], node['z']]
-        x, y, z = coords
-        
-        #get sign of node relative to midline, get laterality of node
-        zref = MIDLINEZ-z
-        zhem = np.sign(zref)
-        
-        #index allen ccf volume to get parcellation id, needs to be 10 um res
-        #tenmicron = np.round([x/10 for x in coords]).astype(int).tolist()
-        
-        #nodes that have AP outside CCF (spinal cord mostly) will throw error when attempting to index ccf volume
-        #for now, I will call all of them spinal cord although this isn't fully accurate since
-        #allen ccf doens't span the whole ap axis of the brain
-        #writing new version to just take the annotated id from the node since this doesn't seem to match up with
-        #brainrender, unsure if it is a brainrender thing or my code...
-#this version is old vers where i was indexing ccf, although this didn't seem correct for everything 
-#had some issues where tectospinal tract was getting a lot of axon marked as in the region, then when i rendered
-#the axon wasn't close to tsp at all
-
-# =============================================================================
-#         try:
-#             allenid = #allen_ccf_data[tenmicron[0], tenmicron[1], tenmicron[2]]
-#         except IndexError:
-#             region = 'SpC'
-#         
-#         #get region abbreviation if node in ccf volume
-#         else:
-#             #parcels = parcellation_map.loc[allen_parcellations.loc[allenid]['label']]
-#             parcels = parcellation_map.loc[allenid]['label']
-#             region = get_allen_region(ontlevel, parcels)
-#         
-#         finally:
-#             latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
-# =============================================================================
-        #ok if i write this to pull from the annotated regions in the json, then you have aids that are marked as None
-        #presumably corresponding to spinal cord, which doesn't have a label in the allen ccf. 
-        #think i have to just skip these nodes for now, although it feels like throwing out a lot of information
-        if node['allenId'] == None:
-            continue
-        allenid = allenstr+str(node['allenId'])
-        region = pterm.loc[allenid]['acronym']
-        latregion = 'Ipsilateral '+region if zhem == somahem else 'Contralateral '+region
-        #calculate euclidean distance from node to its parent, soma will have parentNumber -1
-        if node['parentNumber'] == -1:
-            length = np.sqrt((x-somax)**2+(y-somay)**2+(z-somaz)**2)
-            lengthdict[latregion] += length
-        else:
-            pnode = axon[node['parentNumber']]
-            px, py, pz = [pnode['x'], pnode['y'], pnode['z']]
-            length = np.sqrt((x-px)**2+(y-py)**2+(z-pz)**2)
-            lengthdict[latregion] += length
-            
-    return lengthdict
                     
-def get_allen_region(ontlevel, parcels):
+def get_allen_region(ontlevel, allenid):
     '''
-    find region abbreviation from allen parcellation id
+    find allen region associated with a given parcellation id at any ontology level
+
+    Parameters
+    ----------
+    ontlevel : str
+        desired level of the allen ontology to pull.
+    allenid : int
+        parcellation id to find associated region for
+
+    Returns
+    -------
+    region : str
+        region at desired ontology level associated with a given parcellation id.
+
     '''
+    parcels = parcellation_map[parcellation_map['parcellation_index'] == allenid]
+    
     match ontlevel:
         case 'organ':
             region = parcels.loc[parcels['parcellation_term_set_name']=='organ', 'parcellation_term_acronym'].values[0]
@@ -392,44 +339,6 @@ def get_allen_region(ontlevel, parcels):
         case 'substructure':
             region = parcels.loc[parcels['parcellation_term_set_name']=='substructure', 'parcellation_term_acronym'].values[0]
     return region
-
-def freq_helper(freqdict, end, region, somahem):
-    '''
-    helper function for my frequency annotator
-
-    Parameters
-    ----------
-    freqdict : 
-        DESCRIPTION.
-    end : TYPE
-        DESCRIPTION.
-    region : TYPE
-        DESCRIPTION.
-    somahem : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    '''
-    zend = end['z']
-    zref = MIDLINEZ_10UM - zend
-    #also, should be - for LH, + for RH
-    zhem = np.sign(zref)
-    ipsstr = 'Ipsilateral ' + region
-    contstr = 'Contralateral ' + region
-    if zhem == somahem:
-        if ipsstr in freqdict:
-            freqdict[ipsstr] += 1
-        else:
-            freqdict[ipsstr] = 1
-    if zhem != somahem:
-        if contstr in freqdict:
-            freqdict[contstr] += 1
-        else:
-            freqdict[contstr] = 1
-    return
 
 def get_nodes_in_region(cells, regions, parcellated=True, ontlevel='structure', kind=None, infunc=False, mirror=False):
     '''
@@ -495,80 +404,7 @@ def get_nodes_in_region(cells, regions, parcellated=True, ontlevel='structure', 
                 cellstonodes[cell] = nodes
             return cellstonodes
     
-def parcellation_annotator(node):
-    #round coordinates to 10um resolution
-    startround = time.perf_counter()
-    coords = [node['x'], node['y'], node['z']]
-    coords = [x/10 for x in coords]
-    coords = np.round(coords).astype(int).tolist()
-    node['x'], node['y'], node['z'] = coords
-    endround = time.perf_counter()
-    roundtime = endround-startround
-    
-    #find parcellation index
-    startindex=time.perf_counter()
-    parcellation_index = allen_ccf_data[node['x'], node['y'], node['z']]
-    parcellation_label = parcellation_map.loc[allen_parcellations.loc[parcellation_index]['label']]
-    endindex=time.perf_counter()
-    indextime = endindex-startindex
-    
-    
-    #annotate each ontology level
-    #should figure out why this is so slow and rewrite it to be faster, maybe I can look for the parcellation ID concatenated onto a string?
-    startannot = time.perf_counter()
-    node['organ'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='organ', 'parcellation_term_acronym'].values[0]
-    node['category'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='category', 'parcellation_term_acronym'].values[0]
-    node['division'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='division', 'parcellation_term_acronym'].values[0]
-    node['structure'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='structure', 'parcellation_term_acronym'].values[0]
-    node['substructure'] = parcellation_label.loc[parcellation_label['parcellation_term_set_name']=='substructure', 'parcellation_term_acronym'].values[0]
-    endannot = time.perf_counter()
-    annottime = endannot-startannot
-    
-    return roundtime, indextime, annottime
-    
-def get_node_parcellations(neurondict):
-    for cell, info in tqdm(neurondict.items(), desc='Finding parcellations'):
-        axon = info['axon']
-        dendrite = info['dendrite']
-        soma = info['soma']
-        rtlist = []
-        itlist = []
-        atlist = []
-        ttlist = []
-        for node in axon:
-            starttimea = time.perf_counter()
-            try:
-                rta, ita, ata = parcellation_annotator(node)
-            except IndexError:
-                axon.remove(node)
-            finally:
-                rtlist.append(rta)
-                itlist.append(ita)
-                atlist.append(ata)
-            endtimea=time.perf_counter()
-            totaltimea=endtimea-starttimea
-            ttlist.append(totaltimea)
-        for node in dendrite:
-            starttimed=time.perf_counter()
-            try:
-                rtd, itd, atd = parcellation_annotator(node)
-            except IndexError:
-                dendrite.remove(node)
-            else:
-                rtd, itd, atd = parcellation_annotator(node)
-            finally:
-                rtlist.append(rtd)
-                itlist.append(itd)
-                atlist.append(atd)
-            endtimed=time.perf_counter()
-            totaltimed=endtimed-starttimed
-            ttlist.append(totaltimed)
-        parcellation_annotator(soma)
-        print(f'Total time to round node coordinates: {np.sum(rtlist)}')
-        print(f'Total time to index parcellations: {np.sum(itlist)}')
-        print(f'Total time to annotate parcellations: {np.sum(atlist)}')
-        print(f'Total time to annotate cell: {np.sum(ttlist)}')
-    return
+
 
 def load_neurons_from_json(folderpath):
     '''
@@ -618,24 +454,6 @@ def load_neurons_from_json(folderpath):
             
     return neuron_dict
 
-def load_brainrender_neurons(dir, color=None):
-    '''
-    Docstring for load_brainrender_neurons
-    
-    :param dir: Description
-    :param color: Description
-    '''
-    neurons = []
-    for file in tqdm(os.listdir(dir)):
-        filename = os.path.join(dir, file)
-        if color is None:
-            neuron = Neuron(neuron=filename)
-            neurons.append(neuron)
-        if color is not None:
-            neuron = Neuron(neuron=filename, color=color)
-            neurons.append(neuron)
-    return neurons
-
 def get_axonal_endpoints(neurondict):
     endsdict = {}
     for cell, info in tqdm(neurondict.items(), desc='Finding endpoints'):
@@ -659,70 +477,6 @@ def get_axonal_endpoints(neurondict):
         endsdict[cell] = {'ends': endpoints, 'soma': soma}
     return endsdict
         
-
-def get_endpoints_from_file(neuronjson):
-    '''
-    helper func for load_endpoints
-    
-    :param neuronjson: Description
-    '''
-    endsdict = {}
-    with open(neuronjson, 'r') as f:
-        parent_child_dict = {}
-        neuron = json.load(f)
-        cell = neuron['neurons'][0]['idString']
-        axon = neuron['neurons'][0]['axon']
-        soma = neuron['neurons'][0]['soma']
-        ver = neuron['neurons'][0]['annotationSpace']['version'] #this will be 2.5 if CCFv2.5 is used, 3 if CCFv3
-        for node in axon:
-            #x = node['x']
-            #z = node['z']
-            #x and z in ccf2.5 are swapped in ccfv3, so swapping those in any cell annotated in ccfv2.5
-            #dont think this is needed anymore, keeping it in in case i get other 2.5 cells?
-            # if ver == 2.5:
-            #     node['z'] = x
-            #     node['x'] = z
-            nodeID = str(node['sampleNumber'])
-            parent = str(node['parentNumber'])
-            if parent == str(-1):
-                parent_child_dict[nodeID] = None
-            if parent > str(0):
-                parent_child_dict[nodeID] = str(parent)
-        tree = Tree()
-        tree = tree.from_map(parent_child_dict)
-        leaves = tree.leaves()
-        ends_from_tree = [int(node.identifier) for node in leaves]
-        endpoints = [node for node in axon if node['sampleNumber'] in ends_from_tree]
-        endsdict[cell] = {'ends': endpoints, 'soma': soma} 
-    return endsdict
-# =============================================================================
-# 
-# def load_endpoints(dir):
-#     '''
-#     Docstring for load_endpoints
-#     
-#     :param dir: Description
-#     '''
-#     allends = []
-#     for file in tqdm(os.listdir(dir)):
-#         filename = os.path.join(dir, file)
-#         endpoints = get_endpoints_from_file(filename)
-#         allends.append(endpoints)
-#     return allends
-# =============================================================================
-def swap_swc(fname):
-    swc_df = pd.read_csv(
-         fname,
-         comment='#', 
-         sep=r'\s+',
-         names=['id', 'type', 'x', 'y', 'z', 'r', 'parent']
-    )
-    #need to swap x and z coordinates, brainrender swapped their axes so using swcs as we get them will render them rotated 90 deg
-    x = swc_df['x']
-    z = swc_df['z']
-    swc_df['x'] = z
-    swc_df['z'] = x
-    return swc_df
 
 def coord_swapper(fdict):
     '''
@@ -751,3 +505,41 @@ def coord_swapper(fdict):
     fdict['neurons'][0]['axon'] = axon
     fdict['neurons'][0]['dendrite'] = dendrite
     return fdict
+
+def annotate_swc(swc):
+    '''
+    annotate swc's with region info for each node, useful for visualizing axon length in specific regions
+
+    Parameters
+    ----------
+    swc : path
+        path to the swc to be annotated.
+
+    Returns
+    -------
+    pd.DataFrame of swc with column containing region annotation parcellation id.
+
+    '''
+    df = pd.read_csv(swc, sep=' ', names=['nodeID','structureIdentifier','x','y','z','radius','parent'],
+                     comment='#')
+    
+    df['parcelID'] = None
+    
+    nodeparcels = []
+    
+    for row, vals in df.iterrows():
+        coords = [vals['x'], vals['y'], vals['z']]
+        
+        #ontology level doesn't matter here, i'm annotating with the parcellation index
+        #which is at substructure resolution so I'll pass that, but I'm not using any region abbreviations
+        try:
+            _, allenid = find_region_annotation(coords, 'substructure')
+        except TypeError:
+            print()
+            
+        nodeparcels.append(allenid)
+        
+    df.parcelID = nodeparcels    
+        
+    return df
+    

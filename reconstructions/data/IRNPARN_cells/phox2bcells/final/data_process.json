@@ -1,0 +1,58 @@
+{
+  "object_type": "Data process",
+  "process_type": "Neuron skeleton processing",
+  "name": "aligned_swc_processing",
+  "stage": "Processing",
+  "code": {
+    "object_type": "Code",
+    "url": "https://codeocean.allenneuraldynamics.org/capsule/6437495",
+    "name": "aligned-swc-processing",
+    "version": "038556492fe9e0d3d2a289839fff0c986ad327bb",
+    "container": null,
+    "run_script": "code/run",
+    "language": "Python",
+    "language_version": "3.10.12",
+    "input_data": null,
+    "parameters": {
+      "input_swc_dir": "/results/aligned_resampled",
+      "output_swc_dir": "/results/final/ccf_space_reconstructions/swcs",
+      "output_json_dir": "/results/final/ccf_space_reconstructions/jsons",
+      "workers": 8,
+      "ccf_resolution_um": 10,
+      "fail_fast": true
+    },
+    "core_dependency": null
+  },
+  "experimenters": [
+    "MSMA Team"
+  ],
+  "pipeline_name": null,
+  "start_date_time": "2026-10-09T01:00:11.416000Z",
+  "end_date_time": "2026-10-09T01:00:48.187154Z",
+  "output_path": "/results/final",
+  "output_parameters": {
+    "output_swc_dir": "/results/final/ccf_space_reconstructions/swcs",
+    "output_json_dir": "/results/final/ccf_space_reconstructions/jsons",
+    "swc_outputs": 0,
+    "json_outputs": 17,
+    "manual_alignment_images": 0,
+    "failures": []
+  },
+  "notes": "Aligned SWC processing completed successfully.",
+  "resources": {
+    "object_type": "Resource usage",
+    "os": "Linux 6.1.186-228.374.amzn2023.x86_64",
+    "architecture": "x86_64",
+    "cpu": "x86_64",
+    "cpu_cores": 128,
+    "gpu": null,
+    "system_memory": null,
+    "system_memory_unit": null,
+    "ram": null,
+    "ram_unit": null,
+    "cpu_usage": null,
+    "gpu_usage": null,
+    "ram_usage": null,
+    "usage_unit": "percent"
+  }
+}

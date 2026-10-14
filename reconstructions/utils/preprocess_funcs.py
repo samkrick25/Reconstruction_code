@@ -257,47 +257,8 @@ def get_targeted_regions(data, cell):
     '''
     return data.loc[cell, data.columns[data.loc[cell]!=0].tolist()].sort_values(ascending=False)
 
-# =============================================================================
-# def filter_nodes_by_mesh(swc_df, mesh):
-#     """
-#     Remove SWC nodes that do not fall inside ANY of the provided mesh(es).
-# 
-#     Parameters
-#     ----------
-#     swc_df : pd.DataFrame
-#         SWC data in CCF (pre-axis-swap) space.
-#     mesh : np.ndarray | list[np.ndarray] | np.array([])
-#         One or more (N,3) CCF-space vertex arrays.
-#         Empty array or empty list → no filtering, return swc_df unchanged.
-# 
-#     Returns
-#     -------
-#     pd.DataFrame
-#         Filtered copy (OR logic: node kept if inside any mesh).
-#     """
-#     mesh_list = _normalize_meshes(mesh)
-#     if not mesh_list:
-#         return swc_df
-# 
-#     coords = swc_df[['x', 'y', 'z']].values.copy()   # copy — don't touch DataFrame
-# 
-#     # Vectorized midline reflection (same logic as before, no Python loop)
-#     over = coords[:, 2] > MIDLINEZ
-#     coords[over, 2] = 2 * MIDLINEZ - coords[over, 2]
-# 
-#     # OR across all meshes — keep node if it lands inside at least one
-#     combined_mask = np.zeros(len(coords), dtype=bool)
-#     for verts in mesh_list:
-#         tri = Delaunay(verts)
-#         combined_mask |= tri.find_simplex(coords) >= 0
-#         if combined_mask.all():      # early exit once every node is accounted for
-#             break
-# 
-#     return swc_df[combined_mask].copy()
-# =============================================================================
 
-
-def write_targeted_regions_to_excel(data, output_path='targeted_regions.xlsx'):
+def write_targeted_regions_to_excel(data, output_path='length_in_regions.xlsx'):
     '''
     Runs get_targeted_regions for every cell in data and writes results to one Excel sheet.
     Each cell gets two adjacent columns: region names and their endpoint counts,

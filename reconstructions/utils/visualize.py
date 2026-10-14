@@ -5,219 +5,54 @@ code to visualize IRN/PARN cells with brainrender
 @author: economolab
 """
 
-from brainrender import Scene
-from reconstructions.utils import load_data as ld
-from reconstructions.utils.filedirs import somaspkl, allcoordswapped, parcellated_neurons
-import reconstructions.utils.cameras as cams
-from brainrender.actors import Points
+
+from reconstructions.utils.filedirs import parcellation_mappkl, allen_ccf_10um
 import pickle
 from tqdm import tqdm
 import os
 import numpy as np
 import pandas as pd
 from collections import defaultdict
-from vedo import Tube, Sphere, Line
+from vedo import Sphere
 import vtk
 from vedo import Mesh
-from scipy.spatial import Delaunay
+import nibabel as nib
+
 
 MIDLINEZ = 5750
 MIDLINEZ_10UM = 570
 
-# =============================================================================
-# #get meshes for IRN/PARN from brainrender Scene
-# scene_for_bounds = Scene(atlas_name='allen_mouse_10um', root=False)
-# scene_for_bounds.add_brain_region('IRN')
-# scene_for_bounds.add_brain_region('PARN')
-# actors = scene_for_bounds.get_actors()
-# IRNmesh = actors[0]
-# IRNvertices = IRNmesh.mesh.vertices
-# PARNmesh = actors[1]
-# PARNvertices = PARNmesh.mesh.vertices
-# 
-# #find anterior bound and set antIRN/PARN posterior bound
-# IRNap = [vertex[0] for vertex in IRNvertices]
-# PARNap = [vertex[0] for vertex in PARNvertices]
-# IRNPARNap = IRNap+PARNap
-# MedRNa_bound = np.min(IRNPARNap)
-# MedRNp_bound = np.max(IRNPARNap)
-# MedRNrange = MedRNp_bound-MedRNa_bound
-# MedRNmid = MedRNa_bound + 800
-# 
-# # =============================================================================
-# # #dorsal ventral separation (NOT FUNCTIONAL YET)
-# # IRNdv = [vertex[1] for vertex in IRNvertices]
-# # PARNdv = [vertex[1] for vertex in PARNvertices]
-# # RNdv = IRNdv+PARNdv
-# # dorsbound = np.min(RNdv)
-# # ventbound = np.max(RNdv)
-# # med = np.mean([int(dorsbound), int(ventbound)])
-# # 
-# # =============================================================================
-# #get lists of antIRN/PARN vs postIRN/PARN cells
-# somas = pickle.load(open(somaspkl, 'rb'))
-# antIPARNcells = []
-# postIPARNcells = []
-# for cell, soma in somas.items():
-#     if MedRNa_bound <= soma['x'] < MedRNmid:
-#         antIPARNcells.append(cell)
-#     if MedRNmid <= soma['x'] <= MedRNp_bound:
-#         postIPARNcells.append(cell)
-#         
-# 
-# # =============================================================================
-# # somas = pickle.load(open(somaspkl, 'rb'))
-# # antIPARNcells = []
-# # postIPARNcells = []
-# # for cell, soma in somas.items():
-# #     if dorsbound <= soma['x'] < med:
-# #         antIPARNcells.append(cell)
-# #     if med <= soma['x'] <= ventbound:
-# #         postIPARNcells.append(cell)
-# # =============================================================================
-#         
-#         
-# #get endpoints of IRN/PARN cells split by their A->P position
-# antIPARNends = {}
-# postIPARNends = {}
-# for file in tqdm(os.listdir(parcellated_neurons), desc='Loading endpoints'):
-#     cellname = file.split('.')[0]
+allen_ccf = nib.load(allen_ccf_10um)
+allen_ccf_data = np.asanyarray(allen_ccf.dataobj)
 
-## I GOT RID OF GET_ENDPOINTS_FROM_FILE_PARCELLATED SO THIS LINE IS BROKEN
-#REWRITE AT SOME POINT
-#     endpoints = ld.get_endpoints_from_file_parcellated(os.path.join(parcellated_neurons, file))
-#     if cellname in antIPARNcells:
-#         antIPARNends[cellname] = endpoints
-#     if cellname in postIPARNcells:
-#         postIPARNends[cellname] = endpoints
-# =============================================================================
-
-#this function is also broke while above code doesn't work, i just want this file to be rendering stuff
-# =============================================================================
-# def show_endpoints(regions, root, colors, alphas, camera=cams.sagcam, unilat=False, ontlevel='structure'):
-#     '''
-#     visualize endpoints of IRN/PARN cells in any region defined by allen ccf 10um v3 
-#     (will rewrite to use other resolutions, binary expansion of regions and visualization of those)
-# 
-#     Parameters
-#     ----------
-#     *regions : str
-#         str of regions to be rendered and endpoints to be selected for visualization
-#     root : bool
-#         to be passed to brainrender.Scene.render, bool to render wholebrain mesh or not
-#     colors: list
-#         list of colors for each region to be rendered as, colors and regions must be the same length
-#     alphas: list
-#         list of alpha values for each region
-#     camera: reconstructions.utils.cameras variable
-#         what camera to use when rendering Scene, default is saggital view
-#     
-#     
-# 
-#     Returns
-#     -------
-#     None.
-# 
-#     '''
-# 
-#     if len(regions) != len(colors):
-#         raise ValueError('region and color list must be of same length!')
-#     if len(regions) != len(alphas):
-#         raise ValueError('region and alpha list must be of same length!')
-#         
-#     ccf_scene = Scene(atlas_name='allen_mouse_10um', root=root)
-#     for region, color, alpha in zip(regions, colors, alphas):
-#         ccf_scene.add_brain_region(region, color=color, alpha=alpha, silhouette=False)
-#     
-#     #this is messing up, returning empty lists
-#     antIPARNinreg = pp.get_nodes_in_region(antIPARNends, regions, parcellated=True, ontlevel=ontlevel, kind='by_cell')
-#     postIPARNinreg = pp.get_nodes_in_region(postIPARNends, regions, parcellated=True, ontlevel=ontlevel, kind='by_cell')
-#     
-#     antIPARNXIIswapped = pp.tenmicron_to_one(antIPARNinreg, allcoordswapped)
-#     postIPARNXIIswapped = pp.tenmicron_to_one(postIPARNinreg, allcoordswapped)
-#     #finish cleaning up from here later, need to rewrite this a little since above is now by cell, first need to look at coordswapped for actual coords
-#     antIPARNXIIcoords = []
-#     for cell, nodes in antIPARNXIIswapped.items():
-#         if unilat:
-#             coords = pp.get_coords(nodes, mirror=True)
-#         else:
-#             coords = pp.get_coords(nodes, mirror=False)
-#         if coords.any():
-#             antIPARNXIIcoords.append(coords)
-#     antIPARNXIIflat = np.array([node for cell in antIPARNXIIcoords for node in cell])
-# 
-#     postIPARNXIIcoords = []
-#     for cell, nodes in postIPARNXIIswapped.items():
-#         if unilat:
-#             coords = pp.get_coords(nodes, mirror=True)
-#         else:
-#             coords = pp.get_coords(nodes, mirror=False)
-#         if coords.any():
-#             postIPARNXIIcoords.append(coords)
-#     postIPARNXIIflat = np.array([node for cell in postIPARNXIIcoords for node in cell])
-#     
-#     antPoints = Points(antIPARNXIIflat, colors='red', radius=10)
-#     postPoints = Points(postIPARNXIIflat, colors='blue', radius=10)
-#     ccf_scene.add(antPoints)
-#     ccf_scene.add(postPoints)
-#     
-#     if unilat:
-#         medplane=ccf_scene.atlas.get_plane(plane='sagittal',norm=(0,0,-1))
-#         ccf_scene.slice(plane=medplane)
-#     
-#     ccf_scene.render(camera=camera)
-#     
-#     return antIPARNXIIswapped, postIPARNXIIswapped
-# =============================================================================
-
-def get_inmesh_mask(swc_df, mesh):
-    """
-    Return a boolean numpy array (len == len(swc_df)) where True means the
-    node falls inside at least one of the provided mesh(es).
-
-    Applies midline reflection for contralateral nodes so a single
-    ipsilateral mesh can match bilateral projections to the same region.
-    If mesh is empty, all nodes are True (no filtering).
-    """
-    mesh_list = _normalize_meshes(mesh)
-    if not mesh_list:
-        return np.ones(len(swc_df), dtype=bool)
-
-    coords = swc_df[['x', 'y', 'z']].values.copy()   # copy — never touch swc_df
-    over = coords[:, 2] > MIDLINEZ
-    coords[over, 2] = 2 * MIDLINEZ - coords[over, 2]  # vectorized reflection
-
-    mask = np.zeros(len(coords), dtype=bool)
-    for verts in mesh_list:
-        tri = Delaunay(verts)
-        mask |= tri.find_simplex(coords) >= 0
-        if mask.all():          # early exit once every node is accounted for
-            break
-    return mask
-
-def _normalize_meshes(mesh):
-    """
-    Normalize the mesh argument into a flat list of (N,3) vertex arrays.
-      - np.array([])               → []   (no filtering)
-      - single (N,3) ndarray       → [mesh]
-      - list of (N,3) ndarrays     → mesh (empty arrays dropped)
-    """
-    if isinstance(mesh, np.ndarray):
-        return [] if mesh.size == 0 else [mesh]
-    if isinstance(mesh, list):
-        return [m for m in mesh if isinstance(m, np.ndarray) and m.size > 0]
-    return []
+parcellation_map = pickle.load(open(parcellation_mappkl, 'rb'))
 
 
-def _mesh_has_data(mesh):
-    """Return True when mesh contains at least one non-empty vertex array."""
-    return len(_normalize_meshes(mesh)) > 0
+def get_parcel_id_from_reg(regabv):
+    '''
+    find allen parcellation id from region abbreviation
+
+    Parameters
+    ----------
+    regabv : str
+        Allen CCF region abbreviation to find parcellation index for.
+
+    Returns
+    -------
+    int. Parcellation index associated with the given region in Allen CCF
+
+    '''
+    
+    return parcellation_map.loc[parcellation_map['parcellation_term_acronym']==regabv]['parcellation_index']
 
 
 def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color='blue', dendrite_color='red',
                        soma_color='black', neurite_radius=4, soma_radius=15, alpha=1, res=12,
-                       include_soma=True, inmesh_ids=None, mirror_soma=False):
+                       include_soma=True, regs_to_render=None, mirror_soma=False):
     """
+    generate Actor objects from an swc file that has been read into a pd.DataFrame. this basically draws cells as
+    consecutive dots at a given 
+    
     Parameters
     ----------
     inmesh_ids : set[int] | None
@@ -231,6 +66,10 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color=
         are never split into two disconnected pieces.
     """
     nodes = swc_df.set_index('id')
+
+    #find parcellation ids for desired regions to render, will filter nodes based on this
+    if regs_to_render:
+        parcel_ids = [get_parcel_id_from_reg(abv).iloc[0].astype(np.float64) for abv in regs_to_render]
 
     # ── Build children from the FULL, unfiltered node set ────────────────────
     # Never prune nodes here; intact topology is what prevents mid-path breaks.
@@ -262,14 +101,29 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color=
 
     # soma_id check is always included regardless of include_soma so that
     # direct soma children are correctly identified as section starts.
-    section_starts = [
-        node_id for node_id, row in nodes.iterrows()
-        if row['type'] != 1
-        and (row['parent'] == -1
-             or int(row['parent']) == soma_id
-             or len(children[int(row['parent'])]) > 1)
-    ]
+    #write in a check to add every node that has a different region annot than its parent to be a section start
+    if not regs_to_render:     
+        section_starts = [
+            node_id for node_id, row in nodes.iterrows()
+            if row['type'] != 1
+            and (row['parent'] == -1
+                 or int(row['parent']) == soma_id
+                 or len(children[int(row['parent'])]) > 1)
+        
+        ]
+    
+    #so this might cause an issue for the branch/endpoints of dendrites? unsure how it will manifest
+    #but here is where to check if there's weirdness, idk if this will add a section start if the dendrite is in the regions i want to render
+    #which i guess shouldn't be an issue as long as you don't try to render dendrites and axon length in a given region
+    if regs_to_render:
+        section_starts = [
+            node_id for node_id, row in nodes.iterrows()
+            if row['type'] != 1
+            and row['type'] != 3
+            and row['parcelID'] in parcel_ids 
+        ]
 
+    #add children 
     for start_id in section_starts:
         section_ids = []
         parent_id   = int(nodes.loc[start_id, 'parent'])
@@ -288,12 +142,6 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color=
         if len(section_ids) < 2:
             continue
 
-        # ── Section-level mesh filter ─────────────────────────────────────────
-        # Keep entire section if ANY of its nodes were inside a mesh region.
-        # Using set intersection is O(min(|inmesh_ids|, |section_ids|)).
-        if inmesh_ids is not None and not inmesh_ids.intersection(section_ids):
-            continue
-
         pts   = nodes.loc[section_ids, ['x', 'y', 'z']].values
         ntype = int(nodes.loc[start_id, 'type'])
         sections_by_type[ntype].append(pts)
@@ -307,7 +155,7 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color=
             continue
         color = type_color_map.get(ntype, axon_color)
         actor = build_tube_actor_from_sections(
-            sections, radius=neurite_radius, color=color, alpha=alpha, res=res
+            sections, radius=neurite_radius, color=color, alpha=alpha, res=res, parcelIDs=parcel_ids if regs_to_render else None
         )
         if actor is not None:
             actors.append(actor)
@@ -317,68 +165,116 @@ def swc_to_line_actors(swc_df, skip_dendrite=False, skip_axon=False, axon_color=
 
 def create_cell_actors(swcpath, axon='green', dendrite='black', soma='black',
                          skip_dendrite=False, skip_axon=False, neurite_radius=4, soma_radius=15,
-                         alpha=1, res=12, mesh=np.array([]), mirror_soma=False):
+                         alpha=1, res=12, regs_to_render=None, mirror_soma=False):
+    '''
+    create actors for brainrender visualization
+
+    Parameters
+    ----------
+    swcpath : str
+        path to swc file containing reconstructed neuron.
+    axon : str, optional
+        color to render axon as. The default is 'green'. Color info for axon, dendrite, soma i believe can be found here
+        https://vedo.embl.es/site/api/colors/
+    dendrite : str, optional
+        color to render dendrite as. The default is 'black'.
+    soma : str, optional
+        color to render soma as. The default is 'black'.
+    skip_dendrite : bool, optional
+        True to not render dendrite. The default is False.
+    skip_axon : bool, optional
+        True to not render axon. The default is False.
+    neurite_radius : int, optional
+        desired radius for neurites. The default is 4.
+    soma_radius : int, optional
+        desired soma radius. The default is 15.
+    alpha : float, optional
+        alpha for reconstructions to be rendered at. The default is 1.
+    res : int, optional
+        desired resolution for brainrender to take a screenshot at. The default is 12.
+    regs_to_render : list, optional
+        list of allen CCF region abbreviations that you want to render axon in. The default is None/render axon everywhere.
+    mirror_soma : bool, optional
+        True to mirror soma over midline. The default is False.
+
+    Returns
+    -------
+    cell_actors : list
+        list of Actor objects to be added to brainrender scene.
+
+    '''
     swc_df = pd.read_csv(
         swcpath, comment='#', sep=r'\s+',
-        names=['id', 'type', 'x', 'y', 'z', 'r', 'parent']
+        names=['id', 'type', 'x', 'y', 'z', 'r', 'parent', 'parcelID']
     )
-
-    has_mesh = _mesh_has_data(mesh)
-
-    # ── Step 1: in-mesh check in CCF space (BEFORE axis swap) ────────────────
-    # Mesh vertices are in CCF space; swc_df is also still in CCF space here.
-    # Doing the check now means the coordinate frames always match.
-    if has_mesh:
-        inmesh_mask = get_inmesh_mask(swc_df, mesh)          # boolean ndarray
-        inmesh_ids  = set(swc_df['id'][inmesh_mask].values)  # set of SWC node IDs
-    else:
-        inmesh_ids = None
 
     # ── Step 2: axis swap for brainrender display ─────────────────────────────
     swc_df['x'], swc_df['z'] = swc_df['z'].copy(), swc_df['x'].copy()
 
+    #do not include soma if you are rendering axon in specific regions
+    include_soma = False if regs_to_render else True
+    
     # ── Step 3: build actors from full topology, section-level filter ─────────
     cell_actors = swc_to_line_actors(
         swc_df,
         axon_color=axon, dendrite_color=dendrite, soma_color=soma,
         skip_dendrite=skip_dendrite, skip_axon=skip_axon, neurite_radius=neurite_radius,
         soma_radius=soma_radius, alpha=alpha, res=res,
-        include_soma=not has_mesh,
-        inmesh_ids=inmesh_ids, mirror_soma=mirror_soma
+        include_soma=include_soma,
+        regs_to_render=regs_to_render, mirror_soma=mirror_soma
     )
     return cell_actors
 
-def build_tube_actor_from_sections(sections, radius, color, alpha, res):
-    """
+def build_tube_actor_from_sections(sections, radius, color, alpha, res, parcelIDs=None):
+    '''
     Takes a list of point arrays (one per morphological section) and builds
     them all into a single vtkPolyData, then applies ONE vtkTubeFilter to it.
     Returns a single vedo Mesh actor.
 
-    This avoids creating one vtkTubeFilter per section, which causes VTK
-    internal state corruption after enough instantiations.
-    """
+    Parameters
+    ----------
+    sections : list
+        list containing neuron sections.
+    radius : int
+        minimum radius for actors to be rendered at.
+    color : string
+        desired color.
+    alpha : float
+        desired alpha.
+    res : int
+        number of triangles to draw around lines to create tube object.
+    parcelIDs : list, optional
+        parcellation IDs to filter nodes based on. The default is None.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    '''
     points = vtk.vtkPoints()
     lines  = vtk.vtkCellArray()
     pt_offset = 0
 
     for pts in sections:
+        
+        #filter points based on desired regions to render axon in if passed
+        if parcelIDs:
+            keep = np.ones(len(pts), dtype=bool)
+            for i, pt in enumerate(pts):
+                tenmicron = np.round([x/10 for x in pt]).astype(int).tolist()
+                #swap back to ccf axes
+                #TODO: keep parcel id info from swc files so i don't have to reindex ccf here for every node its a lot
+                allenid = allen_ccf_data[tenmicron[2], tenmicron[1], tenmicron[0]]
+                if allenid not in parcelIDs:
+                    keep[i] = False
+                    continue
+            pts = pts[keep]
+            
         if len(pts) < 2:
             continue
-
-        # Guard against degenerate/NaN coordinates
-        pts = np.array(pts, dtype=np.float64)
-        if not np.all(np.isfinite(pts)):
-            continue
-
-        # Remove consecutive duplicate points (zero-length segments crash VTK)
-        keep = np.ones(len(pts), dtype=bool)
-        for i in range(1, len(pts)):
-            if np.linalg.norm(pts[i] - pts[i-1]) < 1e-6:
-                keep[i] = False
-        pts = pts[keep]
-        if len(pts) < 2:
-            continue
-
+        
+        # create empty polyline, then insert into the cell array to apply the tube filter on
         polyline = vtk.vtkPolyLine()
         polyline.GetPointIds().SetNumberOfIds(len(pts))
         for i, pt in enumerate(pts):
@@ -390,44 +286,23 @@ def build_tube_actor_from_sections(sections, radius, color, alpha, res):
     if pt_offset == 0:
         return None
 
+    #add data to polydata object
     polydata = vtk.vtkPolyData()
     polydata.SetPoints(points)
     polydata.SetLines(lines)
 
+    # apply tube fulter to polydata, set resolution and radius
     tube = vtk.vtkTubeFilter()
     tube.SetInputData(polydata)
     tube.SetRadius(radius)
-    tube.SetNumberOfSides(res)
+    tube.SetNumberOfSides(res) #vtk tubes render on triangles, more triangles means higher resolution
     tube.CappingOn()
     tube.Update()
-
-    # Normalize color to 0-1 range if passed as 0-255 tuple
-    if isinstance(color, (tuple, list)) and any(c > 1 for c in color):
-        color = tuple(c / 255.0 for c in color)
 
     return Mesh(tube.GetOutput(), c=color, alpha=alpha)
 
 
-def get_mesh_onehem(scene, mesh, hem='left'):
-    root_mesh = scene.atlas.get_region('root').mesh
-    if scene.atlas.metadata['symmetric']:
-        mesh_center = (root_mesh.bounds().reshape((3,2)).mean(axis=1))
-    else:
-        mesh_center = root_mesh.center_of_mass()
-    
-    normal = (0, 0, 1) if hem == "right" else (0, 0, -1)
-    plane = scene.atlas.get_plane(pos=mesh_center, norm=normal)
-    if not isinstance(mesh, list):
-        #this is cutting the whole mesh instead of just giving one hem, look into it in a moment
-        mesh.cut_with_plane(origin=plane.center, normal=plane.normal)
-        mesh.cap()
-    else:
-        for m in mesh:
-            m.cut_with_plane(origin=plane.center, normal=plane.normal)
-            m.cap()
-    return mesh
-
-def render_cells(celllist, celldir, scene, camera, screenshot=False, savef=None, scale=None, color_map=None, **kwargs):
+def render_cells(scene, camera, celldir=None, cellfile=None, celllist=None, screenshot=False, savef=None, scale=None, color_map=None, **kwargs):
     '''
     render cells in brainrender. Pass in a scene with any desired region meshes
     already added, any visualization settings already set, this will just
@@ -436,9 +311,11 @@ def render_cells(celllist, celldir, scene, camera, screenshot=False, savef=None,
     Parameters
     ----------
     celllist : list
-        list of cell names to be rendered.
+        list of cell names to be rendered. default none/no filtering by name
     celldir : str
-        Path to directory containing cell swc files
+        Path to directory containing cell swc files, default none if input is a file instead of directory
+    cellfile : str
+        Path to file of swc to be rendere. default none if rendering files from directory instead of an individual cell
     scene : brainrender Scene
         brainrender Scene object to draw the cells in.
     camera : dict
@@ -453,24 +330,32 @@ def render_cells(celllist, celldir, scene, camera, screenshot=False, savef=None,
         mapping for cell keys to color to be rendered, a dictionary where keys are cell names in celllist and 
         values are the desired color for that cell to be rendered as
     kwargs: dict
-        keyword arguments to be passed to swap_for_brainrender
+        keyword arguments to be passed to create_cell_actors
 
     Returns
     -------
     None.
 
     '''
-    for cell in tqdm(os.listdir(celldir), desc='rendering cells'):
-        
-        cellname = cell.split('.')[0]
-        fn = os.path.join(celldir, cell)
-        
-        if cellname in celllist:
-            kwargs.update({'axon': color_map[cellname]})
-            actors = create_cell_actors(fn, **kwargs)
+    if celldir:
+        for cell in tqdm(os.listdir(celldir), desc='rendering cells'):
             
-            for actor in actors:
-                scene.add(actor)
+            cellname = cell.split('.')[0]
+            fn = os.path.join(celldir, cell)
+            
+            if celllist:
+                if cellname in celllist:
+                    kwargs.update({'axon': color_map[cellname]})
+                    actors = create_cell_actors(fn, **kwargs)
+            
+            else:
+                actors = create_cell_actors(fn, **kwargs)
+        
+    if cellfile:
+        actors = create_cell_actors(cellfile, **kwargs)
+    
+    for actor in actors:
+        scene.add(actor)
                 
     if screenshot:
         scene.screenshot(savef, camera=camera, scale=scale)

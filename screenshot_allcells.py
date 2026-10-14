@@ -18,6 +18,7 @@ import pickle
 from reconstructions.utils.filedirs import frequenciespkl
 from reconstructions.utils import preprocess_funcs as pf
 from reconstructions.utils import cellLists
+from reconstructions.utils import visualize as vis
 
 #claude help, generating line actors for axon and dendrite instead of using morphapi tube mesh generation since that is deleting some nodes
 def swc_to_line_actors(swc_df, axon_color='blue', dendrite_color='red', lw=2):
@@ -46,7 +47,7 @@ def swc_to_line_actors(swc_df, axon_color='blue', dendrite_color='red', lw=2):
     return actors
 
 #set directories
-celldir = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\new'#r"reconstructions\data\IRNPARN_cells\swcsfromjson"
+celldir = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson"
 savedir = r"images\all_cells"#C:\Users\economolab\Documents\GitHub\Reconstruction_code\images\all_cells"
 
 
@@ -61,7 +62,10 @@ fnp = frequencies_notprocessed.T
 #turn off brainrender axes
 settings.SHOW_AXES=None
 settings.OFFSCREEN = True
-
+settings.INTERACTIVE=False
+settings.ROOT_COLOR='grey'
+settings.ROOT_ALPHA=0.075
+settings.BACKGROUND_COLOR='white'
 #brainrender scene for top screenshots
 # =============================================================================
 # ccf_scenetop = Scene(atlas_name='allen_mouse_10um')
@@ -128,25 +132,6 @@ for file, color in tqdm(zip(os.listdir(celldir),output),desc='loading and screen
     # =============================================================================
     #ccf_scenesag.slice(plane=medplane) 
     #add neuron, screenshot from saggital view
-    swc_df = pd.read_csv(
-        filename,
-        comment='#', 
-        sep=r'\s+',
-        names=['id', 'type', 'x', 'y', 'z', 'r', 'parent']
-    )
-    x = swc_df['x']
-    z = swc_df['z']
-    swc_df['x'] = z
-    swc_df['z'] = x
-    cell_actors = swc_to_line_actors(swc_df, axon_color=color, dendrite_color='black', lw=2)
-    #screenshot (change name/camera for different views)
-    for actor in cell_actors:
-        ccf_scenesag.add(actor)
-    ccf_scenesag.screenshot(name=corsavefile, camera=cameras.corcam) #(camera=cameras.corcam)
-    ccf_scenesag.close()
-# =============================================================================
-#     for actor in cell_actors:
-#         ccf_scenesag.remove(actor)
-# =============================================================================
+    vis.render_cells(ccf_scenesag, camera=cameras.rootcam, cellfile=filename, scale=6, axon=color, screenshot=True, savef=topsavefile)
 
 

@@ -16,6 +16,9 @@ import csv
 import pandas as pd
 import scipy.cluster.hierarchy as sch
 from reconstructions.utils.cellLists import cells_by_pheno
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from scipy.stats import zscore
 
 def to_mm(series):
     return series.to_list()/np.float64(1000)
@@ -42,7 +45,7 @@ from reconstructions.utils import preprocess_funcs as pp
 from reconstructions.utils.filedirs import lengthspkl, ccf_vols3, frequenciespkl, structure_ont_info
 structure_to_ont = pickle.load(open(structure_ont_info, 'rb'))
 freqs = pickle.load(open(r'reconstructions\data\freqs_hopefullygood.pkl', 'rb')).T
-lengths = pickle.load(open(r'reconstructions\data\lengths_hopefullygood.pkl', 'rb')).T
+lengths = pickle.load(open(lengthspkl, 'rb')).T
 lmerged = pp.merge_regions(lengths)
 fmerged = pp.merge_regions(freqs)
 lnozero = lmerged.loc[:, (lmerged != 0).any(axis=0)]
@@ -50,7 +53,7 @@ fnozero = fmerged.loc[:, (fmerged != 0).any(axis=0)]
 
 #dorp a duplicate cell, will be fixed whenever I get new ones and rerun 
 #the projection calculations
-lnozero = lnozero.drop(index=['N044-674191', 'N005-674185'])
+lnozero = lnozero.drop(index=['N044-674191'])
 
 #pp.write_targeted_regions_to_excel(freqs, r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\targeted_reg_lat.xlsx')
 
@@ -88,7 +91,6 @@ def cluster_corr(corr_array, regidx, inplace=False):
     return corr_array[idx, :][:, idx], idx_reg
 
 
-# %%
 
 def show_heatmap(hmap, idx, start=None, end=None):
     '''
@@ -123,11 +125,10 @@ def show_heatmap(hmap, idx, start=None, end=None):
     else:
         labels = idx
         sns.heatmap(hmap, ax=ax)
-        
-#%%
+
 import os
 
-def do_pca_and_plot(data, sd, n_components=None, plot=False):
+def do_pca_and_plot(data, n_components=None, sd=None, plot=False):
     '''
     do pca on your data, returns pca object as well as transformed data, also plots loadings onto the top 10 pcs
 
@@ -178,7 +179,6 @@ def do_pca_and_plot(data, sd, n_components=None, plot=False):
             
     return pca, scaled, loadings
 
-#%%
 from sklearn.decomposition import SparsePCA
 
 def do_spca_and_plot(data, alpha, n_components=None, sd=None, plot=False):
@@ -233,7 +233,7 @@ def do_spca_and_plot(data, alpha, n_components=None, sd=None, plot=False):
         
     return pca, scaled
 
-#%% umap function
+
 import umap
 from reconstructions.utils.cellLists import cells_by_pheno, pColors
 
@@ -285,7 +285,7 @@ def umap_and_plot(pcadata, index, sd=None, **kwargs):
     
     return embeddingdf
 
-#%%  want to be able to take a list of cell names and get out how many of each pheno are there
+
 from reconstructions.utils.cellLists import cells_by_pheno
 
 #create a mapping from cell name to pheno identity
@@ -306,6 +306,36 @@ def get_phenos(cellnames):
 
     return phenodict
 
+#%% lists of regions to iteratively drop as I group them
+
+#ok start, still some stuff i should group -> ZI doesn't cluster with the rest of HY stuff since it sometimes pops up in MB cells
+#think I should throw some smaller regions together idk?
+HY = ['AVPV', 'LPO', 'ADP', 'VMH', 'MPO', 'DMH', 'AP', 'fiber tracts-unassigned',
+       'PVH', 'PVpo', 'ARH', 'MPN', 'AHN', 'BAC', 'SBPV', 'COAa', 'PS', 'NLOT',
+       'PD', 'HY-unassigned', 'PMv', 'In', 'MS', 'PMd', 'NDB', 'PST', 'PVHd',
+       'PH', 'RL', 'PVi', 'MEA', 'IIn', 'LHA', 'RCH', 'PVa', ]
+
+CTXsp = ['LSv', 'STR-unassigned', 'mfbc', 'CTXsp-unassigned', 'BMA', 'BST', 'LSr']
+
+CTX = ['RR', 'OLF-unassigned', 'ACB', 'LA', 'TT', 'GPi', 'SI', 'GPe', 'IA',
+       'epsc', 'BLA', 'cc', 'VL-unassigned', 'SSs', 'ECT', 'AIp', 'CEA', 'SH',
+       'VISC', 'LSc', 'EPd', 'PAL-unassigned', 'DP']
+
+CB = ['IP', 'CB', 'UVU', 'CUL', 'DEC', 'cbc', 'PFL', 'PRM', 'PYR', 'y', 'arb',
+       'DN', 'VeCB', 'CENT', 'ICB', 'VCO', 'NOD', 'CB-unassigned', 'FL', 'V4r',
+       'FN', 'DCO', 'cbp', 'FOTU', 'SUV', 'chpl', 'AN', 'COPY', 'SIM']
+
+MB = ['Eth', 'RPF', 'RN', 'III', 'Pa4', 'IIIn', 'MA3', 'RH', 'PAG', 'PRNr',
+       'NPC', 'brain-unassigned', 'MRN', 'MH', 'MB-unassigned', 'PRNc',
+       'SPFm', 'LH', 'V3-unassigned', 'APN', 'mfsbshy', 'SCm', 'PPN', 'CUN']
+
+TH = ['VM', 'PF', 'VPL', 'VPM', 'VPMpc', 'VPLpc', 'PCN', 'PO', 'VAL',
+       'TH-unassigned', 'cst', 'PVT', 'MD', 'IAM', 'CM']
+
+vestibular = ['MV', 'LAV', 'SPIV']
+
+to_merge = {'TH':TH, 'MB':MB, 'CB':CB, 'CTX':CTX, 'CTXsp':CTXsp, 'HY':HY, 'vestibular':vestibular}
+
 #%% region by region, using to decide how to group regions by looking at what stuff is highly correlated
 #first not normalized, including spinal cord thing
 
@@ -315,6 +345,42 @@ no_norm_clusters, no_norm_idx = cluster_corr(l_notnorm_corr, lnozero.columns)
 
 show_heatmap(no_norm_clusters, no_norm_idx)
 
+#%% merge clustered regions
+
+lcomb = lnozero.copy()
+
+for group, regs in to_merge.items():
+    groupsums = lnozero[regs].sum(axis=1)
+    lcomb[group] = groupsums
+    lcomb.drop(regs, axis=1, inplace=True)
+
+#%% recorrelate and cluster on merged regions
+
+comb_corr = np.corrcoef(lcomb.T)
+
+comb_clust, comb_idx = cluster_corr(comb_corr, lcomb.columns)
+
+show_heatmap(comb_clust, comb_idx)
+
+#%% pca on combined stuff so far, cell clustering
+sd = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\PCA\combining_regions_PCA_loadings_v1\loadings"
+comb_pca, comb_scaled, _ = do_pca_and_plot(lcomb, n_components=20, sd=sd, plot=True)
+
+pca_corr = np.corrcoef(lcomb)
+
+comb_clust, comb_idx = cluster_corr(pca_corr, lcomb.index)
+
+show_heatmap(comb_clust, comb_idx)
+
+#%% sparse pca
+sd = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\PCA\combining_reg_sPCA_v1\loadings"
+comb_spca, comb_scaled_sparse = do_spca_and_plot(lcomb, alpha=2, plot=True, sd=sd, n_components=20)
+
+comb_sparse_corr = np.corrcoef(comb_scaled_sparse)
+
+comb_s_clusters, comb_s_idx = cluster_corr(comb_sparse_corr, lcomb.index)
+
+show_heatmap(comb_s_clusters, comb_s_idx)
 #%% normalized by region volume
 lnozero=lnozero.drop('SpC', axis=1) #drop custom spinal cord annotation since no ccf volume associated
 #%%
@@ -368,11 +434,6 @@ clust_nomossy, idx_nomossy = cluster_corr(cc_nomossy, llog.index)
 #%% plot
 
 show_heatmap(clust_nomossy, llog.index)
-
-#%% ok lets do pca stuff
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
-from scipy.stats import zscore
 
 #%% cut forebrain projecting and mossy fiber cells, they are super distinct already
 #and a lot of the high variance PCs will be explained by them i believe

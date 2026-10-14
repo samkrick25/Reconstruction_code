@@ -1,0 +1,67 @@
+{
+  "object_type": "Data process",
+  "process_type": "Neuron skeleton processing",
+  "name": "exaspim_swc_transform",
+  "stage": "Processing",
+  "code": {
+    "object_type": "Code",
+    "url": "https://codeocean.allenneuraldynamics.org/capsule/7989393",
+    "name": "exaspim-swc-transform",
+    "version": "385ad5a541786643fc35b30df76b0aed0f080abb",
+    "container": null,
+    "run_script": "code/run.py",
+    "language": "Python",
+    "language_version": "3.10.9",
+    "input_data": null,
+    "parameters": {
+      "swc_dir": "/data/exaSPIM_763259_reconstructions_refined_2026_10_08/refinement/final-world",
+      "processed_dataset": "s3://aind-open-data/exaSPIM_763259_2025-07-02_17-32-40_processed_2025-07-17_11-39-45/ccf_alignment/",
+      "df_asset": "/data/exaSPIM_763259_displacement_field",
+      "transform_dir": "/scratch/reg_bundle",
+      "manual_df_path": "/data/exaSPIM_763259_displacement_field/763259_manual_displacement_field.nrrd",
+      "manual_df_filename": "",
+      "dataset_id": "",
+      "acquisition_file_path": "",
+      "loaded_zarr_image_path": "",
+      "resampled_zarr_image_path": "",
+      "sample_to_exaspim_affine_path": "",
+      "sample_to_exaspim_inverse_warp_path": "",
+      "exaspim_to_ccf_affine_path": "/data/reg_exaspim_template_to_ccf_25um_v1.5/0GenericAffine.mat",
+      "exaspim_to_ccf_inverse_warp_path": "/data/reg_exaspim_template_to_ccf_25um_v1.5/1InverseWarp.nii.gz",
+      "ccf_template_path": "/data/allen_mouse_ccf/average_template/average_template_10.nii.gz",
+      "exaspim_template_path": "/data/exaspim_template_7subjects_nomask_10um_round6_template_only/fixed_median.nii.gz"
+    },
+    "core_dependency": null
+  },
+  "experimenters": [
+    "MSMA Team"
+  ],
+  "pipeline_name": null,
+  "start_date_time": "2026-10-08T23:32:51.425739Z",
+  "end_date_time": "2026-10-09T00:55:17.860748Z",
+  "output_path": "/results/alignment",
+  "output_parameters": {
+    "output_root": "/results/alignment",
+    "aligned_swc_dir": "/results/alignment/aligned_swcs",
+    "input_swc_count": 17,
+    "transformed_swc_count": 17,
+    "resolved_dataset_id": "763259"
+  },
+  "notes": "Alignment run completed successfully.",
+  "resources": {
+    "object_type": "Resource usage",
+    "os": "Linux 6.1.186-228.374.amzn2023.x86_64",
+    "architecture": "x86_64",
+    "cpu": "x86_64",
+    "cpu_cores": 32,
+    "gpu": null,
+    "system_memory": null,
+    "system_memory_unit": null,
+    "ram": null,
+    "ram_unit": null,
+    "cpu_usage": null,
+    "gpu_usage": null,
+    "ram_usage": null,
+    "usage_unit": "percent"
+  }
+}

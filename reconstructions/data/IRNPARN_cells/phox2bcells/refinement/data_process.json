@@ -1,0 +1,64 @@
+{
+  "object_type": "Data process",
+  "process_type": "Neuron skeleton processing",
+  "name": "Neuron skeleton processing",
+  "stage": "Processing",
+  "code": {
+    "object_type": "Code",
+    "url": "https://codeocean.allenneuraldynamics.org/capsule/1168512",
+    "name": "swc-refinement",
+    "version": "105120a6f2e991eb6332d445bec93d21c9f1f274",
+    "container": null,
+    "run_script": "code/run",
+    "language": "Python",
+    "language_version": "3.10.12",
+    "input_data": null,
+    "parameters": {
+      "image_path": "s3://aind-open-data/exaSPIM_763259_2025-07-02_17-32-40_processed_2025-07-17_11-39-45/fusion/fused.zarr",
+      "swc_dir": "/data",
+      "voxel_size": [
+        0.748,
+        0.748,
+        1.0
+      ],
+      "cost": "relative_difference"
+    },
+    "core_dependency": null
+  },
+  "experimenters": [
+    "Cameron Arshadi"
+  ],
+  "pipeline_name": null,
+  "start_date_time": "2026-10-08T18:08:34.841197Z",
+  "end_date_time": "2026-10-08T18:23:20.600300Z",
+  "output_path": "/results/N001-763259-JG_refinement",
+  "output_parameters": {
+    "intermediate_dirs": [
+      "voxel",
+      "fixed",
+      "refined",
+      "astar"
+    ],
+    "output_dirs": [
+      "final-world",
+      "final-voxel"
+    ]
+  },
+  "notes": "SWC refinement run completed successfully.",
+  "resources": {
+    "object_type": "Resource usage",
+    "os": "Linux 6.1.186-228.374.amzn2023.x86_64",
+    "architecture": "x86_64",
+    "cpu": "x86_64",
+    "cpu_cores": 96,
+    "gpu": null,
+    "system_memory": null,
+    "system_memory_unit": null,
+    "ram": null,
+    "ram_unit": null,
+    "cpu_usage": null,
+    "gpu_usage": null,
+    "ram_usage": null,
+    "usage_unit": "percent"
+  }
+}
