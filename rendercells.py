@@ -28,20 +28,22 @@ cells_to_pheno = map_val_to_key(cells_by_pheno)
 #AA0947, AA1196, AL0006, N023-703070, N034-674191-IB, N071-709222
 
 #path to swc to be visualized
-n1 = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N002-703070.swc"
+#n1 = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\N013-703070.swc"
 #n2 = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\AA0947.swc"
 
 #list of cells to be visualized
-celllist = ['N032-674185-IB', 'N031-674185-FMR', 'N029-703070',
-       'N016-651324', 'AL0015', 'AA1405', 'AA0947', 'AA1196', 'AA1535',
-       'AA1521', 'AA1513', 'AA1460', 'N004-703070', 'AL0019', 'N034-674191-IB',
-       'N040-709222', 'N063-709222', 'N061-665081', 'N053-653159-YP',
-       'N039-674185-IB', 'N074-709222', 'N067-685221-HS']
+celllist = ['AA0503', 'AA1513', 'N006-703070', 'N009-653980', 'N010-703070',
+       'N011-703070', 'N016-703070', 'N016-763259-SP', 'N036-674191-SP',
+       'N040-709222', 'N053-709222', 'N054-709222', 'N054-715345-AP',
+       'N055-709222', 'N058-653159-PC', 'N059-665081-KA', 'N061-665081',
+       'N066-665081-YP', 'N071-709222', 'N073-709222', 'N112-708369-JN']
+
+#['N058-709222', 'N012-763259-JG', 'N022-674185-HD', 'N049-709222', 'N090-708369-VM', 'N015-763259-JM', 'N002-703070'] save for sensory cluster?
 
 #edit brainrender settings
 settings.SHOW_AXES=None
-settings.INTERACTIVE=True
-settings.OFFSCREEN=False
+settings.INTERACTIVE=False
+settings.OFFSCREEN=True
 settings.ROOT_COLOR='white'
 settings.ROOT_ALPHA=0.075
 settings.BACKGROUND_COLOR='black'
@@ -61,19 +63,19 @@ print('scene set')
 # =============================================================================
 
 #add desired brain regions
-ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.2)
-ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.2, color='pink')
-#ccf_scene.add_brain_region('PVH', silhouette=False, color='orange', alpha=0.2)
+ccf_scene.add_brain_region('IRN', silhouette=False, color='pink', alpha=0.1)
+ccf_scene.add_brain_region('PARN', silhouette=False, alpha=0.1, color='pink')
+#ccf_scene.add_brain_region('LING', silhouette=False, color='orange', alpha=0.2)
 #ccf_scene.add_brain_region('Acs5', silhouette=False, color='purple', alpha=0.2)
 # =============================================================================
 #ccf_scene.add_brain_region('V', silhouette=False, color='green', alpha=0.2)
 # =============================================================================
-ccf_scene.add_brain_region('RM', silhouette=False, color='purple', alpha=0.2)
+#ccf_scene.add_brain_region('RM', silhouette=False, color='purple', alpha=0.2)
 # ccf_scene.add_brain_region('VII', silhouette=False, color='blue', alpha=0.2)
 # =============================================================================
 #ccf_scene.add_brain_region('PSV', silhouette=False, color='red', alpha=0.2)
-# ccf_scene.add_brain_region('SPVO', silhouette=False, color='cyan', alpha=0.2)
-# ccf_scene.add_brain_region('SPVI', silhouette=False, color='red', alpha=0.2)
+#ccf_scene.add_brain_region('SPVO', silhouette=False, color='cyan', alpha=0.2)
+#ccf_scene.add_brain_region('SPVI', silhouette=False, color='red', alpha=0.2)
 # =============================================================================
 
 #get cell to color mapping
@@ -83,18 +85,20 @@ for cell in celllist:
     color = pColors[pheno]
     color_map[cell] = color
 
-sf = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\PCA\allregs_volnorm_length_sPCA\cluster_images\5_rootcam.png'
+sf = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\combining_reg_clustering\kmeans\7.png"
 
 folder = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\phox2bcells\final\ccf_space_reconstructions\swcs'
 
 #render cells
-vis.render_cells(ccf_scene, camera=cameras.rootcam, cellfile=n1, screenshot=False, scale=3, soma_radius=20, neurite_radius=1)
+vis.render_cells(ccf_scene, camera=cameras.rootcam, celllist=celllist, celldir=annotated, savef=sf, screenshot=True, scale=6, soma_radius=20, color_map=color_map)
     
 
 #ccf_scene.screenshot(sf, camera=cameras.rootcam, scale=12)
 #ccf_scene.render(camera=cameras.MYtopcam)
 
 '''
+useful brainrender shortcuts when you have a scene open
+
     i     print info about the last clicked object     
     I     print color of the pixel under the mouse     
     Y     show the pipeline for this object as a graph 

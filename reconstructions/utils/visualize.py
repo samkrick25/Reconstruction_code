@@ -301,7 +301,7 @@ def create_cell_actors(swcpath, axon='green', dendrite='black', soma='black',
     )
     return cell_actors
 
-def render_cells(scene, camera, celldir=None, cellfile=None, celllist=None, screenshot=False, savef=None, scale=None, color_map=None, **kwargs):
+def render_cells(scene, camera='frontal', celldir=[], cellfile=[], celllist=[], screenshot=False, savef=None, scale=None, color_map=None, **kwargs):
     '''
     render cells in brainrender. Pass in a scene with any desired region meshes
     already added, any visualization settings already set, this will just
@@ -317,8 +317,8 @@ def render_cells(scene, camera, celldir=None, cellfile=None, celllist=None, scre
         Path to file of swc to be rendere. default none if rendering files from directory instead of an individual cell
     scene : brainrender Scene
         brainrender Scene object to draw the cells in.
-    camera : dict
-        dictionary containing parameters for brainrender's camera.
+    camera : dict | string
+        dictionary containing parameters for brainrender's camera. Or string specifying a built in brainrender camera. default 'frontal'.
     screenshot: bool
         switch to enable screenshots, True to take a screenshot and save to path specified in savef
     savedir: str
@@ -336,6 +336,11 @@ def render_cells(scene, camera, celldir=None, cellfile=None, celllist=None, scre
     None.
 
     '''
+    def add_actors(actors, scene):
+        for actor in actors:
+            scene.add(actor)
+    
+    #if rendering files from directory, filter based on a list of cell names if passed
     if celldir:
         for cell in tqdm(os.listdir(celldir), desc='rendering cells'):
             
@@ -346,15 +351,16 @@ def render_cells(scene, camera, celldir=None, cellfile=None, celllist=None, scre
                 if cellname in celllist:
                     kwargs.update({'axon': color_map[cellname]})
                     actors = create_cell_actors(fn, **kwargs)
+                    add_actors(actors, scene)
             
             else:
                 actors = create_cell_actors(fn, **kwargs)
+                add_actors(actors, scene)
         
+    #render single file
     if cellfile:
         actors = create_cell_actors(cellfile, **kwargs)
-    
-    for actor in actors:
-        scene.add(actor)
+        add_actors(actors, scene)
                 
     if screenshot:
         scene.screenshot(savef, camera=camera, scale=scale)

@@ -19,6 +19,10 @@ from reconstructions.utils.cellLists import cells_by_pheno
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from scipy.stats import zscore
+import re
+from scipy.cluster.hierarchy import fcluster, dendrogram
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 
 def to_mm(series):
     return series.to_list()/np.float64(1000)
@@ -57,6 +61,17 @@ lnozero = lnozero.drop(index=['N044-674191'])
 
 #pp.write_targeted_regions_to_excel(freqs, r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\targeted_reg_lat.xlsx')
 
+#%% drop unassigned stuff, not useful
+
+unass_str = 'unassigned'
+to_drop = np.ones(len(lnozero.columns), dtype=bool)
+for i, reg in enumerate(lnozero.columns):
+    match = re.findall(unass_str, reg)
+    if match:
+        to_drop[i] = 0 
+
+l_no_unass = lnozero.loc[:, to_drop]
+
 #%%
 def cluster_corr(corr_array, regidx, inplace=False):
     """
@@ -92,7 +107,7 @@ def cluster_corr(corr_array, regidx, inplace=False):
 
 
 
-def show_heatmap(hmap, idx, start=None, end=None):
+def show_heatmap(hmap, idx, show_labels=False, start=None, end=None):
     '''
     show a heatmap of clustered correlations, optionally zoom in on certain indices
 
@@ -111,20 +126,27 @@ def show_heatmap(hmap, idx, start=None, end=None):
 
     '''
     fig, ax = plt.subplots(dpi=300)
-    if start:    
+    if start is not None:    
         if start == 0:
             labels = idx[:end]
             
-            sns.heatmap(hmap[start:end, start:end], ax=ax, xticklabels=labels, yticklabels=labels)
+            sns.heatmap(hmap[:end, :end], ax=ax, xticklabels=labels, yticklabels=labels)
             return labels
         if start > 0:
             labels = idx[start:end]
             
             sns.heatmap(hmap[start:end, start:end], ax=ax, xticklabels=labels, yticklabels=labels)
             return labels
+    elif show_labels:
+        labels = idx
+        sns.heatmap(hmap, ax=ax, xticklabels=labels, yticklabels=labels)
+        plt.xticks(rotation=90)
+        return labels
+    
     else:
         labels = idx
         sns.heatmap(hmap, ax=ax)
+        return labels
 
 import os
 
@@ -306,40 +328,143 @@ def get_phenos(cellnames):
 
     return phenodict
 
+def hierarchical_clustering(df, **kwargs):
+    '''
+    hierarchical clustering of cells x regions DataFrame
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Data to be hierarchically clustered.
+    **kwargs : kwargs
+        keyword arguments to be passed to sns.clustermap.
+
+    Returns
+    -------
+    A ClusterGrid instance.
+    
+
+    '''
+
+    g = sns.clustermap(df, **kwargs)
+    
+    return g
+
+def kmeans_clustering(df, **kwargs):
+    '''
+    do kmeans clustering
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        data to be kmeans clustered.
+    **kwargs : kwargs
+        kwargs for kmeans.
+
+    Returns
+    -------
+    kmean_scaled : np.array
+        scaled data in kmeans coordinate space
+    predictions : np.array
+        predicted labels for data
+
+    '''
+    
+    scaler = StandardScaler()
+    scaled = scaler.fit_transform(df)
+    
+    kmeans = KMeans(**kwargs)
+    
+    kmean_scaled = kmeans.fit_transform(scaled)
+    
+    predictions = kmeans.predict(scaled)
+    
+    return kmean_scaled, predictions
+
 #%% lists of regions to iteratively drop as I group them
 
 #ok start, still some stuff i should group -> ZI doesn't cluster with the rest of HY stuff since it sometimes pops up in MB cells
 #think I should throw some smaller regions together idk?
-HY = ['AVPV', 'LPO', 'ADP', 'VMH', 'MPO', 'DMH', 'AP', 'fiber tracts-unassigned',
+HY_CTX_CNU = ['AVPV', 'LPO', 'ADP', 'VMH', 'MPO', 'DMH', 'AP', 'STN', 'ZI', 'SCH',
        'PVH', 'PVpo', 'ARH', 'MPN', 'AHN', 'BAC', 'SBPV', 'COAa', 'PS', 'NLOT',
-       'PD', 'HY-unassigned', 'PMv', 'In', 'MS', 'PMd', 'NDB', 'PST', 'PVHd',
-       'PH', 'RL', 'PVi', 'MEA', 'IIn', 'LHA', 'RCH', 'PVa', ]
+       'PD', 'PMv', 'In', 'MS', 'PMd', 'NDB', 'PST', 'PVHd',
+       'PH', 'RL', 'PVi', 'MEA', 'IIn', 'LHA', 'RCH', 'PVa'] + ['LSv', 'mfbc',  'BMA', 'BST', 'LSr', 'GPe', 'GPi', 'BLA'
+              ] + [ 'ACB', 'LA', 'TT', 'SI', 'IA',
+                     'epsc', 'cc', 'SSs', 'ECT', 'AIp', 'CEA', 'SH',
+                     'VISC', 'LSc', 'EPd', 'DP']#, 'fiber tracts-unassigned', 'HY-unassigned'
+                   
+#removed  'CB-unassigned',
+CBverm = ['CB', 'UVU', 'CUL', 'DEC', 'cbc', 'PYR', 'arb',
+       'CENT', 'VCO', 'NOD', 'FL',
+       'DCO', 'FOTU', 'LING'] #cbp
 
-CTXsp = ['LSv', 'STR-unassigned', 'mfbc', 'CTXsp-unassigned', 'BMA', 'BST', 'LSr']
+CBhem = ['PFL', 'PRM', 'AN', 'COPY', 'SIM']
 
-CTX = ['RR', 'OLF-unassigned', 'ACB', 'LA', 'TT', 'GPi', 'SI', 'GPe', 'IA',
-       'epsc', 'BLA', 'cc', 'VL-unassigned', 'SSs', 'ECT', 'AIp', 'CEA', 'SH',
-       'VISC', 'LSc', 'EPd', 'PAL-unassigned', 'DP']
+CBN = ['FN', 'DN', 'VeCB', 'IP', 'ICB']
 
-CB = ['IP', 'CB', 'UVU', 'CUL', 'DEC', 'cbc', 'PFL', 'PRM', 'PYR', 'y', 'arb',
-       'DN', 'VeCB', 'CENT', 'ICB', 'VCO', 'NOD', 'CB-unassigned', 'FL', 'V4r',
-       'FN', 'DCO', 'cbp', 'FOTU', 'SUV', 'chpl', 'AN', 'COPY', 'SIM']
+ventricular = ['V4r', 'chpl']
 
-MB = ['Eth', 'RPF', 'RN', 'III', 'Pa4', 'IIIn', 'MA3', 'RH', 'PAG', 'PRNr',
-       'NPC', 'brain-unassigned', 'MRN', 'MH', 'MB-unassigned', 'PRNc',
-       'SPFm', 'LH', 'V3-unassigned', 'APN', 'mfsbshy', 'SCm', 'PPN', 'CUN']
+#removed  'brain-unassigned', 'MB-unassigned', 'V3-unassigned',
+MB = ['Eth', 'RR', 'RPF', 'RN', 'III', 'Pa4', 'IIIn', 'MA3',
+       'NPC', 'AQ', 'VTA', 'NLL', 'SNr', 'SNc', 'c', 'PBG',
+       'APN', 'mfsbshy', 'SCm', 'tsp', 'rust', 'PAG', 'PPN', 'CUN', 'EW', 'SAG']
 
-TH = ['VM', 'PF', 'VPL', 'VPM', 'VPMpc', 'VPLpc', 'PCN', 'PO', 'VAL',
-       'TH-unassigned', 'cst', 'PVT', 'MD', 'IAM', 'CM']
+BS_sat = ['SLD', 'RPO', 'LDT', 'SLC', 'NI', 'RO', 'RM', 'DR', 'CS', 'LC', 'RPA']
 
-vestibular = ['MV', 'LAV', 'SPIV']
+P_mot = ['PRNc', 'B', 'DTN', 'TRN', 'PG', 'PCG', 'PRNr']
 
-to_merge = {'TH':TH, 'MB':MB, 'CB':CB, 'CTX':CTX, 'CTXsp':CTXsp, 'HY':HY, 'vestibular':vestibular}
+MY_mot = ['Xn', 'IVn', 'IO', 'NR', 'PRP', 'PPY', 'PAS', 'VIIIn', 'drt', 'PGRNd', 'DMX', 'AMB', 'VI', 'y']
 
+BS_sen = ['SOC', 'ECU', 'CU', 'GR', 'Pa5']
+
+#removed 'TH-unassigned',
+TH = ['VM', 'PF', 'VPL', 'VPM', 'VPMpc', 'VPLpc', 'PCN', 'PO', 'VAL','SPFp', 'PoT', 'POL',
+        'cst', 'PVT', 'MD', 'IAM', 'CM', 'SPA', 'SMT', 'IMD', 'RE', 'PIL', 'SPFm', 'RH', 'MH', 'LH']
+
+vestibular = ['MV', 'LAV', 'SPIV', 'SUV', 'x']
+
+V_acs = ['P5', 'Acs5', 'Vn', 'PC5', 'I5']
+
+#V_sen = ['PSV', 'SPVO', 'SPVI', 'SPVC', 'Pa5', 'NTS']
+
+spinal_V = ['SPVO', 'SPVI', 'SPVC']
+
+VIIcomb = ['VII', 'ACVII', 'VIIn'] #this just isn't showing up in lcomb for some reason, don't know why
+
+CVLM = ['LRN', 'PGRNl', 'MARN']
+
+IRN = ['IRN', 'LIN']
+
+PARN = ['PARN', 'ISN']
+
+to_merge = {'TH':TH, 'MB':MB, 'CB vermal':CBverm, 'CB hemispheric':CBhem, 'CBN':CBN, 'HY/CTX/CNU':HY_CTX_CNU, 'vestibular':vestibular,
+             'P/MY state':BS_sat, 'Vmo secondary':V_acs, 'VII combined':VIIcomb, 'MY motor':MY_mot,
+            'MY/P sensory':BS_sen, 'P motor':P_mot, 'CVLM':CVLM, 'SPV':spinal_V, 'ventricular':ventricular, 
+            'IRN/LIN': IRN, 'PARN/ISN': PARN}
+
+#%%
+sortingdict = {
+    1:['AA0922', 'AA1263', 'N010-651324', 'N023-715346-PC', 'N016-715345-HD',
+       'N017-703070', 'N017-715345-YV', 'N030-651895', 'N022-703070',
+       'N031-651895', 'N024-715345-SA', 'N013-703070', 'N038-674185',
+       'N037-674185-IB', 'N035-674191-FMR', 'N031-715345-DS', 'N057-686955-SA',
+       'N056-686955-JN', 'N044-674191-SP', 'N041-674191-AR', 'N114-708369-HS',
+       'N115-708369-BP', 'N113-708369-JN'],
+    2:[], #get correct
+    3:['AA1308', 'N003-763259-YZ', 'N020-703070',
+            'N051-715345-SA'], #get correct
+    4:['N058-709222', 'N012-763259-JG', 'N022-674185-HD', 'N049-709222', 'N090-708369-VM', 
+       'N015-763259-JM', 'N002-703070'],          #get correct (all of these from presentation)
+    5:['AA1521', 'N042-674185-SP', 'N061-665081', 'N066-665081-YP',
+           'N076-709222'],
+    6:['N068-685221', 'N067-685221-HS', 'N040-709222', 'N063-709222', 'N016-651324'],
+    7:['AA1308', 'N003-763259-YZ', 'N020-703070', 'N019-763259-PP',
+           'N051-715345-SA']
+    }
 #%% region by region, using to decide how to group regions by looking at what stuff is highly correlated
 #first not normalized, including spinal cord thing
 
-l_notnorm_corr = np.corrcoef(lnozero.T)
+l_notnorm_corr = np.corrcoef(l_no_unass.T)
 
 no_norm_clusters, no_norm_idx = cluster_corr(l_notnorm_corr, lnozero.columns)
 
@@ -347,12 +472,18 @@ show_heatmap(no_norm_clusters, no_norm_idx)
 
 #%% merge clustered regions
 
-lcomb = lnozero.copy()
+lcomb = l_no_unass.copy()
 
 for group, regs in to_merge.items():
-    groupsums = lnozero[regs].sum(axis=1)
+    groupsums = l_no_unass[regs].sum(axis=1)
     lcomb[group] = groupsums
     lcomb.drop(regs, axis=1, inplace=True)
+
+#%% plot length in combined region groups
+sums = lcomb.sum(axis=0)
+plt.bar(sums.index, sums)
+plt.xticks(rotation=90)
+#plt.yscale('log')
 
 #%% recorrelate and cluster on merged regions
 
@@ -360,18 +491,75 @@ comb_corr = np.corrcoef(lcomb.T)
 
 comb_clust, comb_idx = cluster_corr(comb_corr, lcomb.columns)
 
-show_heatmap(comb_clust, comb_idx)
+show_heatmap(comb_clust, comb_idx, show_labels=True)
 
 #%% pca on combined stuff so far, cell clustering
-sd = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\PCA\combining_regions_PCA_loadings_v1\loadings"
-comb_pca, comb_scaled, _ = do_pca_and_plot(lcomb, n_components=20, sd=sd, plot=True)
+sd = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\PCA\combining_regions_PCA_loadings_v2\loadings"
+#comb_pca, comb_scaled, _ = do_pca_and_plot(lcomb, n_components=20, sd=sd, plot=True)
 
-pca_corr = np.corrcoef(lcomb)
+comb_corr = np.corrcoef(lcomb)
 
-comb_clust, comb_idx = cluster_corr(pca_corr, lcomb.index)
+comb_clust, comb_idx = cluster_corr(comb_corr, lcomb.index)
 
 show_heatmap(comb_clust, comb_idx)
 
+#%% umap?
+embeddings = umap_and_plot(lcomb.values, lcomb.index)
+
+#%% umap but remove mossys?
+lcomb_nm = lcomb.drop(cells_by_pheno['mossy'], axis=0)
+
+embeddings_nm = umap_and_plot(lcomb_nm.values, lcomb_nm.index)
+
+#%% hierarchical clustering on group region dataset
+
+#maybe log normalize or percentage scale this first, might end up just being dominated by groups with large size but lets see first
+lcomb_proc = pp.preprocess(lcomb, log1p=True, pct=False)
+
+g = hierarchical_clustering(lcomb_proc.T, 
+                            method='ward', 
+                            metric='euclidean', 
+                            row_cluster=False, 
+                            col_cluster=True, 
+                            xticklabels=True, 
+                            yticklabels=True,
+                            cbar_kws = {'label': 'length in region group (um)'}, 
+                            cbar_pos=(0, .15, .03, .7), 
+                            figsize=(18,18))
+
+g.ax_heatmap.tick_params(axis='y', labelsize=18)
+
+#%% linkage cluster ids
+a = g.dendrogram_col
+
+Z = a.calculated_linkage
+
+n_clust = 7
+
+lcomb['cluster_id'] = fcluster(Z, t=n_clust, criterion='maxclust')
+
+#replot dendrogram with flattened clusters
+plt.figure(figsize=(10, 6))
+dendrogram(
+    Z,
+    color_threshold=45,
+    labels=None,
+    
+)
+plt.axis('off')
+plt.show()
+
+#%% kmeans clustering on grouped region dataset
+
+kmeans_scaled, predictions = kmeans_clustering(lcomb, n_clusters=7, n_init=10, max_iter=1000)
+
+km_lcomb = lcomb.copy()
+km_lcomb['cluster_id'] = predictions
+
+#%% load combined feature set (regions and morphometrics)
+pheno_to_id = {'mossy':1, 'premotor':2, 'sensory':3, 'GRN':4, 'forebrain':5, 'vestibular':6, 'sensorimotor':7}
+
+morphometrics = r''
 #%% sparse pca
 sd = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\PCA\combining_reg_sPCA_v1\loadings"
 comb_spca, comb_scaled_sparse = do_spca_and_plot(lcomb, alpha=2, plot=True, sd=sd, n_components=20)

@@ -26,6 +26,7 @@ settings.SHOW_AXES = True
 settings.OFFSCREEN=False
 settings.INTERACTIVE=True
 
+#get desired regions
 atlas = bga(atlas_name='allen_mouse_10um', check_latest=False)
 p = atlas.get_structure_descendants('P')
 my = atlas.get_structure_descendants('MY')
@@ -34,12 +35,13 @@ ft = atlas.get_structure_descendants('fiber tracts')
  
 scene = Scene(atlas_name = 'allen_mouse_10um', check_latest=False)
 
+#add desired regions
 scene.add_brain_region(*p, silhouette=True, alpha=0.2, color='orange')
 scene.add_brain_region(*my, silhouette=True, alpha = 0.2, color='pink')
 scene.add_brain_region(*cb, silhouette=True, alpha = 0.2, color='yellow')
 scene.add_brain_region(*ft, silhouette=True, alpha=0.2, color='grey')
 
-soma = [10826.238293125, 5958.449205, 6828.08222975]
+soma = [10826.238293125, 5958.449205, 6828.08222975] #input coordinates of soma here
 
 planeA = scene.atlas.get_plane(plane = 'frontal', pos = (soma[0]-5, soma[1], soma[2]), norm= (1,0,0))
 planeP = scene.atlas.get_plane(plane = 'frontal', pos = (soma[0]+5, soma[1], soma[2]), norm = (-1,0,0))
