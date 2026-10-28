@@ -32,12 +32,9 @@ cells_to_pheno = map_val_to_key(cells_by_pheno)
 #n2 = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\swcsfromjson\AA0947.swc"
 
 #list of cells to be visualized
-celllist = ['AA0503', 'AA1513', 'N006-703070', 'N009-653980', 'N010-703070',
-       'N011-703070', 'N016-703070', 'N016-763259-SP', 'N036-674191-SP',
-       'N040-709222', 'N053-709222', 'N054-709222', 'N054-715345-AP',
-       'N055-709222', 'N058-653159-PC', 'N059-665081-KA', 'N061-665081',
-       'N066-665081-YP', 'N071-709222', 'N073-709222', 'N112-708369-JN']
-
+celllist = ['N056-709222', 'N011-763259-KS', 'N086-686955-HD', 'N090-686955-LS',
+'AL0006', 'N066-709222', 'N058-709222', 'N071-709222', 'N064-709222', 
+'N022-706301-KA', 'N031-674185-FMR', 'N039-674185-IB', 'N090-708369-VM']
 #['N058-709222', 'N012-763259-JG', 'N022-674185-HD', 'N049-709222', 'N090-708369-VM', 'N015-763259-JM', 'N002-703070'] save for sensory cluster?
 
 #edit brainrender settings
@@ -85,13 +82,17 @@ for cell in celllist:
     color = pColors[pheno]
     color_map[cell] = color
 
-sf = r"C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\combining_reg_clustering\kmeans\7.png"
+sf = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\plots\morphometrics_w_projs\classification\cells_wrong_gt50pct.png'
 
-folder = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\phox2bcells\final\ccf_space_reconstructions\swcs'
+folder = r'C:\Users\samkr\OneDrive\Documents\GitHub\Reconstruction_code\reconstructions\data\IRNPARN_cells\phox2bcells'
 
 #render cells
-vis.render_cells(ccf_scene, camera=cameras.rootcam, celllist=celllist, celldir=annotated, savef=sf, screenshot=True, scale=6, soma_radius=20, color_map=color_map)
+vis.render_cells(ccf_scene, camera=cameras.rootcam, celllist=celllist, celldir=annotated, savef=sf, screenshot=True, scale=6, soma_radius=20, color_map=color_map,
+                 skip_axon=False)
     
+#aa1331 soma coords 11663.7333265 6014.9173821875 6910.73133900001 
+#aa1332 soma coords 11676.512623375 5906.1368678125 7027.4413675 
+
 
 #ccf_scene.screenshot(sf, camera=cameras.rootcam, scale=12)
 #ccf_scene.render(camera=cameras.MYtopcam)

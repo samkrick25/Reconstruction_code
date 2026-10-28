@@ -122,15 +122,15 @@ def load_from_swc(swcdir = None, swc = None):
 
 def neuronprop(neurondict, mode, cellname, ontlevel='structure'):
     '''
-    measure properties of a neuron, either length in annotated ccf regions or endpoint frequency
+    measure properties of a neuron, either length or endpoint frequency in annotated ccf regions 
     works with neuron dictionary as loaded in by load_neurons, iterate over dictionary and call this on each entry
 
     Parameters
     ----------
     neurondict : dictionary
         dictionary (rewrite to be OO so i can say smth specific here).
-    properties: str
-        'length', 'frequency', 'both', desired property to measure about set of reconstructions
+    mode: str
+        'length' or 'frequency', desired property to measure about set of reconstructions
     ontlevel: str
         desired ontology level of ccf, default structure
     cellname: name of neuron to be measured
@@ -155,8 +155,10 @@ def neuronprop(neurondict, mode, cellname, ontlevel='structure'):
     #just axon nodes
     nodedf = pd.DataFrame(nodes)
     #axon and dendrite nodes, used if an axon node's parent is a dendrite
-    #only happens for the first node in an axon
-    neuritedf = pd.DataFrame(dendrite+nodes)
+    #only happens for the first node in an axon, and if in length mode
+    #don't care about parent if in frequency mode
+    if mode=='length':
+        neuritedf = pd.DataFrame(dendrite+nodes)
     
     propdict = defaultdict(np.float64)
     
@@ -184,10 +186,13 @@ def neuronprop(neurondict, mode, cellname, ontlevel='structure'):
         #calculate euclidean distance from node to its parent, soma will have parentNumber -1
         match mode:
             case 'length':
+                #for first node of axon
                 if node['parentNumber'] == 1:
                     length = np.sqrt((x-somax)**2+(y-somay)**2+(z-somaz)**2)
                     propdict[latregion] += length
                 else:
+                    #sometimes axon nodes come from dendrite instead of soma, so need to get access into 
+                    #dendrite nodes
                     try:    
                         pnode = neuritedf[neuritedf['sampleNumber'] == node['parentNumber']]
                         px, py, pz = [pnode['x'].values[0], pnode['y'].values[0], pnode['z'].values[0]]
@@ -455,9 +460,26 @@ def load_neurons_from_json(folderpath):
     return neuron_dict
 
 def get_axonal_endpoints(neurondict):
+    '''
+    find endpoints of a cells axon and return for analysis of endpoint frequency
+
+    Parameters
+    ----------
+    neurondict : dictionary
+        nested dictionary, first key is the cell name, then keys are 'axon', 'soma', 'dendrite',
+        where values correspond to nodes that belong to each structure.
+
+    Returns
+    -------
+    endsdict : dictionary
+        nested dictionary where first key is cell name, then keys are 'ends', 'soma',
+        where values correspond to nodes that are ends and soma node.
+
+    '''
     endsdict = {}
-    for cell, info in tqdm(neurondict.items(), desc='Finding endpoints'):
+    for cell, info in neurondict.items():
         axon = info['axon']
+        axonids = [str(node['sampleNumber']) for node in axon]
         soma = info['soma']
         parent_child_dict = {}
         for node in axon:
@@ -465,10 +487,16 @@ def get_axonal_endpoints(neurondict):
             parent = str(node['parentNumber'])
             if isinstance(parent, str) == False:
                 continue
-            if parent == str(-1):
+            if parent == str(1):
                 parent_child_dict[nodeID] = None
-            if parent > str(0):
-                parent_child_dict[nodeID] = str(parent)
+            if parent > str(1):
+                #some cells have an axon root that is connected to a dendrite node not soma
+                #meaning that i can't just set soma parent to None, but have to check if the parent is
+                #an axon node, if not then it sets parent to None/sets node as root
+                if parent not in axonids:
+                    parent_child_dict[nodeID] = None
+                else:
+                    parent_child_dict[nodeID] = str(parent)
         tree = Tree()
         tree = tree.from_map(parent_child_dict)
         leaves = tree.leaves()

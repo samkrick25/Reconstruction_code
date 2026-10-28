@@ -30,12 +30,13 @@ neurondictpkl = r"C:\Users\economolab\Documents\GitHub\Reconstruction_code\recon
 parcellated_neurons = r'reconstructions\data\IRNPARN_cells\json_parcellated'
 parcellated_copy = r"reconstructions\data\IRNPARN_cells\parcellated_copy"
 structure_ont_info = r'reconstructions\data\structure_ont_info.pkl'
-frequenciespkl = r'reconstructions\data\freqs_hopefullygood.pkl' 
+frequenciespkl = r'reconstructions\data\freqs_fromswc.pkl' 
 lengthspkl = r'reconstructions\data\lengths_fromswc.pkl'
 ptermpkl = r'reconstructions\data\pterm.pkl'
 
 celldir = r"reconstructions\data\IRNPARN_cells\swcsfromjson"
 annotated = r"reconstructions\data\IRNPARN_cells\annotatedswcs"
+celldir_forneurom = r"reconstructions\data\IRNPARN_cells\swc_for_neurom"
 ptermpkl = r'reconstructions\data\pterm.pkl'
 
 abc_dir = r'D:\allen_brain_atlas' #specific for shared PC but i think is the same on mine
@@ -49,3 +50,9 @@ bin_ccf = r'D:\allen_brain_atlas\2025_release\ccf_10um_closed.nii'
 ccf_boundary = r"D:\allen_brain_atlas\annotation_boundary_10.nii"
 
 plotdir = r'reconstructions\plots'
+
+morphometrics = r"reconstructions\data\IRNPARN_cells\neurom_stats.json"
+M2 = r"reconstructions\data\IRNPARN_cells\neurom_stats_v2.json"
+F_full = r'reconstructions\data\IRNPARN_cells\features.pkl'
+F_dropped = r'reconstructions\data\IRNPARN_cells\features_dropped.pkl'
+F3 = r'reconstructions\data\IRNPARN_cells\features_v3.pkl'

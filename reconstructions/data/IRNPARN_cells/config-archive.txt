@@ -1,0 +1,30 @@
+neurite:
+ local_bifurcation_angles:
+  kwargs:
+   - {}
+  modes:
+   - mean
+   - raw
+
+morphology:
+ sholl_crossings:
+  kwargs:
+   - neurite_type: BASAL_DENDRITE
+   - neurite_type: APICAL_DENDRITE
+  modes:
+   - total
+ sholl_frequency:
+  kwargs:
+   - neurite_type: BASAL_DENDRITE
+   - neurite_type: APICAL_DENDRITE
+  modes:
+   - total
+ section_term_radial_distances:
+  kwargs: 
+   - neurite_type: BASAL_DENDRITE
+   - neurite_type: APICAL_DENDRITE
+  modes:
+   - max
+   - min
+   - mean
+   - std

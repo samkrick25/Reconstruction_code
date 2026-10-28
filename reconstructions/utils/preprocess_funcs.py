@@ -257,6 +257,31 @@ def get_targeted_regions(data, cell):
     '''
     return data.loc[cell, data.columns[data.loc[cell]!=0].tolist()].sort_values(ascending=False)
 
+def map_val_to_key(d):
+    '''
+    takes a dictionary and returns a dictionary with keys and values reversed. if input is a dictionary with lists as values then each value 
+    gets its own entry. will overwrite values that appear multiple times in input dictionary, the value in output for that entry will be 
+    whatever key it appears in last in input dict
+
+    Parameters
+    ----------
+    d : dict
+        input dictionary which you want to map values to their corresponding keys.
+
+    Returns
+    -------
+    nd : dict
+        dictionary where every value in input dict is mapped to its key in input dict.
+
+    '''
+    nd = {}
+    for k, v in d.items():
+        if isinstance(v, list):
+            for val in v:
+                nd[val]=k
+        if isinstance(v, int) or isinstance(v, float) or isinstance(v, str):
+            nd[v]=k
+    return nd
 
 def write_targeted_regions_to_excel(data, output_path='length_in_regions.xlsx'):
     '''

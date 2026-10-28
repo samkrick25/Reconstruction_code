@@ -5,7 +5,7 @@ innervation of regions looking at axon length/mm^3
 @author: samkr
 """
 
-from reconstructions.utils.filedirs import lengthspkl, ccf_vols3, frequenciespkl, structure_ont_info
+from reconstructions.utils.filedirs import lengthspkl, ccf_vols3, frequenciespkl, structure_ont_info, F_dropped
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -46,7 +46,7 @@ with open(ccf_vols3, 'r') as svols:
 # %%
 # could log scale this data to try to reduce effects of IRN/PARN being so highly targeted? idk its worth a thought
 from reconstructions.utils import preprocess_funcs as pp
-from reconstructions.utils.filedirs import lengthspkl, ccf_vols3, structure_ont_info
+from reconstructions.utils.filedirs import lengthspkl, ccf_vols3, structure_ont_info, F3
 structure_to_ont = pickle.load(open(structure_ont_info, 'rb'))
 freqs = pickle.load(open(r'reconstructions\data\freqs_hopefullygood.pkl', 'rb')).T
 lengths = pickle.load(open(lengthspkl, 'rb')).T
@@ -54,6 +54,11 @@ lmerged = pp.merge_regions(lengths)
 fmerged = pp.merge_regions(freqs)
 lnozero = lmerged.loc[:, (lmerged != 0).any(axis=0)]
 fnozero = fmerged.loc[:, (fmerged != 0).any(axis=0)]
+
+F = pickle.load(open(F3, 'rb'))
+
+#drop phenotype label column
+F = F.drop('phenotype label', axis=1)
 
 #dorp a duplicate cell, will be fixed whenever I get new ones and rerun 
 #the projection calculations
@@ -380,6 +385,34 @@ def kmeans_clustering(df, **kwargs):
     predictions = kmeans.predict(scaled)
     
     return kmean_scaled, predictions
+
+#%% drop some related features
+
+dropp = ['all_total_total_length']
+#%% crosscorrelation of feature matrix, see feature correlations (lots of axon features i would think are similar with each other)
+
+#convert pheno labels to numerical
+pheno_to_num = {'premotor':1,'sensory':2,'sensorimotor':3,'GRN':4,'mossy':5,'forebrain':6,'vestibular':7}
+
+F = F.replace(pheno_to_num)
+    
+F = pp.rem_zero_var(F)
+
+featcorrs = np.corrcoef(F.T)
+
+featcorrs[np.isnan(featcorrs)] = 0.0
+
+featclust, featidx = cluster_corr(featcorrs, F.columns)
+
+show_heatmap(featclust, featidx)
+
+#%% clustering on curated feature matrix 
+
+Fcorr = np.corrcoef(F)
+
+Fclust, Fidx = cluster_corr(Fcorr, F.index)
+
+show_heatmap(Fclust, Fidx)
 
 #%% lists of regions to iteratively drop as I group them
 

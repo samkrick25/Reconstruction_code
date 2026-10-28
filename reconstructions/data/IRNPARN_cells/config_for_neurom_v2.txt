@@ -1,0 +1,94 @@
+neurite:
+ bifurcation_partitions:
+  kwargs:
+   - {}
+  modes:
+   - mean
+ partition_asymmetry:
+  kwargs:
+   - {}
+  modes:
+   - mean
+ remote_bifurcation_angles:
+  kwargs:
+   - {}
+  modes:
+   - std
+ partition_asymmetry_length:
+  kwargs:
+   - {}
+  modes:
+   - max
+ principal_direction_extents:
+  kwargs:
+   - {}
+  modes:
+   - sum
+ section_term_branch_orders:
+  kwargs:
+   - {}
+  modes:
+   - std
+ section_term_lengths:
+  kwargs:
+   - {}
+  modes:
+   - std
+ section_tortuosity:
+  kwargs:
+   - {}
+  modes:
+   - mean
+ segment_meander_angles:
+  kwargs:
+   - {}
+  modes:
+   - mean
+ total_length:
+  kwargs:
+   - {}
+  modes:
+   - total
+ total_volume:
+  kwargs:
+   - {}
+  modes:
+   - total
+ volume_density:
+  kwargs:
+   - {}
+  modes:
+   - total
+
+
+neurite_type:
+ - AXON
+ - BASAL_DENDRITE
+ - ALL
+
+morphology:
+ aspect_ratio:
+  kwargs:
+   - projection_plane: 'xy'
+  modes:
+   - total
+ total_depth:
+  kwargs:
+   - {}
+  modes:
+   - total
+ total_height:
+  kwargs:
+   - {}
+  modes:
+   - total
+ total_width:
+  kwargs:
+   - {}
+  modes:
+   - total
+ trunk_section_lengths:
+  kwargs:
+   - {}
+  modes:
+   - max

@@ -8,7 +8,7 @@ from sklearn.decomposition import SparsePCA
 import pandas as pd
 import os
 import umap
-
+from sklearn.cluster import KMeans
 
 def comp_node_dist(points1, points2, suptitle=None, labels=None, ver=3.0, colors=['red', 'blue']):
     '''
@@ -287,3 +287,56 @@ def umap_and_plot(pcadata, index, sd=None, colors=None, **kwargs):
         plt.savefig(sd)
     
     return embeddingdf
+
+def hierarchical_clustering(df, **kwargs):
+    '''
+    hierarchical clustering of cells x regions DataFrame
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Data to be hierarchically clustered.
+    **kwargs : kwargs
+        keyword arguments to be passed to sns.clustermap.
+
+    Returns
+    -------
+    A ClusterGrid instance.
+    
+
+    '''
+
+    g = sns.clustermap(df, **kwargs)
+    
+    return g
+
+def kmeans_clustering(df, **kwargs):
+    '''
+    do kmeans clustering
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        data to be kmeans clustered.
+    **kwargs : kwargs
+        kwargs for kmeans.
+
+    Returns
+    -------
+    kmean_scaled : np.array
+        scaled data in kmeans coordinate space
+    predictions : np.array
+        predicted labels for data
+
+    '''
+    
+    scaler = StandardScaler()
+    scaled = scaler.fit_transform(df)
+    
+    kmeans = KMeans(**kwargs)
+    
+    kmean_scaled = kmeans.fit_transform(scaled)
+    
+    predictions = kmeans.predict(scaled)
+    
+    return kmean_scaled, predictions

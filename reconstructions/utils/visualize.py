@@ -228,6 +228,8 @@ def _build_tube_actor_from_sections(sections, radius, color, alpha, res, parcelI
     polydata.SetPoints(points)
     polydata.SetLines(lines)
 
+    # need to draw a line from dendrite to soma realistically, currently this leaves dendrites kinda hanging depending on where their nodes are placed
+    # not noticeable when looking from far enough away but you see it when you really zoom up close
     # apply tube fulter to polydata, set resolution and radius
     tube = vtk.vtkTubeFilter()
     tube.SetInputData(polydata)

@@ -77,14 +77,26 @@ from tqdm import tqdm
 # =============================================================================
 neurons = ld.load_from_swc(swcdir=celldir)
 
-lengthdict = {}
-for neuron, info in tqdm(neurons.items(), desc='finding lengths'):
-    lengths = ld.neuronprop({neuron:info}, mode='length', ontlevel='structure', cellname=neuron)
+# =============================================================================
+# lengthdict = {}
+# for neuron, info in tqdm(neurons.items(), desc='finding lengths'):
+#     lengths = ld.neuronprop({neuron:info}, mode='length', ontlevel='structure', cellname=neuron)
+#     ser = pd.Series(lengths, name=neuron)
+#     lengthdict[neuron] = ser
+#     
+# lengthdf = pd.DataFrame(lengthdict)
+# lengthdf = lengthdf.replace(np.nan, 0)
+# savefile = r'reconstructions\data\lengths_fromswc.pkl'
+# pickle.dump(lengthdf, open(savefile, 'wb'))
+# 
+# =============================================================================
+freqdict = {}
+for neuron, info in tqdm(neurons.items(), desc='finding frequencies'):
+    lengths = ld.neuronprop({neuron:info}, mode='frequency', ontlevel='structure', cellname=neuron)
     ser = pd.Series(lengths, name=neuron)
-    lengthdict[neuron] = ser
+    freqdict[neuron] = ser
     
-lengthdf = pd.DataFrame(lengthdict)
-lengthdf = lengthdf.replace(np.nan, 0)
-savefile = r'reconstructions\data\lengths_fromswc.pkl'
-pickle.dump(lengthdf, open(savefile, 'wb'))
-
+freqdf = pd.DataFrame(freqdict)
+freqdf = freqdf.replace(np.nan, 0)
+savefile = r'reconstructions\data\freqs_fromswc.pkl'
+pickle.dump(freqdf, open(savefile, 'wb'))

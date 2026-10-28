@@ -243,3 +243,92 @@ cells_by_geno = {
 
 pColors = {'sensory': 'red', 'premotor': 'cyan', 'mossy': 'seagreen', 'GRN': 'purple', 'sensorimotor': 'pink',
            'vestibular': 'yellow', 'forebrain': 'orange'}
+
+#region groupings
+HY_CTX_CNU_L = ['AVPV', 'LPO', 'ADP', 'VMH', 'MPO', 'DMH', 'AP', 'STN', 'ZI', 'SCH',
+       'PVH', 'PVpo', 'ARH', 'MPN', 'AHN', 'BAC', 'SBPV', 'COAa', 'PS', 'NLOT',
+       'PD', 'PMv', 'In', 'MS', 'PMd', 'NDB', 'PST', 'PVHd',
+       'PH', 'RL', 'PVi', 'MEA', 'IIn', 'LHA', 'RCH', 'PVa'] + ['LSv', 'mfbc',  'BMA', 'BST', 'LSr', 'GPe', 'GPi', 'BLA'
+              ] + [ 'ACB', 'LA', 'TT', 'SI', 'IA',
+                     'epsc', 'cc', 'SSs', 'ECT', 'AIp', 'CEA', 'SH',
+                     'VISC', 'LSc', 'EPd', 'DP']#, 'fiber tracts-unassigned', 'HY-unassigned'
+                   
+HY_CTX_CNU_F = ['AVPV', 'LPO', 'ADP', 'VMH', 'MPO', 'DMH', 'AP', 'STN', 'ZI',
+       'PVH', 'PVpo', 'ARH', 'MPN', 'SBPV', 'COAa', 'PS', 'NLOT',
+       'PMv', 'MS', 'PMd', 'PVHd',
+       'PH', 'RL', 'MEA', 'IIn', 'LHA', 'RCH', 'PVa'] + ['LSv', 'mfbc',  'BMA', 'BST', 'LSr', 'GPi'
+              ] + [ 'ACB', 'TT', 'SI', 'IA',
+                     'epsc', 'cc', 'SSs', 'ECT', 'AIp', 'CEA',
+                     'VISC', 'LSc', 'EPd', 'DP']#, 'fiber tracts-unassigned', 'HY-unassigned'
+                   
+#removed  'CB-unassigned',
+CBverm_L = ['CB', 'UVU', 'CUL', 'DEC', 'cbc', 'PYR', 'arb',
+       'CENT', 'VCO', 'NOD', 'FL',
+       'DCO', 'FOTU', 'LING'] #cbp
+
+CBverm_F = ['CB', 'UVU', 'CUL', 'DEC', 'PYR', 'arb',
+       'CENT', 'VCO', 'NOD', 'FL',
+       'DCO', 'FOTU'] #cbp
+
+CBhem = ['PFL', 'PRM', 'AN', 'COPY', 'SIM']
+
+CBN = ['FN', 'DN', 'VeCB', 'IP', 'ICB']
+
+ventricular = ['V4r', 'chpl']
+
+#removed  'brain-unassigned', 'MB-unassigned', 'V3-unassigned',
+MB_L = ['Eth', 'RR', 'RPF', 'RN', 'III', 'Pa4', 'IIIn', 'MA3',
+       'NPC', 'AQ', 'VTA', 'NLL', 'SNr', 'SNc', 'c', 'PBG',
+       'APN', 'mfsbshy', 'SCm', 'tsp', 'rust', 'PAG', 'PPN', 'CUN', 'EW', 'SAG']
+
+MB_F = ['Eth', 'RR', 'RPF', 'RN', 'III', 'IIIn',
+       'NPC', 'AQ', 'VTA', 'NLL', 'SNr', 'SNc',
+       'APN', 'mfsbshy', 'SCm', 'tsp', 'rust', 'PAG', 'PPN', 'CUN', 'EW', 'SAG']
+
+BS_sat = ['SLD', 'RPO', 'LDT', 'SLC', 'NI', 'RO', 'RM', 'DR', 'CS', 'LC', 'RPA']
+
+P_mot_L = ['PRNc', 'B', 'DTN', 'TRN', 'PG', 'PCG', 'PRNr']
+
+P_mot_F = ['PRNc', 'DTN', 'TRN', 'PG', 'PCG', 'PRNr']
+
+MY_mot_L = ['Xn', 'IVn', 'IO', 'NR', 'PRP', 'PPY', 'PAS', 'VIIIn', 'drt', 'PGRNd', 'DMX', 'AMB', 'VI', 'y']
+
+MY_mot_F = ['Xn', 'IO', 'NR', 'PRP', 'PPY', 'PAS', 'VIIIn', 'drt', 'PGRNd', 'DMX', 'AMB', 'VI']
+
+BS_sen = ['SOC', 'ECU', 'CU', 'GR', 'Pa5']
+
+#removed 'TH-unassigned',
+TH_L = ['VM', 'PF', 'VPL', 'VPM', 'VPMpc', 'VPLpc', 'PCN', 'PO', 'VAL', 'SPFp', 'PoT', 'POL',
+        'cst', 'PVT', 'MD', 'IAM', 'CM', 'SPA', 'SMT', 'IMD', 'RE', 'PIL', 'SPFm', 'RH', 'MH', 'LH']
+
+TH_F = ['VM', 'PF', 'VPM', 'VPMpc', 'VPLpc', 'PCN', 'PO', 'VAL', 'SPFp', 'PoT', 'POL',
+        'cst', 'PVT', 'MD', 'IAM', 'CM', 'SPA', 'IMD', 'RE', 'PIL', 'SPFm', 'RH', 'MH', 'LH']
+
+vestibular = ['MV', 'LAV', 'SPIV', 'SUV', 'x']
+
+V_acs = ['P5', 'Acs5', 'Vn', 'PC5', 'I5']
+
+#V_sen = ['PSV', 'SPVO', 'SPVI', 'SPVC', 'Pa5', 'NTS']
+
+spinal_V = ['SPVO', 'SPVI', 'SPVC']
+
+VIIcomb = ['VII', 'ACVII', 'VIIn'] #this just isn't showing up in lcomb for some reason, don't know why
+
+CVLM = ['LRN', 'PGRNl', 'MARN']
+
+IRN = ['IRN', 'LIN']
+
+PARN = ['PARN', 'ISN']
+
+
+#this are the important ones to import
+#need two different dicts since some areas have length but no endpoints
+to_merge_L = {'TH':TH_L, 'MB':MB_L, 'CB vermal':CBverm_L, 'CB hemispheric':CBhem, 'CBN':CBN, 'HY/CTX/CNU':HY_CTX_CNU_L, 'vestibular':vestibular,
+             'P/MY state':BS_sat, 'Vmo secondary':V_acs, 'VII combined':VIIcomb, 'MY motor':MY_mot_L,
+            'MY/P sensory':BS_sen, 'P motor':P_mot_L, 'CVLM':CVLM, 'SPV':spinal_V, 'ventricular':ventricular, 
+            'IRN/LIN': IRN, 'PARN/ISN': PARN}
+
+to_merge_F = {'TH':TH_F, 'MB':MB_F, 'CB vermal':CBverm_F, 'CB hemispheric':CBhem, 'CBN':CBN, 'HY/CTX/CNU':HY_CTX_CNU_F, 'vestibular':vestibular,
+             'P/MY state':BS_sat, 'Vmo secondary':V_acs, 'VII combined':VIIcomb, 'MY motor':MY_mot_F,
+            'MY/P sensory':BS_sen, 'P motor':P_mot_F, 'CVLM':CVLM, 'SPV':spinal_V, 'ventricular':ventricular, 
+            'IRN/LIN': IRN, 'PARN/ISN': PARN}
